@@ -1,0 +1,12 @@
+{
+  "frame": "convention",
+  "objects": [
+    { "catalogId": "furniture_slice_18", "x": 48, "y": 84 },
+    { "catalogId": "furniture_slice_24", "x": 96, "y": 84 },
+    { "catalogId": "furniture_slice_7", "x": 144, "y": 84 },
+    { "catalogId": "furniture_slice_2", "x": 192, "y": 84 },
+    { "catalogId": "furniture_slice_1", "x": 256, "y": 84 },
+    { "catalogId": "furniture_slice_10", "x": 80, "y": 68 },
+    { "catalogId": "furniture_slice_19", "x": 224, "y": 68 }
+  ]
+}

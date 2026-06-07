@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-electron/
+*.log
+.DS_Store
+
+# Local user prefs (overlay zoom, etc.)
+assets/settings.json
+
+# Debug captures
+screenshot*.png

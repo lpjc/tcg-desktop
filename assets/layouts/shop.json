@@ -1,0 +1,11 @@
+{
+  "frame": "shop",
+  "objects": [
+    { "catalogId": "furniture_slice_8", "x": 32, "y": 84 },
+    { "catalogId": "furniture_slice_16", "x": 80, "y": 84 },
+    { "catalogId": "furniture_slice_12", "x": 128, "y": 84 },
+    { "catalogId": "furniture_slice_6", "x": 176, "y": 84 },
+    { "catalogId": "furniture_slice_20", "x": 224, "y": 84 },
+    { "catalogId": "furniture_slice_11", "x": 48, "y": 68 }
+  ]
+}
