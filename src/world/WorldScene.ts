@@ -192,6 +192,9 @@ export class WorldScene extends Phaser.Scene {
       newLayout.roadWidth === oldLayout.roadWidth &&
       newLayout.shopFrame.x === oldLayout.shopFrame.x
     ) {
+      // Width unchanged, but a height-only resize still needs re-anchoring
+      // (the camera glues the band to the window bottom).
+      this.cameraDirector.refit(oldLayout.worldWidth);
       return;
     }
 

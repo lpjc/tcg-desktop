@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { windowBandHeight } from './core/constants';
 import { DevToggleButton } from './ui/DevToggleButton';
 import { MonitorSwitchButton } from './ui/MonitorSwitchButton';
 import { WorldScene } from './world/WorldScene';
@@ -7,7 +6,9 @@ import { WorldScene } from './world/WorldScene';
 /**
  * Phaser bootstrap for the desktop overlay band.
  *
- * - Fixed small zoom (ZOOM); window height = windowBandHeight() (~192px).
+ * - Canvas always fills the Electron window (whose height is set in
+ *   electron/main.ts to (BAND_HEIGHT + TOP_MARGIN) × ZOOM); the camera glues
+ *   the world band to the window bottom, headroom above stays transparent.
  * - Width is 100% of the monitor work area; convention | road | shop fill it
  *   via `WorldLayout` (road flexes on resize).
  * - `transparent: true` lets the desktop show through.
@@ -16,7 +17,7 @@ import { WorldScene } from './world/WorldScene';
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   width: window.innerWidth,
-  height: windowBandHeight(),
+  height: window.innerHeight,
   parent: 'game-container',
   backgroundColor: 'rgba(0,0,0,0)',
   transparent: true,
@@ -29,7 +30,7 @@ const game = new Phaser.Game({
 });
 
 function resizeCanvas(): void {
-  game.scale.resize(window.innerWidth, windowBandHeight());
+  game.scale.resize(window.innerWidth, window.innerHeight);
 }
 
 window.addEventListener('resize', resizeCanvas);

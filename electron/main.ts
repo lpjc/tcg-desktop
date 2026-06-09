@@ -2,10 +2,12 @@ import { app, BrowserWindow, ipcMain, screen, globalShortcut } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
-/** Must match ZOOM and BAND_HEIGHT in src/core/constants.ts */
+/** Must match ZOOM, BAND_HEIGHT and TOP_MARGIN in src/core/constants.ts */
 const ZOOM = 2;
 const BAND_HEIGHT = 96;
-const WINDOW_HEIGHT = BAND_HEIGHT * ZOOM;
+/** Transparent click-through headroom above the band (world px). */
+const TOP_MARGIN = 10;
+const WINDOW_HEIGHT = (BAND_HEIGHT + TOP_MARGIN) * ZOOM;
 
 const isDev = !app.isPackaged;
 // Set DEBUG_OPAQUE=1 to render the overlay as a normal opaque, framed window.

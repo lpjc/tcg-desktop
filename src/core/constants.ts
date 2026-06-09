@@ -7,20 +7,28 @@ export const FLOOR_SUBTILE = 8;
 /** Editor furniture snap grid (8px — half the 16px world TILE). */
 export const PLACE_GRID = FLOOR_SUBTILE;
 
-/** Highest foot Y when placing wall decor / floating props in the editor. */
-export const PLACE_Y_MIN = 4;
-
 /**
  * Fixed overlay magnification (small companion size only).
- * Window/canvas pixel height = BAND_HEIGHT × ZOOM (~192px on any display).
+ * Window/canvas pixel height = (BAND_HEIGHT + TOP_MARGIN) × ZOOM.
  */
 export const ZOOM = 2;
 
 /**
  * Logical height of the bottom world band (source pixels).
- * Must match the art band; window pixel height is BAND_HEIGHT × ZOOM.
+ * Must match the art band.
  */
 export const BAND_HEIGHT = 96;
+
+/**
+ * Extra transparent headroom (world px) above the band — gives tall sprites
+ * and high-hung wall decor room to render, and click-through desktop space.
+ * Visible world Y range is -TOP_MARGIN .. WORLD_HEIGHT.
+ * Must match TOP_MARGIN in electron/main.ts.
+ */
+export const TOP_MARGIN = 10;
+
+/** Highest foot Y when placing wall decor / floating props in the editor. */
+export const PLACE_Y_MIN = 4 - TOP_MARGIN;
 
 /** Fixed world-pixel width of the shop zone (right). Road flexes between them. */
 export const SHOP_WIDTH = 200;
@@ -52,9 +60,9 @@ export const DEPTH_UI = 10000;
 /**
  * Magnification and horizontal layout:
  * - Zoom is fixed at ZOOM (see above).
+ * - Window height is set by electron/main.ts ((BAND_HEIGHT + TOP_MARGIN) × ZOOM);
+ *   the canvas simply fills the window and `CameraDirector` glues the band to
+ *   the window bottom.
  * - World width is dynamic: convention + responsive road + shop — see `WorldLayout.ts`.
  * - Camera shows the entire band at once; position with `centerOn(worldWidth/2, …)`.
  */
-export function windowBandHeight(): number {
-  return BAND_HEIGHT * ZOOM;
-}

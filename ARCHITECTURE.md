@@ -105,14 +105,17 @@ These rules are enforced in code so the past "too big / misaligned" failures can
 
 1. **1 source pixel = 1 logical pixel everywhere. Individual sprites are NEVER resized.**
 2. **One fixed integer camera zoom** (`ZOOM = 2` in `constants.ts`) — the small
-   companion size (~192px window height). Not user-adjustable.
+   companion size (~212px window height). Not user-adjustable.
 3. **Nearest-neighbor** rendering via Phaser `pixelArt: true` (+ `roundPixels`).
 4. **Grid:** world cell = **16px**; floor uses **8px** sub-tiles (4 per cell). All native.
 5. **Foot anchor:** every placeable/character uses **bottom-center origin**; `depth = footY`.
    Fixes alignment *and* drives Y-sort in one move.
 
-The world band is always `BAND_HEIGHT` (96) source pixels tall. Horizontal width is
-dynamic: convention (320px) + responsive road + shop (320px) = viewport width at zoom.
+The world band is always `BAND_HEIGHT` (96) source pixels tall, plus `TOP_MARGIN` (10)
+source pixels of transparent click-through headroom above it (window height =
+`(BAND_HEIGHT + TOP_MARGIN) × ZOOM`; the camera keeps the band glued to the window
+bottom, visible world Y runs `-TOP_MARGIN..96`). Horizontal width is dynamic:
+convention (320px) + responsive road + shop (320px) = viewport width at zoom.
 
 ---
 

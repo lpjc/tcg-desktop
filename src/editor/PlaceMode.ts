@@ -890,11 +890,14 @@ export class PlaceMode {
         ? getConventionRooms().map((room) => conventionRoomBounds(room, frame.x))
         : [{ x: frame.x, width: frame.width, floorTop: SHOP_FLOOR_TOP }];
 
+    // Grid extends above the floor into the transparent headroom so wall
+    // decor / floating props show their snap positions too.
+    const gridTop = Math.ceil(PLACE_Y_MIN / PLACE_GRID) * PLACE_GRID;
     for (const zone of zones) {
       for (let x = zone.x; x <= zone.x + zone.width; x += PLACE_GRID) {
-        this.gridGraphics.lineBetween(x, zone.floorTop, x, frame.y + frame.height);
+        this.gridGraphics.lineBetween(x, gridTop, x, frame.y + frame.height);
       }
-      for (let y = zone.floorTop; y <= frame.y + frame.height; y += PLACE_GRID) {
+      for (let y = gridTop; y <= frame.y + frame.height; y += PLACE_GRID) {
         this.gridGraphics.lineBetween(zone.x, y, zone.x + zone.width, y);
       }
       this.gridGraphics.lineStyle(1, 0x6ecfff, 0.25);
