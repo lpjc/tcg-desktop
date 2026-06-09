@@ -3,23 +3,24 @@
   "objects": [
     {
       "catalogId": "furniture_slice_7",
-      "x": 144,
-      "y": 84
-    },
-    {
-      "catalogId": "furniture_slice_1",
-      "x": 40,
-      "y": 88,
-      "collidable": true
-    },
-    {
-      "catalogId": "furniture_slice_1",
-      "x": 72,
+      "x": 136,
       "y": 88
     },
     {
+      "catalogId": "furniture_slice_1",
+      "x": 32,
+      "y": 88,
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 8,
+        "w": 30,
+        "h": 8
+      }
+    },
+    {
       "catalogId": "furniture_slice_112",
-      "x": 280,
+      "x": 272,
       "y": 32
     },
     {
@@ -33,14 +34,119 @@
       "y": 72
     },
     {
-      "catalogId": "furniture_slice_257",
+      "catalogId": "furniture_slice_256",
       "x": 448,
       "y": 56
     },
     {
-      "catalogId": "free_furniture_sprite_36_3",
+      "catalogId": "free_furniture_sprite_3_4",
       "x": 472,
+      "y": 56
+    },
+    {
+      "catalogId": "furniture_slice_344",
+      "x": 288,
+      "y": 48,
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 4,
+        "w": 32,
+        "h": 8
+      }
+    },
+    {
+      "catalogId": "free_furniture_sprite_41_2",
+      "x": 24,
+      "y": 40,
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 6,
+        "w": 23,
+        "h": 8
+      }
+    },
+    {
+      "catalogId": "free_furniture_sprite_41_1",
+      "x": 48,
+      "y": 40,
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 6,
+        "w": 23,
+        "h": 8
+      }
+    },
+    {
+      "catalogId": "free_furniture_sprite_56_1",
+      "x": 24,
+      "y": 16
+    },
+    {
+      "catalogId": "free_furniture_sprite_57_1",
+      "x": 40,
+      "y": 16
+    },
+    {
+      "catalogId": "free_furniture_sprite_35_2",
+      "x": 80,
+      "y": 32,
+      "collidable": true
+    },
+    {
+      "catalogId": "free_furniture_sprite_35_2",
+      "x": 312,
+      "y": 48,
+      "collidable": true
+    },
+    {
+      "catalogId": "free_furniture_sprite_35_2",
+      "x": 384,
       "y": 72
+    },
+    {
+      "catalogId": "furniture_slice_1",
+      "x": 112,
+      "y": 88
+    },
+    {
+      "catalogId": "furniture_slice_75",
+      "x": 56,
+      "y": 88
+    },
+    {
+      "catalogId": "furniture_slice_75",
+      "x": 208,
+      "y": 88
+    },
+    {
+      "catalogId": "furniture_slice_75",
+      "x": 192,
+      "y": 88
+    },
+    {
+      "catalogId": "furniture_slice_75",
+      "x": 176,
+      "y": 88
+    },
+    {
+      "catalogId": "free_furniture_sprite_41_2",
+      "x": 216,
+      "y": 40,
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 6,
+        "w": 23,
+        "h": 8
+      }
+    },
+    {
+      "catalogId": "free_furniture_sprite_31_9",
+      "x": 216,
+      "y": 16
     }
   ],
   "floor": []

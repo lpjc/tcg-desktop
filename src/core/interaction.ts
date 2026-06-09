@@ -8,7 +8,8 @@ import { setWindowInteractive } from './clickthrough';
  *  - edit mode is on (whole band is editable),
  *  - a drag is in progress (must not drop interactivity mid-drag),
  *  - the cursor is over a registered "hot" HTML panel (palette, drag handle),
- *  - the cursor is over a world station (play mode click target).
+ *  - the cursor is over drawn world content (floors, road, stations) — see the
+ *    world hit test registered by WorldScene.
  *
  * This is the single place that drives `setWindowInteractive`, so the
  * click-through behaviour is easy to reason about for the next developer.
@@ -17,7 +18,7 @@ class InteractionManager {
   private editMode = false;
   private dragLock = false;
   private hotElements: HTMLElement[] = [];
-  private stationHitTest: (clientX: number, clientY: number) => boolean = () => false;
+  private worldHitTest: (clientX: number, clientY: number) => boolean = () => false;
 
   start(): void {
     const onMove = (e: { clientX: number; clientY: number }) =>
@@ -45,8 +46,9 @@ class InteractionManager {
     if (!this.hotElements.includes(el)) this.hotElements.push(el);
   }
 
-  setStationHitTest(fn: (clientX: number, clientY: number) => boolean): void {
-    this.stationHitTest = fn;
+  /** Hit test for drawn world content (floors, road, stations) in client coords. */
+  setWorldHitTest(fn: (clientX: number, clientY: number) => boolean): void {
+    this.worldHitTest = fn;
   }
 
   private recompute(clientX: number, clientY: number): void {
@@ -55,8 +57,8 @@ class InteractionManager {
       return;
     }
     const overHot = this.hotElements.some((el) => isOverElement(el, clientX, clientY));
-    const overStation = clientX >= 0 && this.stationHitTest(clientX, clientY);
-    setWindowInteractive(overHot || overStation);
+    const overWorld = clientX >= 0 && this.worldHitTest(clientX, clientY);
+    setWindowInteractive(overHot || overWorld);
   }
 }
 

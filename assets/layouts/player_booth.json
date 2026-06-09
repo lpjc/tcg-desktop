@@ -1,21 +1,31 @@
 {
   "objects": [
     {
-      "catalogId": "furniture_slice_24",
-      "x": 152,
-      "y": -52,
-      "collidable": true
-    },
-    {
-      "catalogId": "furniture_slice_7",
-      "x": 96,
-      "y": 0
-    },
-    {
       "catalogId": "furniture_slice_2",
-      "x": 104,
+      "x": 88,
       "y": -36,
-      "collidable": true
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 8,
+        "w": 32,
+        "h": 8
+      }
+    },
+    {
+      "catalogId": "free_furniture_sprite_53_1",
+      "x": 72,
+      "y": -68
+    },
+    {
+      "catalogId": "free_furniture_sprite_53_2",
+      "x": 88,
+      "y": -68
+    },
+    {
+      "catalogId": "free_furniture_sprite_53_3",
+      "x": 104,
+      "y": -68
     }
   ]
 }

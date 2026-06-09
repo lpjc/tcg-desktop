@@ -690,6 +690,67 @@ export class PlaceMode {
     this.notifyChange();
   }
 
+  /**
+   * Resize the selected item's collision box (sprite-local, 8px steps).
+   * Shift+arrow grows that edge; Ctrl+Shift+arrow shrinks it.
+   */
+  nudgeSelectedCollision(dx: number, dy: number, shrink: boolean): void {
+    if (!this.active || !this.selectedPlaceable || this.paintMode) return;
+    const p = this.selectedPlaceable;
+    p.ensureCollisionBoxOverride();
+    const box = p.collisionBoxOverride!;
+    const item = p.catalogItem;
+    const step = PLACE_GRID;
+    const minSize = PLACE_GRID;
+
+    if (dx < 0) {
+      if (shrink) {
+        const cut = Math.min(step, box.w - minSize);
+        box.x += cut;
+        box.w -= cut;
+      } else {
+        const grow = Math.min(step, box.x);
+        box.x -= grow;
+        box.w += grow;
+      }
+    } else if (dx > 0) {
+      if (shrink) {
+        box.w = Math.max(minSize, box.w - step);
+      } else {
+        const room = item.width - (box.x + box.w);
+        box.w += Math.min(step, room);
+      }
+    }
+
+    if (dy < 0) {
+      if (shrink) {
+        const cut = Math.min(step, box.h - minSize);
+        box.y += cut;
+        box.h -= cut;
+      } else {
+        const grow = Math.min(step, box.y);
+        box.y -= grow;
+        box.h += grow;
+      }
+    } else if (dy > 0) {
+      if (shrink) {
+        box.h = Math.max(minSize, box.h - step);
+      } else {
+        const room = item.height - (box.y + box.h);
+        box.h += Math.min(step, room);
+      }
+    }
+
+    box.x = Phaser.Math.Clamp(box.x, 0, item.width - minSize);
+    box.y = Phaser.Math.Clamp(box.y, 0, item.height - minSize);
+    box.w = Phaser.Math.Clamp(box.w, minSize, item.width - box.x);
+    box.h = Phaser.Math.Clamp(box.h, minSize, item.height - box.y);
+
+    this.updateSelectionOutline();
+    this.updateHud(`Collision ${box.w}×${box.h} @ ${box.x},${box.y} (Shift+arrows grow · Ctrl+Shift shrink)`);
+    this.notifyChange();
+  }
+
   nudgeSelected(dx: number, dy: number): void {
     if (!this.active || !this.selectedPlaceable || this.paintMode) return;
     const p = this.selectedPlaceable;
@@ -969,8 +1030,8 @@ export class PlaceMode {
     const hint = this.paintMode
       ? 'Paint floor · Shift+click erase tile · P exit · Ctrl+S save props'
       : this.editingFrame === 'convention'
-        ? '8px grid · C collidable on/off · Shift+click remove · B booth/venue · Ctrl+S'
-        : '8px grid · C collidable on/off · Shift+click remove · Ctrl+S saves shop';
+        ? 'Arrows move · Shift+arrows resize collision · C walk-through · Ctrl+S'
+        : 'Arrows move · Shift+arrows resize collision · C walk-through · Ctrl+S';
 
     this.hudBody.innerHTML = `
       <div><strong>${mode}</strong> — ${frameLabel}</div>

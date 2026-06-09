@@ -25,11 +25,12 @@ export type AllowedFn = (x: number, y: number) => boolean;
 /** World-space collision box from catalog data (sprite foot = placeable x/y). */
 export function placeableCollisionWorld(p: Placeable): WorldRect {
   const item = p.catalogItem;
+  const col = p.getCollisionBox();
   return {
-    x: p.x - item.footX + item.collision.x,
-    y: p.y - item.footY + item.collision.y,
-    w: item.collision.w,
-    h: item.collision.h,
+    x: p.x - item.footX + col.x,
+    y: p.y - item.footY + col.y,
+    w: col.w,
+    h: col.h,
   };
 }
 

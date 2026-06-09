@@ -27,6 +27,7 @@ import { conventionRoomPicker, pickShopFloorTile } from './floorPatterns';
 import { paintFloorLip, paintPatternedFloor } from './floorPaint';
 import { buildRoadFloor } from './RoadFloor';
 import { rebuildObstacleField } from './obstacleField';
+import { isOverWorldSurface } from './worldSurface';
 import { CameraDirector } from './CameraDirector';
 import {
   computeWorldLayout,
@@ -86,9 +87,10 @@ export class WorldScene extends Phaser.Scene {
     this.cameraDirector = new CameraDirector(this.cameras.main, getWorldLayout().worldWidth);
 
     interaction.start();
-    interaction.setStationHitTest((clientX, clientY) => {
+    interaction.setWorldHitTest((clientX, clientY) => {
       if (this.placeMode.isActive()) return true;
       const world = this.cameras.main.getWorldPoint(clientX, clientY);
+      if (isOverWorldSurface(world.x, world.y)) return true;
       return this.placeMode.stationAtWorld(world.x, world.y) !== null;
     });
 
@@ -111,7 +113,11 @@ export class WorldScene extends Phaser.Scene {
       const nudge = arrows[event.code];
       if (nudge) {
         event.preventDefault();
-        this.placeMode.nudgeSelected(nudge[0], nudge[1]);
+        if (event.shiftKey) {
+          this.placeMode.nudgeSelectedCollision(nudge[0], nudge[1], event.ctrlKey);
+        } else {
+          this.placeMode.nudgeSelected(nudge[0], nudge[1]);
+        }
       }
     });
 

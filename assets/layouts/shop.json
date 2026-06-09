@@ -2,25 +2,15 @@
   "frame": "shop",
   "objects": [
     {
-      "catalogId": "furniture_slice_1",
-      "x": 72,
-      "y": 64
-    },
-    {
-      "catalogId": "furniture_slice_1",
-      "x": 104,
-      "y": 64
-    },
-    {
       "catalogId": "free_furniture_sprite_16_2",
-      "x": 24,
-      "y": 48,
+      "x": 128,
+      "y": 88,
       "collidable": true
     },
     {
       "catalogId": "free_furniture_sprite_16_2",
-      "x": 24,
-      "y": 80
+      "x": 32,
+      "y": 88
     },
     {
       "catalogId": "free_furniture_sprite_16_1",
@@ -30,13 +20,13 @@
     },
     {
       "catalogId": "free_furniture_sprite_16_2",
-      "x": 152,
-      "y": 80
+      "x": 64,
+      "y": 88
     },
     {
       "catalogId": "free_furniture_sprite_16_2",
-      "x": 184,
-      "y": 80
+      "x": 96,
+      "y": 88
     },
     {
       "catalogId": "free_furniture_sprite_31_9",
@@ -45,12 +35,72 @@
     },
     {
       "catalogId": "furniture_slice_66",
-      "x": 152,
-      "y": 32
+      "x": 168,
+      "y": 32,
+      "collidable": true
     },
     {
-      "catalogId": "furniture_slice_366",
-      "x": 112,
+      "catalogId": "free_furniture_sprite_31_9",
+      "x": 136,
+      "y": 16
+    },
+    {
+      "catalogId": "furniture_slice_164",
+      "x": 168,
+      "y": 64,
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 8,
+        "w": 32,
+        "h": 8
+      }
+    },
+    {
+      "catalogId": "furniture_slice_164",
+      "x": 168,
+      "y": 88,
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 8,
+        "w": 32,
+        "h": 8
+      }
+    },
+    {
+      "catalogId": "free_furniture_sprite_31_3",
+      "x": 72,
+      "y": 48,
+      "collidable": true
+    },
+    {
+      "catalogId": "free_furniture_sprite_31_3",
+      "x": 72,
+      "y": 40,
+      "collidable": true
+    },
+    {
+      "catalogId": "free_furniture_sprite_31_3",
+      "x": 72,
+      "y": 56,
+      "collidable": true
+    },
+    {
+      "catalogId": "free_furniture_sprite_30_2",
+      "x": 104,
+      "y": 64,
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 9,
+        "w": 48,
+        "h": 8
+      }
+    },
+    {
+      "catalogId": "free_furniture_sprite_13_1",
+      "x": 104,
       "y": 16
     }
   ]

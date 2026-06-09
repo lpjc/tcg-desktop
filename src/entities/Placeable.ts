@@ -1,5 +1,10 @@
 import Phaser from 'phaser';
-import { applyCatalogScale, getCatalogItem, type CatalogItem } from '../assets/catalog';
+import {
+  applyCatalogScale,
+  getCatalogItem,
+  type CatalogItem,
+  type CollisionBox,
+} from '../assets/catalog';
 import { depthFromFootY } from '../core/depth';
 
 export type PlaceableLayer = 'booth' | 'venue' | 'shop';
@@ -14,6 +19,8 @@ export interface PlacedObjectData {
    * catalog collision box (tables block, rugs/wall decor do not).
    */
   collidable?: boolean;
+  /** Per-instance collision footprint in sprite-local pixels (editor: Shift+arrows). */
+  collision?: CollisionBox;
 }
 
 export class Placeable extends Phaser.GameObjects.Image {
@@ -23,6 +30,8 @@ export class Placeable extends Phaser.GameObjects.Image {
   readonly layer: PlaceableLayer;
   /** null = no override (use catalog heuristic); set via editor "C" toggle. */
   collidableOverride: boolean | null;
+  /** null = use catalog collision; set when resized in the editor. */
+  collisionBoxOverride: CollisionBox | null;
 
   constructor(
     scene: Phaser.Scene,
@@ -41,6 +50,7 @@ export class Placeable extends Phaser.GameObjects.Image {
     this.instanceId = instanceId;
     this.layer = layer;
     this.collidableOverride = data.collidable ?? null;
+    this.collisionBoxOverride = data.collision ? { ...data.collision } : null;
 
     this.setOrigin(item.footX / item.width, 1);
     applyCatalogScale(this, item);
@@ -57,6 +67,18 @@ export class Placeable extends Phaser.GameObjects.Image {
     this.applyDepth();
   }
 
+  /** Sprite-local collision box (catalog default or per-instance override). */
+  getCollisionBox(): CollisionBox {
+    return this.collisionBoxOverride ?? this.catalogItem.collision;
+  }
+
+  /** Copy catalog collision into an editable override (first Shift+arrow nudge). */
+  ensureCollisionBoxOverride(): void {
+    if (this.collisionBoxOverride === null) {
+      this.collisionBoxOverride = { ...this.catalogItem.collision };
+    }
+  }
+
   applyDepth(): void {
     this.setDepth(depthFromFootY(this.getFootY()));
   }
@@ -67,6 +89,7 @@ export class Placeable extends Phaser.GameObjects.Image {
       x: this.x,
       y: this.y,
       ...(this.collidableOverride !== null ? { collidable: this.collidableOverride } : {}),
+      ...(this.collisionBoxOverride ? { collision: { ...this.collisionBoxOverride } } : {}),
     };
   }
 }
