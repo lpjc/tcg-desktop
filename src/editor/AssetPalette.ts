@@ -16,6 +16,9 @@ const CATEGORIES: Array<{ id: string; label: string }> = [
  */
 const MAX_VISIBLE_ITEMS = 1000;
 
+const PALETTE_WIDTH_PX = 320;
+const PALETTE_STORAGE_KEY = 'tcg-desktop.palette-pos';
+
 export class AssetPalette {
   private root: HTMLElement;
   private listEl: HTMLElement;
@@ -34,8 +37,8 @@ export class AssetPalette {
     this.root = document.createElement('div');
     this.root.id = 'asset-palette';
     this.root.innerHTML = `
+      <div class="palette-drag-handle" title="Drag to reposition">Assets</div>
       <div class="palette-header">
-        <strong>Assets</strong>
         <div class="palette-mode-hint"></div>
         <div class="palette-tabs"></div>
         <input type="search" placeholder="Search…" />
@@ -51,6 +54,8 @@ export class AssetPalette {
 
     interaction.registerHotElement(this.root);
     this.injectStyles();
+    this.restorePosition();
+    this.enableDragging();
     this.renderTabs();
     this.renderList();
     this.setVisible(false);
@@ -123,7 +128,7 @@ export class AssetPalette {
       btn.className = `palette-item${this.selectedId === item.id ? ' selected' : ''}`;
       btn.title = `${item.name} (${item.width}×${item.height})`;
       btn.innerHTML = `
-        <img src="${encodeURI(`/${item.file}`)}" alt="" width="${Math.min(item.width, 32)}" height="${Math.min(item.height, 32)}" />
+        <img src="${encodeURI(`/${item.file}`)}" alt="" width="${Math.min(item.width, 36)}" height="${Math.min(item.height, 36)}" />
         <span>${item.name}</span>
       `;
       btn.addEventListener('click', () => {
@@ -133,6 +138,69 @@ export class AssetPalette {
       });
       this.listEl.appendChild(btn);
     }
+  }
+
+  private restorePosition(): void {
+    try {
+      const raw = localStorage.getItem(PALETTE_STORAGE_KEY);
+      if (!raw) return;
+      const { left, top } = JSON.parse(raw) as { left: number; top: number };
+      if (Number.isFinite(left) && Number.isFinite(top)) {
+        this.root.style.left = `${left}px`;
+        this.root.style.top = `${top}px`;
+        this.root.style.right = 'auto';
+      }
+    } catch {
+      /* ignore corrupt saved position */
+    }
+  }
+
+  private savePosition(): void {
+    const rect = this.root.getBoundingClientRect();
+    localStorage.setItem(
+      PALETTE_STORAGE_KEY,
+      JSON.stringify({ left: Math.round(rect.left), top: Math.round(rect.top) }),
+    );
+  }
+
+  private enableDragging(): void {
+    const handle = this.root.querySelector('.palette-drag-handle') as HTMLElement;
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    handle.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      dragging = true;
+      const rect = this.root.getBoundingClientRect();
+      offsetX = event.clientX - rect.left;
+      offsetY = event.clientY - rect.top;
+      handle.setPointerCapture(event.pointerId);
+      handle.classList.add('dragging');
+      event.preventDefault();
+    });
+
+    handle.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      const maxLeft = Math.max(0, window.innerWidth - PALETTE_WIDTH_PX - 8);
+      const maxTop = Math.max(0, window.innerHeight - 80);
+      const left = clamp(event.clientX - offsetX, 0, maxLeft);
+      const top = clamp(event.clientY - offsetY, 0, maxTop);
+      this.root.style.left = `${left}px`;
+      this.root.style.top = `${top}px`;
+      this.root.style.right = 'auto';
+    });
+
+    const endDrag = (event: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove('dragging');
+      handle.releasePointerCapture(event.pointerId);
+      this.savePosition();
+    };
+
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
   }
 
   private injectStyles(): void {
@@ -148,21 +216,36 @@ export class AssetPalette {
         font-family: system-ui, sans-serif;
       }
       #asset-palette {
-        position: absolute;
+        position: fixed;
         top: 8px;
         right: 8px;
-        width: 240px;
+        width: ${PALETTE_WIDTH_PX}px;
         max-height: calc(100% - 16px);
         display: flex;
         flex-direction: column;
         gap: 6px;
         padding: 8px;
-        background: rgba(12, 14, 20, 0.9);
+        background: rgba(12, 14, 20, 0.92);
         border: 1px solid rgba(255,255,255,0.15);
         border-radius: 8px;
         color: #f2f4f8;
         pointer-events: auto;
         backdrop-filter: blur(6px);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      }
+      #asset-palette .palette-drag-handle {
+        margin: -2px -2px 0;
+        padding: 6px 8px;
+        border-radius: 6px 6px 0 0;
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: grab;
+        user-select: none;
+        letter-spacing: 0.02em;
+      }
+      #asset-palette .palette-drag-handle.dragging {
+        cursor: grabbing;
       }
       #asset-palette .palette-header {
         display: flex;
@@ -205,9 +288,9 @@ export class AssetPalette {
       #asset-palette .palette-list {
         overflow-y: auto;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
         gap: 4px;
-        max-height: 300px;
+        max-height: 360px;
       }
       #asset-palette .palette-item {
         display: flex;
@@ -255,4 +338,8 @@ export class AssetPalette {
     `;
     document.head.appendChild(style);
   }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }

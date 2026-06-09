@@ -26,7 +26,7 @@ import {
   type ConventionPropsLayout,
   type PlayerBoothLayout,
 } from '../world/ConventionVenue';
-import { getSceneFrames, type SceneFrameId } from '../world/WorldLayout';
+import { frameForX, getSceneFrames, type SceneFrameId } from '../world/WorldLayout';
 import { AssetPalette } from './AssetPalette';
 
 export interface LayoutData {
@@ -40,6 +40,9 @@ export type ConventionEditLayer = 'booth' | 'venue';
 const FURNITURE_PAINT_ALPHA = 0.18;
 const FURNITURE_NORMAL_ALPHA = 1;
 const INACTIVE_LAYER_ALPHA = 0.45;
+const INACTIVE_FRAME_ALPHA = 0.38;
+/** Extra pixels around sprite bounds so clicks register reliably. */
+const EDITOR_HIT_PAD = 6;
 
 export class PlaceMode {
   private scene: Phaser.Scene;
@@ -59,6 +62,8 @@ export class PlaceMode {
   private floorTiles = new Map<string, Phaser.GameObjects.Image>();
   private nextInstanceId = 1;
   private hudEl: HTMLElement;
+  private hudBody: HTMLElement;
+  private currentStation: Placeable | null = null;
   private onLayoutChange: (frame: SceneFrameId, data: LayoutData) => void;
 
   constructor(
@@ -84,6 +89,9 @@ export class PlaceMode {
 
     this.hudEl = document.createElement('div');
     this.hudEl.id = 'hud-banner';
+    this.hudBody = document.createElement('div');
+    this.hudBody.className = 'hud-body';
+    this.hudEl.appendChild(this.hudBody);
     document.getElementById('editor-ui')?.appendChild(this.hudEl);
     this.updateHud();
 
@@ -148,9 +156,11 @@ export class PlaceMode {
   }
 
   setEditingFrame(frame: SceneFrameId): void {
+    if (this.editingFrame === frame) return;
     this.editingFrame = frame;
     this.selectedPlaceable = null;
     this.dragging = null;
+    interaction.setDragLock(false);
     this.applyFurnitureAlpha();
     this.drawGrid();
     this.updateSelectionOutline();
@@ -194,10 +204,32 @@ export class PlaceMode {
       this.ghost?.setVisible(false);
       this.selectedPlaceable = null;
       this.dragging = null;
+      interaction.setDragLock(false);
       this.applyFurnitureAlpha();
       this.selectionGraphics.setVisible(false);
     }
     this.updateHud();
+  }
+
+  /** Play-mode HUD: which station the avatar is at right now. */
+  setCurrentStation(station: Placeable | null): void {
+    this.currentStation = station;
+    if (!this.active) this.updateHud();
+  }
+
+  /** Nearest clickable station to a foot position (used on spawn / after walking). */
+  nearestStationTo(worldX: number, worldY: number): Placeable | null {
+    const threshold = TILE * 2;
+    let best: Placeable | null = null;
+    let bestDist = threshold;
+    for (const p of this.placeables) {
+      const dist = Math.hypot(p.x - worldX, p.y - worldY);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = p;
+      }
+    }
+    return best;
   }
 
   // ---- seeding / persistence -------------------------------------------------
@@ -281,13 +313,45 @@ export class PlaceMode {
   ): Placeable | null {
     const frame = frameId === 'all' ? null : getSceneFrames()[frameId];
     const layerFilter = frameId !== 'all' ? this.editLayerFilter() : null;
-    for (let i = this.placeables.length - 1; i >= 0; i--) {
-      const p = this.placeables[i];
-      if (frame && !this.isInFrame(p.x, frame)) continue;
-      if (layerFilter && p.layer !== layerFilter) continue;
-      if (this.hitsPlaceable(p, worldX, worldY)) return p;
+    return this.pickPlaceableAt(worldX, worldY, frame, layerFilter);
+  }
+
+  /**
+   * Editor hit-test: finds furniture under the cursor in whichever scene frame
+   * (convention or shop) was clicked, and switches the editor to that frame.
+   */
+  private editorPickAt(worldX: number, worldY: number): Placeable | null {
+    const primary = frameForX(worldX);
+    const order: SceneFrameId[] =
+      primary === 'convention' ? ['convention', 'shop'] : ['shop', 'convention'];
+
+    for (const frameId of order) {
+      const frame = getSceneFrames()[frameId];
+      const hit = this.pickPlaceableAt(worldX, worldY, frame, null, EDITOR_HIT_PAD);
+      if (hit) {
+        if (frameId !== this.editingFrame) this.setEditingFrame(frameId);
+        return hit;
+      }
     }
     return null;
+  }
+
+  private pickPlaceableAt(
+    worldX: number,
+    worldY: number,
+    frame: { x: number; width: number } | null,
+    layerFilter: PlaceableLayer | null,
+    hitPad = 0,
+  ): Placeable | null {
+    const hits: Placeable[] = [];
+    for (const p of this.placeables) {
+      if (frame && !this.isInFrame(p.x, frame)) continue;
+      if (layerFilter && p.layer !== layerFilter) continue;
+      if (this.hitsPlaceable(p, worldX, worldY, hitPad)) hits.push(p);
+    }
+    if (hits.length === 0) return null;
+    hits.sort((a, b) => b.getFootY() - a.getFootY());
+    return hits[0];
   }
 
   toLayout(frame: SceneFrameId): LayoutData {
@@ -427,29 +491,60 @@ export class PlaceMode {
     if (pointer.rightButtonDown()) return;
 
     const world = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    this.focusFrameAtWorldX(world.x);
+    const shiftRemove = pointer.event.shiftKey;
 
     if (this.paintMode || this.selectedCatalog?.category === 'floor') {
+      if (shiftRemove && this.canPaintFloor()) {
+        const pos = this.snapFloor(world.x, world.y);
+        this.eraseFloorTile(pos.x, pos.y);
+        this.notifyChange();
+        return;
+      }
       if (this.selectedCatalog?.category === 'floor' && this.canPaintFloor()) {
         this.paintFloorAt(world.x, world.y);
       }
       return;
     }
 
+    if (shiftRemove) {
+      const removeTarget = this.editorPickAt(world.x, world.y);
+      if (removeTarget) {
+        this.removePlaceable(removeTarget);
+        return;
+      }
+    }
+
+    const hit = this.editorPickAt(world.x, world.y);
+    if (hit) {
+      this.selectPlaceableForEdit(hit);
+      this.dragging = hit;
+      interaction.setDragLock(true);
+      this.updateSelectionOutline();
+      return;
+    }
+
     if (this.selectedCatalog) {
       const pos = this.snapFurniture(world.x, world.y);
+      const occupied = this.pickPlaceableNearFoot(pos.x, pos.y, this.editingFrame);
+      if (occupied) {
+        this.selectPlaceableForEdit(occupied);
+        this.dragging = occupied;
+        interaction.setDragLock(true);
+        this.updateSelectionOutline();
+        return;
+      }
       const placed = this.spawnPlaceable(
         { catalogId: this.selectedCatalog.id, x: pos.x, y: pos.y },
         this.currentPlaceableLayer(),
       );
-      this.selectedPlaceable = placed;
-      this.updateSelectionOutline();
+      this.selectPlaceableForEdit(placed);
       this.notifyChange();
       return;
     }
 
-    const hit = this.stationAtWorld(world.x, world.y, this.editingFrame);
-    this.selectedPlaceable = hit;
-    this.dragging = hit;
+    this.selectedPlaceable = null;
+    this.dragging = null;
     this.updateSelectionOutline();
   }
 
@@ -460,9 +555,14 @@ export class PlaceMode {
     }
     const world = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
 
+    if (!this.dragging && this.selectedCatalog) {
+      this.focusFrameAtWorldX(world.x);
+    }
+
     if (this.dragging && pointer.isDown && !pointer.rightButtonDown()) {
       const pos = this.snapFurniture(world.x, world.y);
       this.dragging.setFootPosition(pos.x, pos.y);
+      this.dragging.setDepth(9600);
       this.updateSelectionOutline();
       return;
     }
@@ -481,7 +581,9 @@ export class PlaceMode {
 
   private onPointerUp(): void {
     if (this.dragging) {
+      this.dragging.applyDepth();
       this.dragging = null;
+      interaction.setDragLock(false);
       this.notifyChange();
     }
   }
@@ -498,13 +600,25 @@ export class PlaceMode {
       return;
     }
 
-    const hit = this.stationAtWorld(world.x, world.y, this.editingFrame);
-    if (hit) {
-      this.placeables = this.placeables.filter((p) => p !== hit);
-      hit.destroy();
-      if (this.selectedPlaceable === hit) this.selectedPlaceable = null;
-      this.updateSelectionOutline();
-      this.notifyChange();
+    const hit = this.editorPickAt(world.x, world.y);
+    if (hit) this.removePlaceable(hit);
+  }
+
+  /** Select a placed object for move/nudge/delete; sync convention layer if needed. */
+  private selectPlaceableForEdit(placeable: Placeable): void {
+    this.selectedPlaceable = placeable;
+    this.selectedCatalog = null;
+    this.palette.clearSelection();
+    this.ghost?.setVisible(false);
+
+    if (
+      this.editingFrame === 'convention' &&
+      (placeable.layer === 'booth' || placeable.layer === 'venue') &&
+      placeable.layer !== this.conventionEditLayer
+    ) {
+      this.conventionEditLayer = placeable.layer;
+      this.applyFurnitureAlpha();
+      this.updateHud();
     }
   }
 
@@ -521,10 +635,17 @@ export class PlaceMode {
 
   deleteSelected(): void {
     if (!this.active || !this.selectedPlaceable || this.paintMode) return;
-    const hit = this.selectedPlaceable;
+    this.removePlaceable(this.selectedPlaceable);
+  }
+
+  private removePlaceable(hit: Placeable): void {
     this.placeables = this.placeables.filter((p) => p !== hit);
     hit.destroy();
-    this.selectedPlaceable = null;
+    if (this.selectedPlaceable === hit) this.selectedPlaceable = null;
+    if (this.dragging === hit) {
+      this.dragging = null;
+      interaction.setDragLock(false);
+    }
     this.updateSelectionOutline();
     this.notifyChange();
   }
@@ -590,12 +711,45 @@ export class PlaceMode {
     };
   }
 
-  private hitsPlaceable(p: Placeable, x: number, y: number): boolean {
-    const left = p.x - p.catalogItem.footX;
-    const top = p.y - p.catalogItem.footY;
-    const right = left + p.catalogItem.width;
-    const bottom = p.y;
+  private hitsPlaceable(p: Placeable, x: number, y: number, pad = 0): boolean {
+    const left = p.x - p.catalogItem.footX - pad;
+    const top = p.y - p.catalogItem.footY - pad;
+    const right = left + p.catalogItem.width + pad * 2;
+    const bottom = p.y + pad;
     return x >= left && x <= right && y >= top && y <= bottom;
+  }
+
+  /** True when a placed item already occupies this foot position (prevents duplicates). */
+  private pickPlaceableNearFoot(
+    footX: number,
+    footY: number,
+    frameId: SceneFrameId,
+  ): Placeable | null {
+    const frame = getSceneFrames()[frameId];
+    const threshold = TILE * 0.75;
+    let best: Placeable | null = null;
+    let bestDist = threshold;
+    for (const p of this.placeables) {
+      if (!this.isInFrame(p.x, frame)) continue;
+      const dist = Math.hypot(p.x - footX, p.y - footY);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  /** Switch the editor to convention or shop based on where the pointer is. */
+  private focusFrameAtWorldX(worldX: number): void {
+    if (this.paintMode || this.dragging) return;
+    const frame = frameForX(worldX);
+    if (frame !== this.editingFrame) this.setEditingFrame(frame);
+  }
+
+  private stationDisplayName(station: Placeable | null): string {
+    if (!station) return '—';
+    return station.catalogItem.name;
   }
 
   // ---- ghost preview ---------------------------------------------------------
@@ -633,7 +787,7 @@ export class PlaceMode {
     const frame = getSceneFrames()[this.editingFrame];
     for (const p of this.placeables) {
       if (!this.isInFrame(p.x, frame)) {
-        p.setAlpha(FURNITURE_NORMAL_ALPHA);
+        p.setAlpha(this.active ? INACTIVE_FRAME_ALPHA : FURNITURE_NORMAL_ALPHA);
         continue;
       }
       if (this.paintMode && this.active) {
@@ -721,25 +875,29 @@ export class PlaceMode {
   }
 
   private updateHud(extra?: string): void {
+    if (!this.active) {
+      this.hudBody.innerHTML = `
+        <div>Current station: <strong>${this.stationDisplayName(this.currentStation)}</strong></div>
+        <div>Click a station to walk · F2 edit</div>
+        ${extra ? `<div>${extra}</div>` : ''}
+      `;
+      return;
+    }
+
     const venue = getActiveConventionVenue();
-    const mode = this.active ? (this.paintMode ? 'PAINT' : 'EDIT') : 'PLAY';
+    const mode = this.paintMode ? 'PAINT' : 'EDIT';
     const frameLabel =
       this.editingFrame === 'convention'
         ? `${venue.name} · ${this.conventionEditLayer === 'booth' ? 'your booth' : 'venue props'}`
-        : this.editingFrame;
-    const roomHint =
-      this.editingFrame === 'convention' && this.active && !this.paintMode
-        ? ` · ${getConventionRooms().map((r) => r.label).join(' → ')}`
-        : '';
-    const hint = this.active
-      ? this.paintMode
-        ? 'Venue floor paint · Right-click erase · P exit · Tab scene · Ctrl+S save props'
-        : this.editingFrame === 'convention'
-          ? 'B toggle booth/venue · Drag move · P paint (venue) · Tab scene · Ctrl+S save layer'
-          : 'Pick asset → place · Drag · Arrows nudge · Tab switch · Ctrl+S save'
-      : 'Click a station to walk · F2 edit · V switch convention (dev)';
-    this.hudEl.innerHTML = `
-      <div><strong>${mode}</strong> — ${frameLabel}${roomHint}</div>
+        : 'shop';
+    const hint = this.paintMode
+      ? 'Paint floor · Shift+click erase tile · P exit · Ctrl+S save props'
+      : this.editingFrame === 'convention'
+        ? 'Click/drag move · Shift+click remove · Del · B booth/venue · Ctrl+S'
+        : 'Click/drag move · Shift+click remove · Del · Pick asset to place · Ctrl+S';
+
+    this.hudBody.innerHTML = `
+      <div><strong>${mode}</strong> — ${frameLabel}</div>
       <div>${hint}</div>
       ${extra ? `<div>${extra}</div>` : ''}
     `;

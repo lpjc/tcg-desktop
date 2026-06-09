@@ -19,6 +19,7 @@ import {
   type ConventionPropsLayout,
   type PlayerBoothLayout,
 } from './ConventionVenue';
+import { Placeable } from '../entities/Placeable';
 import { Player } from '../entities/Player';
 import { PlaceMode, type LayoutData } from '../editor/PlaceMode';
 import { interaction } from '../core/interaction';
@@ -70,12 +71,12 @@ export class WorldScene extends Phaser.Scene {
     this.rebuildBaseFloors();
 
     this.placeMode = new PlaceMode(this, 'convention', () => undefined);
-    void this.bootstrapLayouts();
 
     registerAllCharacterAnims(this);
 
     const booth = getBoothAnchor();
     this.player = new Player(this, booth.x + 96, FLOOR_WALK_Y);
+    void this.bootstrapLayouts().then(() => this.syncCurrentStation());
     this.npcCrowd = new NpcCrowd(this);
     this.playerScene = frameForX(this.player.x);
     this.npcCrowd.syncToPlayerScene(this.playerScene);
@@ -89,14 +90,6 @@ export class WorldScene extends Phaser.Scene {
     });
 
     this.input.on('pointerdown', this.onPlayClick, this);
-
-    this.input.keyboard?.on('keydown-TAB', (event: KeyboardEvent) => {
-      event.preventDefault();
-      if (!this.placeMode.isActive()) return;
-      const next: SceneFrameId =
-        this.placeMode.getEditingFrame() === 'convention' ? 'shop' : 'convention';
-      this.placeMode.setEditingFrame(next);
-    });
 
     this.input.keyboard?.on('keydown-V', (event: KeyboardEvent) => {
       if (this.placeMode.isActive()) return;
@@ -148,7 +141,13 @@ export class WorldScene extends Phaser.Scene {
 
     const targetX = station.x;
     const targetY = Phaser.Math.Clamp(station.y + 4, 16, WORLD_HEIGHT - 4);
-    this.player.walkTo(targetX, targetY);
+    this.player.walkTo(targetX, targetY, () => this.syncCurrentStation(station));
+  }
+
+  private syncCurrentStation(station?: Placeable): void {
+    const at =
+      station ?? this.placeMode.nearestStationTo(this.player.x, this.player.y);
+    this.placeMode.setCurrentStation(at);
   }
 
   private async cycleConventionVenue(): Promise<void> {
