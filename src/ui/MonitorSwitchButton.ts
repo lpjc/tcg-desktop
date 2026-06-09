@@ -1,4 +1,6 @@
 import { interaction } from '../core/interaction';
+import { devUi } from './devUi';
+import { enablePanelDragWithClickThreshold } from './draggablePanel';
 import './MonitorSwitchButton.css';
 
 /**
@@ -20,7 +22,15 @@ export class MonitorSwitchButton {
     host.appendChild(this.el);
 
     interaction.registerHotElement(this.el);
-    this.el.addEventListener('click', () => void this.onClick());
+    enablePanelDragWithClickThreshold(this.el, this.el, {
+      storageKey: 'tcg-desktop.monitor-switch-pos',
+      width: 120,
+      minVisibleHeight: 20,
+      onClick: () => void this.onClick(),
+    });
+    devUi.subscribe((visible) => {
+      this.el.style.display = visible ? '' : 'none';
+    });
   }
 
   private async onClick(): Promise<void> {

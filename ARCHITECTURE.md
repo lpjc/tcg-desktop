@@ -156,9 +156,22 @@ behind it. Renderer `console.log` is forwarded to the terminal in dev.
   where Adam is. Wander areas come from `characters/wanderZones.ts`: one rectangle per
   convention room (each room's `width` + `floorTop` from the active venue preset), and
   for the shop the full floor minus the centre-top behind-counter strip (`SHOP_BACK_COUNTER`
-  in `floorPatterns.ts`). NPCs arrive at a zone edge fading in, stroll a few legs, then
-  walk to an edge fading out and despawn; the crowd trickles in replacements. NPCs are
-  decorative (no interaction, no game state).
+  in `floorPatterns.ts`). Convention NPCs may cross all room thresholds; both scenes
+  only fade in/out at their road doorway (lobby for convention, left edge for shop).
+  NPCs stroll a few legs, then walk back out through the same doorway and despawn;
+  the crowd trickles in replacements. NPCs are decorative (no interaction, no game state).
+- **NPC lifecycle never teleports:** `Npc.trySpawn` first finds a free foot spot on the
+  doorway line (`findDoorSpot`); if furniture blocks the whole entrance the spawn is
+  skipped and the maintenance timer retries later. Exits walk to the doorway and fade
+  while stepping outside; if the doorway became unreachable the NPC retries a few times,
+  then fades out in place (the only fallback — still a fade, never a pop).
+- **Collision & pathfinding:** `world/obstacleField.ts` builds collision rects from
+  every placed item (catalog `collision` box, or the per-object `collidable` override
+  set in the editor with **C** — e.g. rug = walk-through, table = blocking). Player and
+  NPC walks route around these via BFS on an 8px grid with string-pulling smoothing.
+  NPC paths are additionally constrained to their wander regions (`withinAnyRegion`),
+  so they never cut through the road or other scenes. The field is rebuilt on layout
+  edits, venue switches, and bootstrap (`WorldScene.rebuildObstacles`).
 - **Sheets:** LimeZu "Modern Interiors" free pack, 16×32 frames, strips ordered
   `down,up,left,right` (6 frames each). The world only moves horizontally, so only
   left/right idle+walk anims are built (`run` sheet drives "walk").

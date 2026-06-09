@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getCatalogItem, type CatalogItem } from '../assets/catalog';
+import { applyCatalogScale, getCatalogItem, type CatalogItem } from '../assets/catalog';
 import { depthFromFootY } from '../core/depth';
 
 export type PlaceableLayer = 'booth' | 'venue' | 'shop';
@@ -9,6 +9,11 @@ export interface PlacedObjectData {
   x: number;
   y: number;
   interaction?: string;
+  /**
+   * Editor override: does this item block walkers? Omitted = derive from the
+   * catalog collision box (tables block, rugs/wall decor do not).
+   */
+  collidable?: boolean;
 }
 
 export class Placeable extends Phaser.GameObjects.Image {
@@ -16,6 +21,8 @@ export class Placeable extends Phaser.GameObjects.Image {
   readonly catalogItem: CatalogItem;
   readonly instanceId: string;
   readonly layer: PlaceableLayer;
+  /** null = no override (use catalog heuristic); set via editor "C" toggle. */
+  collidableOverride: boolean | null;
 
   constructor(
     scene: Phaser.Scene,
@@ -33,8 +40,10 @@ export class Placeable extends Phaser.GameObjects.Image {
     this.catalogItem = item;
     this.instanceId = instanceId;
     this.layer = layer;
+    this.collidableOverride = data.collidable ?? null;
 
     this.setOrigin(item.footX / item.width, 1);
+    applyCatalogScale(this, item);
     this.applyDepth();
     scene.add.existing(this);
   }
@@ -57,6 +66,7 @@ export class Placeable extends Phaser.GameObjects.Image {
       catalogId: this.catalogId,
       x: this.x,
       y: this.y,
+      ...(this.collidableOverride !== null ? { collidable: this.collidableOverride } : {}),
     };
   }
 }

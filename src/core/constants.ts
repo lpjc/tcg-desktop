@@ -4,6 +4,12 @@ export const TILE = 16;
 /** Floor sub-tile size (Sierra floor pack is 8×8). */
 export const FLOOR_SUBTILE = 8;
 
+/** Editor furniture snap grid (8px — half the 16px world TILE). */
+export const PLACE_GRID = FLOOR_SUBTILE;
+
+/** Highest foot Y when placing wall decor / floating props in the editor. */
+export const PLACE_Y_MIN = 4;
+
 /**
  * Fixed overlay magnification (small companion size only).
  * Window/canvas pixel height = BAND_HEIGHT × ZOOM (~192px on any display).

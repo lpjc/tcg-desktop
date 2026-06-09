@@ -1,5 +1,6 @@
 import { getItemsByCategory, type CatalogItem } from '../assets/catalog';
 import { interaction } from '../core/interaction';
+import { enablePanelDrag } from '../ui/draggablePanel';
 
 export type PaletteSelectHandler = (item: CatalogItem) => void;
 
@@ -54,8 +55,10 @@ export class AssetPalette {
 
     interaction.registerHotElement(this.root);
     this.injectStyles();
-    this.restorePosition();
-    this.enableDragging();
+    enablePanelDrag(this.root, this.root.querySelector('.palette-drag-handle') as HTMLElement, {
+      storageKey: PALETTE_STORAGE_KEY,
+      width: PALETTE_WIDTH_PX,
+    });
     this.renderTabs();
     this.renderList();
     this.setVisible(false);
@@ -138,69 +141,6 @@ export class AssetPalette {
       });
       this.listEl.appendChild(btn);
     }
-  }
-
-  private restorePosition(): void {
-    try {
-      const raw = localStorage.getItem(PALETTE_STORAGE_KEY);
-      if (!raw) return;
-      const { left, top } = JSON.parse(raw) as { left: number; top: number };
-      if (Number.isFinite(left) && Number.isFinite(top)) {
-        this.root.style.left = `${left}px`;
-        this.root.style.top = `${top}px`;
-        this.root.style.right = 'auto';
-      }
-    } catch {
-      /* ignore corrupt saved position */
-    }
-  }
-
-  private savePosition(): void {
-    const rect = this.root.getBoundingClientRect();
-    localStorage.setItem(
-      PALETTE_STORAGE_KEY,
-      JSON.stringify({ left: Math.round(rect.left), top: Math.round(rect.top) }),
-    );
-  }
-
-  private enableDragging(): void {
-    const handle = this.root.querySelector('.palette-drag-handle') as HTMLElement;
-    let dragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    handle.addEventListener('pointerdown', (event) => {
-      if (event.button !== 0) return;
-      dragging = true;
-      const rect = this.root.getBoundingClientRect();
-      offsetX = event.clientX - rect.left;
-      offsetY = event.clientY - rect.top;
-      handle.setPointerCapture(event.pointerId);
-      handle.classList.add('dragging');
-      event.preventDefault();
-    });
-
-    handle.addEventListener('pointermove', (event) => {
-      if (!dragging) return;
-      const maxLeft = Math.max(0, window.innerWidth - PALETTE_WIDTH_PX - 8);
-      const maxTop = Math.max(0, window.innerHeight - 80);
-      const left = clamp(event.clientX - offsetX, 0, maxLeft);
-      const top = clamp(event.clientY - offsetY, 0, maxTop);
-      this.root.style.left = `${left}px`;
-      this.root.style.top = `${top}px`;
-      this.root.style.right = 'auto';
-    });
-
-    const endDrag = (event: PointerEvent) => {
-      if (!dragging) return;
-      dragging = false;
-      handle.classList.remove('dragging');
-      handle.releasePointerCapture(event.pointerId);
-      this.savePosition();
-    };
-
-    handle.addEventListener('pointerup', endDrag);
-    handle.addEventListener('pointercancel', endDrag);
   }
 
   private injectStyles(): void {
@@ -323,10 +263,11 @@ export class AssetPalette {
         background: rgba(110, 207, 255, 0.18);
       }
       #hud-banner {
-        position: absolute;
+        position: fixed;
         left: 8px;
         top: 30px;
-        padding: 6px 10px;
+        max-width: min(360px, calc(100vw - 16px));
+        padding: 0;
         border-radius: 6px;
         background: rgba(12, 14, 20, 0.82);
         color: #e8ecf4;
@@ -334,12 +275,32 @@ export class AssetPalette {
         line-height: 1.45;
         pointer-events: none;
         border: 1px solid rgba(255,255,255,0.12);
+        overflow: hidden;
+      }
+      #hud-banner .hud-drag-handle {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #9aa3b2;
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        pointer-events: auto;
+        cursor: grab;
+        user-select: none;
+      }
+      #hud-banner .hud-drag-handle.dragging {
+        cursor: grabbing;
+      }
+      #hud-banner .hud-body {
+        padding: 6px 10px 8px;
+        pointer-events: none;
       }
     `;
     document.head.appendChild(style);
   }
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }

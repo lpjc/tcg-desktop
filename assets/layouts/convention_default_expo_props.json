@@ -1,0 +1,47 @@
+{
+  "venueId": "default_expo",
+  "objects": [
+    {
+      "catalogId": "furniture_slice_7",
+      "x": 144,
+      "y": 84
+    },
+    {
+      "catalogId": "furniture_slice_1",
+      "x": 40,
+      "y": 88,
+      "collidable": true
+    },
+    {
+      "catalogId": "furniture_slice_1",
+      "x": 72,
+      "y": 88
+    },
+    {
+      "catalogId": "furniture_slice_112",
+      "x": 280,
+      "y": 32
+    },
+    {
+      "catalogId": "furniture_slice_277",
+      "x": 400,
+      "y": 72
+    },
+    {
+      "catalogId": "furniture_slice_278",
+      "x": 416,
+      "y": 72
+    },
+    {
+      "catalogId": "furniture_slice_257",
+      "x": 448,
+      "y": 56
+    },
+    {
+      "catalogId": "free_furniture_sprite_36_3",
+      "x": 472,
+      "y": 72
+    }
+  ],
+  "floor": []
+}

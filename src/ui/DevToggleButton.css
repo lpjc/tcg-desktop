@@ -1,0 +1,33 @@
+#dev-toggle-btn {
+  position: fixed;
+  bottom: 8px;
+  left: 8px;
+  cursor: grab;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(12, 14, 20, 0.72);
+  color: #c8d0dc;
+  font-family: system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 1300;
+}
+
+#dev-toggle-btn:hover {
+  background: rgba(12, 14, 20, 0.92);
+  color: #f2f4f8;
+}
+
+#dev-toggle-btn.active {
+  border-color: #6ecfff;
+  color: #6ecfff;
+  background: rgba(110, 207, 255, 0.12);
+}
+
+#dev-toggle-btn.dragging {
+  cursor: grabbing;
+}

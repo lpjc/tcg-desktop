@@ -1,11 +1,57 @@
 {
   "frame": "shop",
   "objects": [
-    { "catalogId": "furniture_slice_8", "x": 32, "y": 84 },
-    { "catalogId": "furniture_slice_16", "x": 80, "y": 84 },
-    { "catalogId": "furniture_slice_12", "x": 128, "y": 84 },
-    { "catalogId": "furniture_slice_6", "x": 176, "y": 84 },
-    { "catalogId": "furniture_slice_20", "x": 224, "y": 84 },
-    { "catalogId": "furniture_slice_11", "x": 48, "y": 68 }
+    {
+      "catalogId": "furniture_slice_1",
+      "x": 72,
+      "y": 64
+    },
+    {
+      "catalogId": "furniture_slice_1",
+      "x": 104,
+      "y": 64
+    },
+    {
+      "catalogId": "free_furniture_sprite_16_2",
+      "x": 24,
+      "y": 48,
+      "collidable": true
+    },
+    {
+      "catalogId": "free_furniture_sprite_16_2",
+      "x": 24,
+      "y": 80
+    },
+    {
+      "catalogId": "free_furniture_sprite_16_1",
+      "x": 24,
+      "y": 24,
+      "collidable": true
+    },
+    {
+      "catalogId": "free_furniture_sprite_16_2",
+      "x": 152,
+      "y": 80
+    },
+    {
+      "catalogId": "free_furniture_sprite_16_2",
+      "x": 184,
+      "y": 80
+    },
+    {
+      "catalogId": "free_furniture_sprite_31_9",
+      "x": 72,
+      "y": 16
+    },
+    {
+      "catalogId": "furniture_slice_66",
+      "x": 152,
+      "y": 32
+    },
+    {
+      "catalogId": "furniture_slice_366",
+      "x": 112,
+      "y": 16
+    }
   ]
 }

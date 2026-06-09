@@ -26,6 +26,7 @@ import { interaction } from '../core/interaction';
 import { conventionRoomPicker, pickShopFloorTile } from './floorPatterns';
 import { paintFloorLip, paintPatternedFloor } from './floorPaint';
 import { buildRoadFloor } from './RoadFloor';
+import { rebuildObstacleField } from './obstacleField';
 import { CameraDirector } from './CameraDirector';
 import {
   computeWorldLayout,
@@ -70,16 +71,18 @@ export class WorldScene extends Phaser.Scene {
     setWorldLayout(computeWorldLayout(this.scale.width, ZOOM));
     this.rebuildBaseFloors();
 
-    this.placeMode = new PlaceMode(this, 'convention', () => undefined);
+    this.placeMode = new PlaceMode(this, 'convention', () => this.rebuildObstacles());
 
     registerAllCharacterAnims(this);
 
     const booth = getBoothAnchor();
     this.player = new Player(this, booth.x + 96, FLOOR_WALK_Y);
-    void this.bootstrapLayouts().then(() => this.syncCurrentStation());
     this.npcCrowd = new NpcCrowd(this);
     this.playerScene = frameForX(this.player.x);
-    this.npcCrowd.syncToPlayerScene(this.playerScene);
+    void this.bootstrapLayouts().then(() => {
+      this.syncCurrentStation();
+      this.npcCrowd.syncToPlayerScene(this.playerScene);
+    });
     this.cameraDirector = new CameraDirector(this.cameras.main, getWorldLayout().worldWidth);
 
     interaction.start();
@@ -178,6 +181,7 @@ export class WorldScene extends Phaser.Scene {
     for (const p of this.placeMode.getAllPlaceables()) {
       p.applyDepth();
     }
+    this.rebuildObstacles();
     this.npcCrowd.relayoutConvention();
   }
 
@@ -261,6 +265,11 @@ export class WorldScene extends Phaser.Scene {
     for (const p of this.placeMode.getAllPlaceables()) {
       p.applyDepth();
     }
+    this.rebuildObstacles();
+  }
+
+  private rebuildObstacles(): void {
+    rebuildObstacleField(this.placeMode.getAllPlaceables());
   }
 
   private async loadConventionContent(): Promise<void> {

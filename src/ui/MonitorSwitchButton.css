@@ -24,3 +24,7 @@
   opacity: 0.45;
   cursor: default;
 }
+
+#switch-monitor-btn.dragging {
+  cursor: grabbing;
+}

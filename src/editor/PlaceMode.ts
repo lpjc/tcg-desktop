@@ -1,13 +1,16 @@
 import Phaser from 'phaser';
-import { getCatalogItem, type CatalogItem } from '../assets/catalog';
+import { applyCatalogScale, getCatalogItem, type CatalogItem } from '../assets/catalog';
 import { snapToGrid } from '../core/depth';
 import { interaction } from '../core/interaction';
 import {
   DEPTH_FLOOR,
+  PLACE_GRID,
+  PLACE_Y_MIN,
   SHOP_FLOOR_TOP,
   SHOP_WIDTH,
   TILE,
   FLOOR_SUBTILE,
+  WORLD_HEIGHT,
 } from '../core/constants';
 import {
   Placeable,
@@ -27,6 +30,9 @@ import {
   type PlayerBoothLayout,
 } from '../world/ConventionVenue';
 import { frameForX, getSceneFrames, type SceneFrameId } from '../world/WorldLayout';
+import { placeableBlocksWalking, placeableCollisionWorld } from '../world/obstacleField';
+import { devUi } from '../ui/devUi';
+import { enablePanelDrag } from '../ui/draggablePanel';
 import { AssetPalette } from './AssetPalette';
 
 export interface LayoutData {
@@ -89,17 +95,35 @@ export class PlaceMode {
 
     this.hudEl = document.createElement('div');
     this.hudEl.id = 'hud-banner';
+    const hudDragHandle = document.createElement('div');
+    hudDragHandle.className = 'hud-drag-handle';
+    hudDragHandle.textContent = '⋯ drag';
+    hudDragHandle.title = 'Drag to reposition';
     this.hudBody = document.createElement('div');
     this.hudBody.className = 'hud-body';
+    this.hudEl.appendChild(hudDragHandle);
     this.hudEl.appendChild(this.hudBody);
     document.getElementById('editor-ui')?.appendChild(this.hudEl);
+    interaction.registerHotElement(hudDragHandle);
+    enablePanelDrag(this.hudEl, hudDragHandle, {
+      storageKey: 'tcg-desktop.hud-pos',
+      width: 280,
+    });
+    devUi.subscribe((visible) => {
+      this.hudEl.style.display = visible ? '' : 'none';
+      if (!visible && this.active) this.setActive(false);
+      this.syncPaletteVisibility();
+    });
     this.updateHud();
 
     scene.input.on('pointerdown', this.onPointerDown, this);
     scene.input.on('pointermove', this.onPointerMove, this);
     scene.input.on('pointerup', this.onPointerUp, this);
     scene.input.on('contextmenu', this.onContextMenu, this);
-    scene.input.keyboard?.on('keydown-F2', () => this.toggle());
+    scene.input.keyboard?.on('keydown-F2', () => {
+      if (!devUi.isVisible()) return;
+      this.toggle();
+    });
     window.desktop?.onTogglePlaceMode(() => this.toggle());
     scene.input.keyboard?.on('keydown-P', () => {
       if (!this.active) return;
@@ -110,6 +134,7 @@ export class PlaceMode {
       this.toggleConventionEditLayer();
     });
     scene.input.keyboard?.on('keydown-DELETE', () => this.deleteSelected());
+    scene.input.keyboard?.on('keydown-C', () => this.toggleSelectedCollidable());
     scene.input.keyboard?.on('keydown-S', (event: KeyboardEvent) => {
       if (event.ctrlKey) {
         event.preventDefault();
@@ -197,8 +222,8 @@ export class PlaceMode {
   setActive(active: boolean): void {
     this.active = active;
     this.gridGraphics.setVisible(active);
-    this.palette.setVisible(active);
-    interaction.setEditMode(active);
+    this.syncPaletteVisibility();
+    interaction.setEditMode(active && devUi.isVisible());
     if (!active) {
       this.setPaintMode(false);
       this.ghost?.setVisible(false);
@@ -248,7 +273,7 @@ export class PlaceMode {
     const anchor = this.boothAnchor;
     for (const obj of layout.objects) {
       this.spawnPlaceable(
-        { catalogId: obj.catalogId, x: anchor.x + obj.x, y: anchor.y + obj.y },
+        { ...obj, x: anchor.x + obj.x, y: anchor.y + obj.y },
         'booth',
       );
     }
@@ -257,7 +282,7 @@ export class PlaceMode {
 
   seedVenueProps(layout: ConventionPropsLayout): void {
     for (const obj of layout.objects) {
-      this.spawnPlaceable({ catalogId: obj.catalogId, x: obj.x, y: obj.y }, 'venue');
+      this.spawnPlaceable({ ...obj }, 'venue');
     }
     this.seedFloor('convention', layout.floor);
   }
@@ -391,7 +416,7 @@ export class PlaceMode {
       objects: this.placeables
         .filter((p) => p.layer === 'booth')
         .map((p) => ({
-          catalogId: p.catalogId,
+          ...p.toData(),
           x: p.x - anchor.x,
           y: p.y - anchor.y,
         })),
@@ -650,13 +675,28 @@ export class PlaceMode {
     this.notifyChange();
   }
 
+  /**
+   * Mark the selected item as walkable-through (rug) or blocking (table).
+   * Stored as an explicit per-object override in the layout JSON.
+   */
+  toggleSelectedCollidable(): void {
+    if (!this.active || !this.selectedPlaceable || this.paintMode) return;
+    const p = this.selectedPlaceable;
+    p.collidableOverride = !placeableBlocksWalking(p);
+    this.updateSelectionOutline();
+    this.updateHud(
+      `${p.catalogItem.name}: ${p.collidableOverride ? 'blocks walking' : 'walk-through'}`,
+    );
+    this.notifyChange();
+  }
+
   nudgeSelected(dx: number, dy: number): void {
     if (!this.active || !this.selectedPlaceable || this.paintMode) return;
     const p = this.selectedPlaceable;
     const zone = this.zoneAt(p.x, this.editingFrame);
     p.setFootPosition(
-      Phaser.Math.Clamp(p.x + dx, zone.x + TILE / 2, zone.x + zone.width - TILE / 2),
-      Phaser.Math.Clamp(p.y + dy, zone.floorTop + TILE, zone.y + zone.height - FLOOR_SUBTILE),
+      Phaser.Math.Clamp(p.x + dx, zone.x + PLACE_GRID / 2, zone.x + zone.width - PLACE_GRID / 2),
+      Phaser.Math.Clamp(p.y + dy, PLACE_Y_MIN, WORLD_HEIGHT - FLOOR_SUBTILE),
     );
     this.updateSelectionOutline();
     this.notifyChange();
@@ -692,11 +732,15 @@ export class PlaceMode {
   private snapFurniture(worldX: number, worldY: number): { x: number; y: number } {
     const zone = this.zoneAt(worldX, this.editingFrame);
     return {
-      x: Phaser.Math.Clamp(snapToGrid(worldX), zone.x + TILE / 2, zone.x + zone.width - TILE / 2),
+      x: Phaser.Math.Clamp(
+        snapToGrid(worldX, PLACE_GRID),
+        zone.x + PLACE_GRID / 2,
+        zone.x + zone.width - PLACE_GRID / 2,
+      ),
       y: Phaser.Math.Clamp(
-        snapToGrid(worldY),
-        zone.floorTop + TILE,
-        zone.y + zone.height - FLOOR_SUBTILE,
+        snapToGrid(worldY, PLACE_GRID),
+        PLACE_Y_MIN,
+        WORLD_HEIGHT - FLOOR_SUBTILE,
       ),
     };
   }
@@ -726,7 +770,7 @@ export class PlaceMode {
     frameId: SceneFrameId,
   ): Placeable | null {
     const frame = getSceneFrames()[frameId];
-    const threshold = TILE * 0.75;
+    const threshold = PLACE_GRID;
     let best: Placeable | null = null;
     let bestDist = threshold;
     for (const p of this.placeables) {
@@ -745,6 +789,10 @@ export class PlaceMode {
     if (this.paintMode || this.dragging) return;
     const frame = frameForX(worldX);
     if (frame !== this.editingFrame) this.setEditingFrame(frame);
+  }
+
+  private syncPaletteVisibility(): void {
+    this.palette.setVisible(this.active && devUi.isVisible());
   }
 
   private stationDisplayName(station: Placeable | null): string {
@@ -767,8 +815,10 @@ export class PlaceMode {
     const item = this.selectedCatalog;
     if (item.category === 'floor') {
       this.ghost.setOrigin(0.5, 0.5);
+      this.ghost.setScale(1);
     } else {
       this.ghost.setOrigin(item.footX / item.width, 1);
+      applyCatalogScale(this.ghost, item);
     }
   }
 
@@ -820,6 +870,12 @@ export class PlaceMode {
     this.selectionGraphics.strokeRect(left - 1, top - 1, w + 2, h + 2);
     this.selectionGraphics.lineStyle(1, 0xffffff, 0.35);
     this.selectionGraphics.strokeRect(left, top, w, h);
+
+    // Collision footprint: red = blocks walkers, green = walk-through (C toggles).
+    const col = placeableCollisionWorld(p);
+    const blocks = placeableBlocksWalking(p);
+    this.selectionGraphics.lineStyle(1, blocks ? 0xff5c5c : 0x7dff8a, 0.9);
+    this.selectionGraphics.strokeRect(col.x, col.y, col.w, col.h);
   }
 
   // ---- misc ------------------------------------------------------------------
@@ -835,10 +891,10 @@ export class PlaceMode {
         : [{ x: frame.x, width: frame.width, floorTop: SHOP_FLOOR_TOP }];
 
     for (const zone of zones) {
-      for (let x = zone.x; x <= zone.x + zone.width; x += TILE) {
+      for (let x = zone.x; x <= zone.x + zone.width; x += PLACE_GRID) {
         this.gridGraphics.lineBetween(x, zone.floorTop, x, frame.y + frame.height);
       }
-      for (let y = zone.floorTop; y <= frame.y + frame.height; y += TILE) {
+      for (let y = zone.floorTop; y <= frame.y + frame.height; y += PLACE_GRID) {
         this.gridGraphics.lineBetween(zone.x, y, zone.x + zone.width, y);
       }
       this.gridGraphics.lineStyle(1, 0x6ecfff, 0.25);
@@ -852,33 +908,50 @@ export class PlaceMode {
   }
 
   async saveCurrentFrame(): Promise<void> {
-    let name: string;
-    let json: string;
-
-    if (this.editingFrame === 'shop') {
-      name = 'shop';
-      json = JSON.stringify(this.toLayout('shop'), null, 2);
-    } else if (this.conventionEditLayer === 'booth') {
-      name = 'player_booth';
-      json = JSON.stringify(this.toBoothLayout(), null, 2);
-    } else {
-      name = conventionPropsLayoutName();
-      json = JSON.stringify(this.toVenuePropsLayout(), null, 2);
-    }
+    const { name, label, json } = this.currentSaveTarget();
 
     if (window.desktop) {
-      await window.desktop.saveLayout(name, json);
-    } else {
-      console.log(`Layout save (browser) [${name}]:`, json);
+      const ok = await window.desktop.saveLayout(name, json);
+      if (!ok) {
+        this.updateHud('Save failed — could not write assets/layouts/');
+        return;
+      }
+      this.updateHud(`Saved ${label} → assets/layouts/${name}.json`);
+      return;
     }
-    this.updateHud('Saved!');
+
+    console.log(`Layout save (browser) [${name}]:`, json);
+    this.updateHud(`Saved ${label} (browser only — run in Electron to persist)`);
+  }
+
+  private currentSaveTarget(): { name: string; label: string; json: string } {
+    if (this.editingFrame === 'shop') {
+      return {
+        name: 'shop',
+        label: 'shop',
+        json: JSON.stringify(this.toLayout('shop'), null, 2),
+      };
+    }
+    if (this.conventionEditLayer === 'booth') {
+      return {
+        name: 'player_booth',
+        label: 'your booth (all conventions)',
+        json: JSON.stringify(this.toBoothLayout(), null, 2),
+      };
+    }
+    const name = conventionPropsLayoutName();
+    return {
+      name,
+      label: `venue props (${getActiveConventionVenueId()})`,
+      json: JSON.stringify(this.toVenuePropsLayout(), null, 2),
+    };
   }
 
   private updateHud(extra?: string): void {
     if (!this.active) {
       this.hudBody.innerHTML = `
         <div>Current station: <strong>${this.stationDisplayName(this.currentStation)}</strong></div>
-        <div>Click a station to walk · F2 edit</div>
+        <div>Click a station to walk · F2 edit · V switch convention</div>
         ${extra ? `<div>${extra}</div>` : ''}
       `;
       return;
@@ -893,8 +966,8 @@ export class PlaceMode {
     const hint = this.paintMode
       ? 'Paint floor · Shift+click erase tile · P exit · Ctrl+S save props'
       : this.editingFrame === 'convention'
-        ? 'Click/drag move · Shift+click remove · Del · B booth/venue · Ctrl+S'
-        : 'Click/drag move · Shift+click remove · Del · Pick asset to place · Ctrl+S';
+        ? '8px grid · C collidable on/off · Shift+click remove · B booth/venue · Ctrl+S'
+        : '8px grid · C collidable on/off · Shift+click remove · Ctrl+S saves shop';
 
     this.hudBody.innerHTML = `
       <div><strong>${mode}</strong> — ${frameLabel}</div>

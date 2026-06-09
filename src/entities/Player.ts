@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { DIRECTION_FRAME_START, characterTextureKey } from '../characters/characterSheets';
 import { playFacing } from '../characters/registerCharacterAnims';
 import { depthFromFootY } from '../core/depth';
-import { planWalkMotion } from '../core/walkMotion';
+import { followPath } from '../core/pathWalk';
+import { getObstacleField } from '../world/obstacleField';
 
 /**
  * The player is a non-controllable avatar: it represents the result of the
@@ -34,45 +35,40 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.setDepth(depthFromFootY(this.getFootY()) + 0.5);
   }
 
-  /** Walk to a target foot position; fixed accel/decel, distance-based cruise. */
+  /** Walk to a target foot position, routing around furniture obstacles. */
   walkTo(targetX: number, targetY: number, onArrive?: () => void): void {
     this.walkTween?.stop();
 
-    const startX = this.x;
-    const startY = this.y;
-    const distance = Phaser.Math.Distance.Between(startX, startY, targetX, targetY);
-    if (distance < 1) {
-      this.setPosition(targetX, targetY);
-      this.applyDepth();
+    const path = getObstacleField().findPath(this.x, this.y, targetX, targetY);
+    if (path.length === 0) {
       onArrive?.();
       return;
     }
 
-    this.facingLeft = targetX < startX;
-    playFacing(this, 'adam', 'walk', this.facingLeft);
-
-    const plan = planWalkMotion(distance);
-    const proxy = { t: 0 };
-
-    this.walkTween = this.scene.tweens.add({
-      targets: proxy,
-      t: 1,
-      duration: plan.durationMs,
-      ease: 'Linear',
-      onUpdate: () => {
-        const p = plan.progressAt(proxy.t);
-        this.setPosition(
-          Phaser.Math.Linear(startX, targetX, p),
-          Phaser.Math.Linear(startY, targetY, p),
-        );
-        this.applyDepth();
-      },
-      onComplete: () => {
-        this.setPosition(targetX, targetY);
-        playFacing(this, 'adam', 'idle', this.facingLeft);
-        this.applyDepth();
-        onArrive?.();
-      },
+    this.walkTween = followPath(this.scene, this.asPathWalker(), path, {
+      speed: 48,
+      useAccel: true,
+      onComplete: onArrive,
     });
+  }
+
+  private asPathWalker() {
+    const player = this;
+    return {
+      // Live getters: followPath reads the walker position at each leg start.
+      get x() {
+        return player.x;
+      },
+      get y() {
+        return player.y;
+      },
+      setPosition: (x: number, y: number) => this.setPosition(x, y),
+      applyDepth: () => this.applyDepth(),
+      setFacingLeft: (left: boolean) => {
+        this.facingLeft = left;
+      },
+      playWalk: () => playFacing(this, 'adam', 'walk', this.facingLeft),
+      playIdle: () => playFacing(this, 'adam', 'idle', this.facingLeft),
+    };
   }
 }

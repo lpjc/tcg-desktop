@@ -11,6 +11,15 @@ export interface WanderRect {
   maxY: number;
 }
 
+/** Road doorway where background characters fade in and out of a scene. */
+export interface SceneEntrance {
+  x: number;
+  minY: number;
+  maxY: number;
+  /** Which side of `x` is off-scene (the road). */
+  outside: 'left' | 'right';
+}
+
 /** Horizontal inset from room/shop walls so sprites do not clip edges. */
 const EDGE_INSET = 12;
 /** Foot Y stays this far above the floor lip and below the band bottom. */
@@ -30,14 +39,41 @@ export function shopBackCounterRect(shopFrameX: number): WanderRect {
 /**
  * One wander rectangle per convention room, sized to each room's width and
  * floor height (main hall, hall, lobby can all differ per venue preset).
+ *
+ * Internal room dividers have no horizontal inset so NPCs can stroll across
+ * thresholds; only the outer convention walls are inset.
  */
 export function conventionWanderRegions(): WanderRect[] {
-  return getConventionRooms().map((room) => ({
-    minX: room.x + EDGE_INSET,
-    maxX: room.x + room.width - EDGE_INSET,
+  const rooms = getConventionRooms();
+  const last = rooms.length - 1;
+  return rooms.map((room, index) => ({
+    minX: room.x + (index === 0 ? EDGE_INSET : 0),
+    maxX: room.x + room.width - (index === last ? EDGE_INSET : 0),
     minY: room.floorTop + FOOT_INSET_TOP,
     maxY: WORLD_HEIGHT - FOOT_INSET_BOTTOM,
   }));
+}
+
+/** Lobby doorway where the convention meets the road (rightmost room). */
+export function conventionRoadEntrance(): SceneEntrance {
+  const rooms = getConventionRooms();
+  const lobby = rooms[rooms.length - 1];
+  return {
+    x: lobby.x + lobby.width - EDGE_INSET,
+    minY: lobby.floorTop + FOOT_INSET_TOP,
+    maxY: WORLD_HEIGHT - FOOT_INSET_BOTTOM,
+    outside: 'right',
+  };
+}
+
+/** Shop doorway where the road meets the left edge of the shop floor. */
+export function shopRoadEntrance(shopFrameX: number): SceneEntrance {
+  return {
+    x: shopFrameX + EDGE_INSET,
+    minY: SHOP_FLOOR_TOP + FOOT_INSET_TOP,
+    maxY: WORLD_HEIGHT - FOOT_INSET_BOTTOM,
+    outside: 'left',
+  };
 }
 
 /**
@@ -94,11 +130,19 @@ export function randomPointInRect(rect: WanderRect): { x: number; y: number } {
   };
 }
 
-export function clampToRect(x: number, y: number, rect: WanderRect): { x: number; y: number } {
-  return {
-    x: Phaser.Math.Clamp(x, rect.minX, rect.maxX),
-    y: Phaser.Math.Clamp(y, rect.minY, rect.maxY),
-  };
+/**
+ * True when a foot position sits inside any wander rect (with a little slack
+ * so path waypoints snapped to the 8px grid still count as inside). Used to
+ * constrain NPC pathfinding to their allowed areas.
+ */
+export function withinAnyRegion(x: number, y: number, regions: WanderRect[], slack = 5): boolean {
+  return regions.some(
+    (rect) =>
+      x >= rect.minX - slack &&
+      x <= rect.maxX + slack &&
+      y >= rect.minY - slack &&
+      y <= rect.maxY + slack,
+  );
 }
 
 export function findRegionContaining(

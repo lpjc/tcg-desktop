@@ -3,8 +3,11 @@ import { getWorldLayout } from '../world/WorldLayout';
 import { Npc } from './Npc';
 import { NPC_CHARACTERS, type CharacterKey } from './characterSheets';
 import {
+  conventionRoadEntrance,
   conventionWanderRegions,
+  shopRoadEntrance,
   shopWanderRegions,
+  type SceneEntrance,
   type WanderRect,
 } from './wanderZones';
 
@@ -13,6 +16,7 @@ interface CrowdZone {
   id: 'convention' | 'shop';
   /** Rebuilt on venue switch / shop relayout; each NPC holds this reference. */
   regions: WanderRect[];
+  entrance: SceneEntrance;
   target: number;
   chars: readonly CharacterKey[];
   npcs: Npc[];
@@ -28,9 +32,10 @@ const MAINTAIN_INTERVAL_MS = 1300;
 /**
  * Owns every background character in the world.
  *
- * Convention NPCs wander inside their venue's room boxes (main hall, hall, lobby
- * — each with its own width and floor height). Shop visitors use the full shop
- * floor except the centre-top behind-the-counter strip.
+ * Convention NPCs wander across all venue rooms but only fade in/out at the
+ * rightmost room's road doorway (lobby or foyer, depending on venue preset). Shop visitors use the full shop
+ * floor except the centre-top behind-the-counter strip, entering from the road
+ * on the left.
  */
 export class NpcCrowd {
   private readonly scene: Phaser.Scene;
@@ -44,6 +49,7 @@ export class NpcCrowd {
     this.convention = {
       id: 'convention',
       regions: conventionWanderRegions(),
+      entrance: conventionRoadEntrance(),
       target: CONVENTION_TARGET,
       chars: NPC_CHARACTERS,
       npcs: [],
@@ -51,6 +57,7 @@ export class NpcCrowd {
     this.shop = {
       id: 'shop',
       regions: shopWanderRegions(getWorldLayout().shopFrame.x),
+      entrance: shopRoadEntrance(getWorldLayout().shopFrame.x),
       target: SHOP_TARGET,
       chars: NPC_CHARACTERS,
       npcs: [],
@@ -104,26 +111,32 @@ export class NpcCrowd {
   }
 
   private topUp(zone: CrowdZone): void {
-    if (zone.regions.length === 0) return;
     if (zone.npcs.length < zone.target) this.spawn(zone);
   }
 
   private fillZone(zone: CrowdZone): void {
-    if (zone.regions.length === 0) return;
-    while (zone.npcs.length < zone.target) this.spawn(zone);
+    // Stop at the first failed spawn (blocked doorway); the maintenance timer
+    // keeps topping up later, so a temporarily blocked entrance is harmless.
+    while (zone.npcs.length < zone.target) {
+      if (!this.spawn(zone)) return;
+    }
   }
 
-  private spawn(zone: CrowdZone): void {
+  /** True when an NPC was actually spawned (doorway clear). */
+  private spawn(zone: CrowdZone): boolean {
     const charKey = Phaser.Utils.Array.GetRandom(zone.chars as CharacterKey[]);
-    const npc = new Npc(this.scene, charKey, zone.regions, (gone) => {
+    const npc = Npc.trySpawn(this.scene, charKey, zone.regions, zone.entrance, (gone) => {
       const index = zone.npcs.indexOf(gone);
       if (index >= 0) zone.npcs.splice(index, 1);
     });
+    if (!npc) return false;
     zone.npcs.push(npc);
+    return true;
   }
 
   private rebuildConventionRegions(): void {
     this.convention.regions = conventionWanderRegions();
+    this.convention.entrance = conventionRoadEntrance();
     for (const npc of this.convention.npcs) {
       npc.setRegions(this.convention.regions);
       npc.onBoundsChanged();
@@ -131,7 +144,9 @@ export class NpcCrowd {
   }
 
   private rebuildShopRegions(): void {
-    this.shop.regions = shopWanderRegions(getWorldLayout().shopFrame.x);
+    const shopX = getWorldLayout().shopFrame.x;
+    this.shop.regions = shopWanderRegions(shopX);
+    this.shop.entrance = shopRoadEntrance(shopX);
     for (const npc of this.shop.npcs) {
       npc.setRegions(this.shop.regions);
       npc.onBoundsChanged();

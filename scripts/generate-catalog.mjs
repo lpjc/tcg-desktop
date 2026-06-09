@@ -13,23 +13,29 @@ function pngSize(filePath) {
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
 }
 
-function catalogEntry({ id, file, name, category, size }) {
-  const footX = Math.floor(size.width / 2);
-  const footY = size.height;
-  const collisionH = Math.min(8, size.height);
+/** Free pack art is ~4× Sierra furniture; scale down to match the 16px grid. */
+const FREE_FURNITURE_SCALE = 0.25;
+
+function catalogEntry({ id, file, name, category, size, scale = 1 }) {
+  const width = Math.round(size.width * scale);
+  const height = Math.round(size.height * scale);
+  const footX = Math.floor(width / 2);
+  const footY = height;
+  const collisionH = Math.min(8, height);
   return {
     id,
     file,
     name,
     category,
-    width: size.width,
-    height: size.height,
+    ...(scale !== 1 ? { scale } : {}),
+    width,
+    height,
     footX,
     footY,
     collision: {
       x: Math.max(0, footX - 8),
       y: footY - collisionH,
-      w: Math.min(16, size.width),
+      w: Math.min(16, width),
       h: collisionH,
     },
   };
@@ -76,6 +82,7 @@ function scanFreeFurniture() {
         // instead of being buried behind the Sierra furniture list.
         category: 'free',
         size,
+        scale: FREE_FURNITURE_SCALE,
       });
     })
     .filter(Boolean);
