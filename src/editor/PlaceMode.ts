@@ -3,15 +3,29 @@ import { getCatalogItem, type CatalogItem } from '../assets/catalog';
 import { snapToGrid } from '../core/depth';
 import { interaction } from '../core/interaction';
 import {
-  CONVENTION_FLOOR_TOP,
-  CONVENTION_WIDTH,
   DEPTH_FLOOR,
   SHOP_FLOOR_TOP,
   SHOP_WIDTH,
   TILE,
   FLOOR_SUBTILE,
 } from '../core/constants';
-import { Placeable, type PlacedObjectData } from '../entities/Placeable';
+import {
+  Placeable,
+  type PlacedObjectData,
+  type PlaceableLayer,
+} from '../entities/Placeable';
+import {
+  conventionPropsLayoutName,
+  conventionRoomBounds,
+  getActiveConventionVenue,
+  getActiveConventionVenueId,
+  getBoothAnchor,
+  getConventionRoomAt,
+  getConventionRooms,
+  getConventionWidth,
+  type ConventionPropsLayout,
+  type PlayerBoothLayout,
+} from '../world/ConventionVenue';
 import { getSceneFrames, type SceneFrameId } from '../world/WorldLayout';
 import { AssetPalette } from './AssetPalette';
 
@@ -21,15 +35,26 @@ export interface LayoutData {
   floor?: PlacedObjectData[];
 }
 
+export type ConventionEditLayer = 'booth' | 'venue';
+
+const FURNITURE_PAINT_ALPHA = 0.18;
+const FURNITURE_NORMAL_ALPHA = 1;
+const INACTIVE_LAYER_ALPHA = 0.45;
+
 export class PlaceMode {
   private scene: Phaser.Scene;
   private palette: AssetPalette;
   private gridGraphics: Phaser.GameObjects.Graphics;
+  private selectionGraphics: Phaser.GameObjects.Graphics;
   private ghost?: Phaser.GameObjects.Image;
   private active = false;
+  private paintMode = false;
   private editingFrame: SceneFrameId = 'convention';
+  private conventionEditLayer: ConventionEditLayer = 'booth';
+  private boothAnchor = getBoothAnchor();
   private selectedCatalog: CatalogItem | null = null;
   private selectedPlaceable: Placeable | null = null;
+  private dragging: Placeable | null = null;
   private placeables: Placeable[] = [];
   private floorTiles = new Map<string, Phaser.GameObjects.Image>();
   private nextInstanceId = 1;
@@ -46,12 +71,15 @@ export class PlaceMode {
     this.onLayoutChange = onLayoutChange;
 
     this.gridGraphics = scene.add.graphics().setDepth(9000).setVisible(false);
+    this.selectionGraphics = scene.add.graphics().setDepth(9200).setVisible(false);
     this.drawGrid();
 
     this.palette = new AssetPalette('editor-ui', (item) => {
+      if (this.paintMode && item.category !== 'floor') return;
       this.selectedCatalog = item;
       this.selectedPlaceable = null;
       this.updateGhost();
+      this.updateSelectionOutline();
     });
 
     this.hudEl = document.createElement('div');
@@ -61,9 +89,18 @@ export class PlaceMode {
 
     scene.input.on('pointerdown', this.onPointerDown, this);
     scene.input.on('pointermove', this.onPointerMove, this);
+    scene.input.on('pointerup', this.onPointerUp, this);
     scene.input.on('contextmenu', this.onContextMenu, this);
     scene.input.keyboard?.on('keydown-F2', () => this.toggle());
     window.desktop?.onTogglePlaceMode(() => this.toggle());
+    scene.input.keyboard?.on('keydown-P', () => {
+      if (!this.active) return;
+      this.togglePaintMode();
+    });
+    scene.input.keyboard?.on('keydown-B', () => {
+      if (!this.active || this.editingFrame !== 'convention' || this.paintMode) return;
+      this.toggleConventionEditLayer();
+    });
     scene.input.keyboard?.on('keydown-DELETE', () => this.deleteSelected());
     scene.input.keyboard?.on('keydown-S', (event: KeyboardEvent) => {
       if (event.ctrlKey) {
@@ -77,18 +114,74 @@ export class PlaceMode {
     return this.active;
   }
 
+  isPaintMode(): boolean {
+    return this.paintMode;
+  }
+
   getEditingFrame(): SceneFrameId {
     return this.editingFrame;
   }
 
+  getConventionEditLayer(): ConventionEditLayer {
+    return this.conventionEditLayer;
+  }
+
+  setBoothAnchor(anchor: { x: number; y: number }): void {
+    const dx = anchor.x - this.boothAnchor.x;
+    const dy = anchor.y - this.boothAnchor.y;
+    this.boothAnchor = anchor;
+    if (dx === 0 && dy === 0) return;
+    for (const p of this.placeables) {
+      if (p.layer === 'booth') {
+        p.setFootPosition(p.x + dx, p.y + dy);
+      }
+    }
+  }
+
+  toggleConventionEditLayer(): void {
+    this.conventionEditLayer = this.conventionEditLayer === 'booth' ? 'venue' : 'booth';
+    this.selectedPlaceable = null;
+    this.dragging = null;
+    this.applyFurnitureAlpha();
+    this.updateSelectionOutline();
+    this.updateHud();
+  }
+
   setEditingFrame(frame: SceneFrameId): void {
     this.editingFrame = frame;
+    this.selectedPlaceable = null;
+    this.dragging = null;
+    this.applyFurnitureAlpha();
     this.drawGrid();
+    this.updateSelectionOutline();
     this.updateHud();
   }
 
   toggle(): void {
     this.setActive(!this.active);
+  }
+
+  togglePaintMode(): void {
+    this.setPaintMode(!this.paintMode);
+  }
+
+  setPaintMode(on: boolean): void {
+    if (this.paintMode === on) return;
+    this.paintMode = on;
+    this.selectedPlaceable = null;
+    this.dragging = null;
+    if (on) {
+      this.selectedCatalog = null;
+      this.palette.setFloorOnly(true);
+      this.ghost?.setVisible(false);
+    } else {
+      this.palette.setFloorOnly(false);
+      this.selectedCatalog = null;
+      this.ghost?.setVisible(false);
+    }
+    this.applyFurnitureAlpha();
+    this.updateSelectionOutline();
+    this.updateHud();
   }
 
   setActive(active: boolean): void {
@@ -97,8 +190,12 @@ export class PlaceMode {
     this.palette.setVisible(active);
     interaction.setEditMode(active);
     if (!active) {
+      this.setPaintMode(false);
       this.ghost?.setVisible(false);
       this.selectedPlaceable = null;
+      this.dragging = null;
+      this.applyFurnitureAlpha();
+      this.selectionGraphics.setVisible(false);
     }
     this.updateHud();
   }
@@ -107,10 +204,30 @@ export class PlaceMode {
 
   seedPlaceables(frame: SceneFrameId, objects: PlacedObjectData[]): void {
     const frameX = getSceneFrames()[frame].x;
+    const layer: PlaceableLayer = frame === 'shop' ? 'shop' : 'venue';
     for (const obj of objects) {
       const worldX = this.toWorldX(frame, frameX, obj.x);
-      this.spawnPlaceable({ ...obj, x: worldX });
+      this.spawnPlaceable({ ...obj, x: worldX }, layer);
     }
+    this.applyFurnitureAlpha();
+  }
+
+  seedBooth(layout: PlayerBoothLayout): void {
+    const anchor = this.boothAnchor;
+    for (const obj of layout.objects) {
+      this.spawnPlaceable(
+        { catalogId: obj.catalogId, x: anchor.x + obj.x, y: anchor.y + obj.y },
+        'booth',
+      );
+    }
+    this.applyFurnitureAlpha();
+  }
+
+  seedVenueProps(layout: ConventionPropsLayout): void {
+    for (const obj of layout.objects) {
+      this.spawnPlaceable({ catalogId: obj.catalogId, x: obj.x, y: obj.y }, 'venue');
+    }
+    this.seedFloor('convention', layout.floor);
   }
 
   seedFloor(frame: SceneFrameId, tiles: PlacedObjectData[] | undefined): void {
@@ -122,14 +239,10 @@ export class PlaceMode {
     }
   }
 
-  /**
-   * Shop layouts store frame-relative x (0…SHOP_WIDTH).
-   * Legacy saves used absolute world x from the old fixed 80px road (shop at x=400).
-   */
   private toWorldX(frame: SceneFrameId, frameX: number, x: number): number {
     if (frame !== 'shop') return x;
     if (x < SHOP_WIDTH) return frameX + x;
-    const legacyShopOrigin = CONVENTION_WIDTH + 80;
+    const legacyShopOrigin = getConventionWidth() + 80;
     return frameX + (x - legacyShopOrigin);
   }
 
@@ -138,14 +251,40 @@ export class PlaceMode {
     this.placeables = [];
   }
 
+  clearConventionContent(): void {
+    const frame = getSceneFrames().convention;
+    this.placeables = this.placeables.filter((p) => {
+      if (this.isInFrame(p.x, frame) && (p.layer === 'booth' || p.layer === 'venue')) {
+        p.destroy();
+        return false;
+      }
+      return true;
+    });
+    for (const [key, tile] of [...this.floorTiles.entries()]) {
+      if (this.isInFrame(tile.x, frame)) {
+        tile.destroy();
+        this.floorTiles.delete(key);
+      }
+    }
+    this.selectedPlaceable = null;
+    this.dragging = null;
+  }
+
   getAllPlaceables(): Placeable[] {
     return this.placeables;
   }
 
-  /** Find the topmost placeable (a "station") under a world point, any frame. */
-  stationAtWorld(worldX: number, worldY: number): Placeable | null {
+  stationAtWorld(
+    worldX: number,
+    worldY: number,
+    frameId: SceneFrameId | 'all' = 'all',
+  ): Placeable | null {
+    const frame = frameId === 'all' ? null : getSceneFrames()[frameId];
+    const layerFilter = frameId !== 'all' ? this.editLayerFilter() : null;
     for (let i = this.placeables.length - 1; i >= 0; i--) {
       const p = this.placeables[i];
+      if (frame && !this.isInFrame(p.x, frame)) continue;
+      if (layerFilter && p.layer !== layerFilter) continue;
       if (this.hitsPlaceable(p, worldX, worldY)) return p;
     }
     return null;
@@ -153,27 +292,64 @@ export class PlaceMode {
 
   toLayout(frame: SceneFrameId): LayoutData {
     const bounds = getSceneFrames()[frame];
-    const inFrame = (x: number) => x >= bounds.x && x <= bounds.x + bounds.width;
+    const inFrame = (x: number) => this.isInFrame(x, bounds);
+    const layer =
+      frame === 'shop' ? 'shop' : this.conventionEditLayer === 'booth' ? 'booth' : 'venue';
     return {
       frame,
-      // Shop coords are saved relative to the shop frame so layouts survive road resize.
       objects: this.placeables
-        .filter((p) => inFrame(p.x))
+        .filter((p) => inFrame(p.x) && p.layer === layer)
         .map((p) => {
           const data = p.toData();
           if (frame === 'shop') data.x -= bounds.x;
+          if (frame === 'convention' && layer === 'booth') {
+            data.x -= this.boothAnchor.x;
+            data.y -= this.boothAnchor.y;
+          }
           return data;
         }),
-      floor: [...this.floorTiles.values()]
-        .filter((t) => inFrame(t.x))
-        .map((t) => {
-          const x = frame === 'shop' ? t.x - bounds.x : t.x;
-          return { catalogId: t.getData('catalogId') as string, x, y: t.y };
-        }),
+      floor:
+        frame === 'convention' && layer === 'venue'
+          ? [...this.floorTiles.values()]
+              .filter((t) => inFrame(t.x))
+              .map((t) => ({
+                catalogId: t.getData('catalogId') as string,
+                x: t.x,
+                y: t.y,
+              }))
+          : undefined,
     };
   }
 
-  /** Move shop content when the responsive road changes width. */
+  toBoothLayout(): PlayerBoothLayout {
+    const anchor = this.boothAnchor;
+    return {
+      objects: this.placeables
+        .filter((p) => p.layer === 'booth')
+        .map((p) => ({
+          catalogId: p.catalogId,
+          x: p.x - anchor.x,
+          y: p.y - anchor.y,
+        })),
+    };
+  }
+
+  toVenuePropsLayout(): ConventionPropsLayout {
+    return {
+      venueId: getActiveConventionVenueId(),
+      objects: this.placeables
+        .filter((p) => p.layer === 'venue')
+        .map((p) => p.toData()),
+      floor: [...this.floorTiles.values()]
+        .filter((t) => this.isInFrame(t.x, getSceneFrames().convention))
+        .map((t) => ({
+          catalogId: t.getData('catalogId') as string,
+          x: t.x,
+          y: t.y,
+        })),
+    };
+  }
+
   shiftShopContent(deltaX: number, oldShopX: number, shopWidth: number): void {
     if (deltaX === 0) return;
     for (const p of this.placeables) {
@@ -187,18 +363,33 @@ export class PlaceMode {
       }
     }
     this.drawGrid();
+    this.updateSelectionOutline();
   }
 
   onLayoutBoundsChanged(): void {
     this.drawGrid();
+    this.updateSelectionOutline();
   }
 
   // ---- spawning --------------------------------------------------------------
 
-  private spawnPlaceable(data: PlacedObjectData): Placeable {
-    const placeable = new Placeable(this.scene, `inst_${this.nextInstanceId++}`, data);
+  private spawnPlaceable(data: PlacedObjectData, layer: PlaceableLayer): Placeable {
+    const placeable = new Placeable(this.scene, `inst_${this.nextInstanceId++}`, data, layer);
     this.placeables.push(placeable);
+    if (this.paintMode) {
+      placeable.setAlpha(FURNITURE_PAINT_ALPHA);
+    }
     return placeable;
+  }
+
+  private currentPlaceableLayer(): PlaceableLayer {
+    if (this.editingFrame === 'shop') return 'shop';
+    return this.conventionEditLayer === 'booth' ? 'booth' : 'venue';
+  }
+
+  private editLayerFilter(): PlaceableLayer | null {
+    if (this.editingFrame !== 'convention' || !this.active || this.paintMode) return null;
+    return this.conventionEditLayer;
   }
 
   private floorKey(x: number, y: number): string {
@@ -237,20 +428,29 @@ export class PlaceMode {
 
     const world = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
 
-    if (this.selectedCatalog?.category === 'floor') {
-      this.paintFloorAt(world.x, world.y);
+    if (this.paintMode || this.selectedCatalog?.category === 'floor') {
+      if (this.selectedCatalog?.category === 'floor' && this.canPaintFloor()) {
+        this.paintFloorAt(world.x, world.y);
+      }
       return;
     }
 
     if (this.selectedCatalog) {
       const pos = this.snapFurniture(world.x, world.y);
-      const placed = this.spawnPlaceable({ catalogId: this.selectedCatalog.id, x: pos.x, y: pos.y });
+      const placed = this.spawnPlaceable(
+        { catalogId: this.selectedCatalog.id, x: pos.x, y: pos.y },
+        this.currentPlaceableLayer(),
+      );
       this.selectedPlaceable = placed;
+      this.updateSelectionOutline();
       this.notifyChange();
       return;
     }
 
-    this.selectedPlaceable = this.stationAtWorld(world.x, world.y);
+    const hit = this.stationAtWorld(world.x, world.y, this.editingFrame);
+    this.selectedPlaceable = hit;
+    this.dragging = hit;
+    this.updateSelectionOutline();
   }
 
   private onPointerMove(pointer: Phaser.Input.Pointer): void {
@@ -259,10 +459,30 @@ export class PlaceMode {
       return;
     }
     const world = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+
+    if (this.dragging && pointer.isDown && !pointer.rightButtonDown()) {
+      const pos = this.snapFurniture(world.x, world.y);
+      this.dragging.setFootPosition(pos.x, pos.y);
+      this.updateSelectionOutline();
+      return;
+    }
+
     this.updateGhostPosition(world.x, world.y);
 
-    if (pointer.isDown && !pointer.rightButtonDown() && this.selectedCatalog?.category === 'floor') {
+    const paintingFloor =
+      this.canPaintFloor() &&
+      this.selectedCatalog?.category === 'floor' &&
+      pointer.isDown &&
+      !pointer.rightButtonDown();
+    if (paintingFloor) {
       this.paintFloorAt(world.x, world.y);
+    }
+  }
+
+  private onPointerUp(): void {
+    if (this.dragging) {
+      this.dragging = null;
+      this.notifyChange();
     }
   }
 
@@ -271,77 +491,102 @@ export class PlaceMode {
     pointer.event.preventDefault();
     const world = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
 
-    if (this.selectedCatalog?.category === 'floor') {
+    if (this.canPaintFloor() && (this.paintMode || this.selectedCatalog?.category === 'floor')) {
       const pos = this.snapFloor(world.x, world.y);
       this.eraseFloorTile(pos.x, pos.y);
       this.notifyChange();
       return;
     }
 
-    const hit = this.stationAtWorld(world.x, world.y);
+    const hit = this.stationAtWorld(world.x, world.y, this.editingFrame);
     if (hit) {
       this.placeables = this.placeables.filter((p) => p !== hit);
       hit.destroy();
       if (this.selectedPlaceable === hit) this.selectedPlaceable = null;
+      this.updateSelectionOutline();
       this.notifyChange();
     }
   }
 
+  private canPaintFloor(): boolean {
+    return this.editingFrame === 'convention' && this.conventionEditLayer === 'venue';
+  }
+
   private paintFloorAt(worldX: number, worldY: number): void {
-    if (!this.selectedCatalog) return;
+    if (!this.selectedCatalog || this.selectedCatalog.category !== 'floor') return;
     const pos = this.snapFloor(worldX, worldY);
     this.paintFloorTile(this.selectedCatalog.id, pos.x, pos.y);
     this.notifyChange();
   }
 
   deleteSelected(): void {
-    if (!this.active || !this.selectedPlaceable) return;
+    if (!this.active || !this.selectedPlaceable || this.paintMode) return;
     const hit = this.selectedPlaceable;
     this.placeables = this.placeables.filter((p) => p !== hit);
     hit.destroy();
     this.selectedPlaceable = null;
+    this.updateSelectionOutline();
     this.notifyChange();
   }
 
   nudgeSelected(dx: number, dy: number): void {
-    if (!this.active || !this.selectedPlaceable) return;
-    const frame = getSceneFrames()[this.editingFrame];
+    if (!this.active || !this.selectedPlaceable || this.paintMode) return;
     const p = this.selectedPlaceable;
-    const floorTop = this.floorTopFor(this.editingFrame);
+    const zone = this.zoneAt(p.x, this.editingFrame);
     p.setFootPosition(
-      Phaser.Math.Clamp(p.x + dx, frame.x + TILE / 2, frame.x + frame.width - TILE / 2),
-      Phaser.Math.Clamp(p.y + dy, floorTop + TILE, frame.y + frame.height - FLOOR_SUBTILE),
+      Phaser.Math.Clamp(p.x + dx, zone.x + TILE / 2, zone.x + zone.width - TILE / 2),
+      Phaser.Math.Clamp(p.y + dy, zone.floorTop + TILE, zone.y + zone.height - FLOOR_SUBTILE),
     );
+    this.updateSelectionOutline();
     this.notifyChange();
   }
 
-  // ---- snapping & hit-testing ------------------------------------------------
+  // ---- zones, snapping & hit-testing -----------------------------------------
 
-  private floorTopFor(frameId: SceneFrameId): number {
-    return frameId === 'convention' ? CONVENTION_FLOOR_TOP : SHOP_FLOOR_TOP;
+  private isInFrame(x: number, frame: { x: number; width: number }): boolean {
+    return x >= frame.x && x < frame.x + frame.width;
+  }
+
+  private zoneAt(
+    worldX: number,
+    frameId: SceneFrameId,
+  ): { x: number; width: number; floorTop: number; y: number; height: number } {
+    const frame = getSceneFrames()[frameId];
+    if (frameId === 'convention') {
+      const room = getConventionRoomAt(worldX);
+      if (room) {
+        const b = conventionRoomBounds(room, frame.x);
+        return { ...b, y: frame.y, height: frame.height };
+      }
+    }
+    return {
+      x: frame.x,
+      width: frame.width,
+      floorTop: SHOP_FLOOR_TOP,
+      y: frame.y,
+      height: frame.height,
+    };
   }
 
   private snapFurniture(worldX: number, worldY: number): { x: number; y: number } {
-    const frame = getSceneFrames()[this.editingFrame];
-    const floorTop = this.floorTopFor(this.editingFrame);
+    const zone = this.zoneAt(worldX, this.editingFrame);
     return {
-      x: Phaser.Math.Clamp(snapToGrid(worldX), frame.x + TILE / 2, frame.x + frame.width - TILE / 2),
+      x: Phaser.Math.Clamp(snapToGrid(worldX), zone.x + TILE / 2, zone.x + zone.width - TILE / 2),
       y: Phaser.Math.Clamp(
         snapToGrid(worldY),
-        floorTop + TILE,
-        frame.y + frame.height - FLOOR_SUBTILE,
+        zone.floorTop + TILE,
+        zone.y + zone.height - FLOOR_SUBTILE,
       ),
     };
   }
 
   private snapFloor(worldX: number, worldY: number): { x: number; y: number } {
-    const frame = getSceneFrames()[this.editingFrame];
-    const floorTop = this.floorTopFor(this.editingFrame);
-    const gx = Math.floor((worldX - frame.x) / FLOOR_SUBTILE) * FLOOR_SUBTILE + frame.x + FLOOR_SUBTILE / 2;
+    const zone = this.zoneAt(worldX, this.editingFrame);
+    const gx = Math.floor((worldX - zone.x) / FLOOR_SUBTILE) * FLOOR_SUBTILE + zone.x + FLOOR_SUBTILE / 2;
     const gy = Math.floor(worldY / FLOOR_SUBTILE) * FLOOR_SUBTILE + FLOOR_SUBTILE / 2;
     return {
-      x: Phaser.Math.Clamp(gx, frame.x + FLOOR_SUBTILE / 2, frame.x + frame.width - FLOOR_SUBTILE / 2),
-      y: Phaser.Math.Clamp(gy, floorTop + FLOOR_SUBTILE / 2, frame.height - FLOOR_SUBTILE / 2),
+      x: Phaser.Math.Clamp(gx, zone.x + FLOOR_SUBTILE / 2, zone.x + zone.width - FLOOR_SUBTILE / 2),
+      y: Phaser.Math.Clamp(gy, zone.floorTop + FLOOR_SUBTILE / 2, zone.height - FLOOR_SUBTILE / 2),
     };
   }
 
@@ -382,18 +627,69 @@ export class PlaceMode {
     this.ghost.setVisible(true).setPosition(pos.x, pos.y);
   }
 
+  // ---- selection & furniture dimming -----------------------------------------
+
+  private applyFurnitureAlpha(): void {
+    const frame = getSceneFrames()[this.editingFrame];
+    for (const p of this.placeables) {
+      if (!this.isInFrame(p.x, frame)) {
+        p.setAlpha(FURNITURE_NORMAL_ALPHA);
+        continue;
+      }
+      if (this.paintMode && this.active) {
+        p.setAlpha(FURNITURE_PAINT_ALPHA);
+        continue;
+      }
+      if (this.editingFrame === 'convention' && this.active) {
+        const isActiveLayer = p.layer === this.conventionEditLayer;
+        p.setAlpha(isActiveLayer ? FURNITURE_NORMAL_ALPHA : INACTIVE_LAYER_ALPHA);
+        continue;
+      }
+      p.setAlpha(FURNITURE_NORMAL_ALPHA);
+    }
+  }
+
+  private updateSelectionOutline(): void {
+    this.selectionGraphics.clear();
+    if (!this.active || !this.selectedPlaceable || this.paintMode) {
+      this.selectionGraphics.setVisible(false);
+      return;
+    }
+    const p = this.selectedPlaceable;
+    const left = p.x - p.catalogItem.footX;
+    const top = p.y - p.catalogItem.footY;
+    const w = p.catalogItem.width;
+    const h = p.catalogItem.footY;
+    const color = p.layer === 'booth' ? 0xffc86e : 0x6ecfff;
+    this.selectionGraphics.setVisible(true);
+    this.selectionGraphics.lineStyle(1, color, 0.95);
+    this.selectionGraphics.strokeRect(left - 1, top - 1, w + 2, h + 2);
+    this.selectionGraphics.lineStyle(1, 0xffffff, 0.35);
+    this.selectionGraphics.strokeRect(left, top, w, h);
+  }
+
   // ---- misc ------------------------------------------------------------------
 
   private drawGrid(): void {
     const frame = getSceneFrames()[this.editingFrame];
-    const floorTop = this.floorTopFor(this.editingFrame);
     this.gridGraphics.clear();
     this.gridGraphics.lineStyle(1, 0xffffff, 0.1);
-    for (let x = frame.x; x <= frame.x + frame.width; x += TILE) {
-      this.gridGraphics.lineBetween(x, floorTop, x, frame.y + frame.height);
-    }
-    for (let y = floorTop; y <= frame.y + frame.height; y += TILE) {
-      this.gridGraphics.lineBetween(frame.x, y, frame.x + frame.width, y);
+
+    const zones =
+      this.editingFrame === 'convention'
+        ? getConventionRooms().map((room) => conventionRoomBounds(room, frame.x))
+        : [{ x: frame.x, width: frame.width, floorTop: SHOP_FLOOR_TOP }];
+
+    for (const zone of zones) {
+      for (let x = zone.x; x <= zone.x + zone.width; x += TILE) {
+        this.gridGraphics.lineBetween(x, zone.floorTop, x, frame.y + frame.height);
+      }
+      for (let y = zone.floorTop; y <= frame.y + frame.height; y += TILE) {
+        this.gridGraphics.lineBetween(zone.x, y, zone.x + zone.width, y);
+      }
+      this.gridGraphics.lineStyle(1, 0x6ecfff, 0.25);
+      this.gridGraphics.lineBetween(zone.x, zone.floorTop, zone.x + zone.width, zone.floorTop);
+      this.gridGraphics.lineStyle(1, 0xffffff, 0.1);
     }
   }
 
@@ -402,23 +698,48 @@ export class PlaceMode {
   }
 
   async saveCurrentFrame(): Promise<void> {
-    const layout = this.toLayout(this.editingFrame);
-    const json = JSON.stringify(layout, null, 2);
-    if (window.desktop) {
-      await window.desktop.saveLayout(this.editingFrame, json);
+    let name: string;
+    let json: string;
+
+    if (this.editingFrame === 'shop') {
+      name = 'shop';
+      json = JSON.stringify(this.toLayout('shop'), null, 2);
+    } else if (this.conventionEditLayer === 'booth') {
+      name = 'player_booth';
+      json = JSON.stringify(this.toBoothLayout(), null, 2);
     } else {
-      console.log('Layout save (browser):', json);
+      name = conventionPropsLayoutName();
+      json = JSON.stringify(this.toVenuePropsLayout(), null, 2);
+    }
+
+    if (window.desktop) {
+      await window.desktop.saveLayout(name, json);
+    } else {
+      console.log(`Layout save (browser) [${name}]:`, json);
     }
     this.updateHud('Saved!');
   }
 
   private updateHud(extra?: string): void {
-    const mode = this.active ? 'EDIT' : 'PLAY';
+    const venue = getActiveConventionVenue();
+    const mode = this.active ? (this.paintMode ? 'PAINT' : 'EDIT') : 'PLAY';
+    const frameLabel =
+      this.editingFrame === 'convention'
+        ? `${venue.name} · ${this.conventionEditLayer === 'booth' ? 'your booth' : 'venue props'}`
+        : this.editingFrame;
+    const roomHint =
+      this.editingFrame === 'convention' && this.active && !this.paintMode
+        ? ` · ${getConventionRooms().map((r) => r.label).join(' → ')}`
+        : '';
     const hint = this.active
-      ? 'Pick an asset → click to place · Floors: click/drag to paint · Right-click delete · Tab switch scene · Ctrl+S save'
-      : 'Click a station to walk there · F2 to edit';
+      ? this.paintMode
+        ? 'Venue floor paint · Right-click erase · P exit · Tab scene · Ctrl+S save props'
+        : this.editingFrame === 'convention'
+          ? 'B toggle booth/venue · Drag move · P paint (venue) · Tab scene · Ctrl+S save layer'
+          : 'Pick asset → place · Drag · Arrows nudge · Tab switch · Ctrl+S save'
+      : 'Click a station to walk · F2 edit · V switch convention (dev)';
     this.hudEl.innerHTML = `
-      <div><strong>${mode}</strong> — ${this.editingFrame}</div>
+      <div><strong>${mode}</strong> — ${frameLabel}${roomHint}</div>
       <div>${hint}</div>
       ${extra ? `<div>${extra}</div>` : ''}
     `;

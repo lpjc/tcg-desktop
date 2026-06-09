@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld('desktop', {
   moveWindow: (dx: number, dy: number) => {
     ipcRenderer.send('move-window', dx, dy);
   },
+  switchMonitor: () => {
+    return ipcRenderer.invoke('switch-monitor') as Promise<boolean>;
+  },
   saveLayout: (name: string, data: string) => {
     return ipcRenderer.invoke('save-layout', name, data) as Promise<boolean>;
   },

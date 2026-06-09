@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { windowBandHeight } from './core/constants';
+import { MonitorSwitchButton } from './ui/MonitorSwitchButton';
 import { WorldScene } from './world/WorldScene';
 
 /**
@@ -31,5 +32,9 @@ function resizeCanvas(): void {
 }
 
 window.addEventListener('resize', resizeCanvas);
+
+if (window.desktop) {
+  new MonitorSwitchButton('editor-ui');
+}
 
 export default game;

@@ -8039,6 +8039,3414 @@
       }
     },
     {
+      "id": "free_furniture_sprite_1_1",
+      "file": "free-furniture-sprites/sprite-1-1.png",
+      "name": "sprite 1 1",
+      "category": "free",
+      "width": 126,
+      "height": 162,
+      "footX": 63,
+      "footY": 162,
+      "collision": {
+        "x": 55,
+        "y": 154,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_1_2",
+      "file": "free-furniture-sprites/sprite-1-2.png",
+      "name": "sprite 1 2",
+      "category": "free",
+      "width": 78,
+      "height": 96,
+      "footX": 39,
+      "footY": 96,
+      "collision": {
+        "x": 31,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_1_3",
+      "file": "free-furniture-sprites/sprite-1-3.png",
+      "name": "sprite 1 3",
+      "category": "free",
+      "width": 39,
+      "height": 12,
+      "footX": 19,
+      "footY": 12,
+      "collision": {
+        "x": 11,
+        "y": 4,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_1_4",
+      "file": "free-furniture-sprites/sprite-1-4.png",
+      "name": "sprite 1 4",
+      "category": "free",
+      "width": 123,
+      "height": 192,
+      "footX": 61,
+      "footY": 192,
+      "collision": {
+        "x": 53,
+        "y": 184,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_1_5",
+      "file": "free-furniture-sprites/sprite-1-5.png",
+      "name": "sprite 1 5",
+      "category": "free",
+      "width": 48,
+      "height": 93,
+      "footX": 24,
+      "footY": 93,
+      "collision": {
+        "x": 16,
+        "y": 85,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_1_6",
+      "file": "free-furniture-sprites/sprite-1-6.png",
+      "name": "sprite 1 6",
+      "category": "free",
+      "width": 126,
+      "height": 162,
+      "footX": 63,
+      "footY": 162,
+      "collision": {
+        "x": 55,
+        "y": 154,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_1_7",
+      "file": "free-furniture-sprites/sprite-1-7.png",
+      "name": "sprite 1 7",
+      "category": "free",
+      "width": 78,
+      "height": 96,
+      "footX": 39,
+      "footY": 96,
+      "collision": {
+        "x": 31,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_10_1",
+      "file": "free-furniture-sprites/sprite-10-1.png",
+      "name": "sprite 10 1",
+      "category": "free",
+      "width": 66,
+      "height": 21,
+      "footX": 33,
+      "footY": 21,
+      "collision": {
+        "x": 25,
+        "y": 13,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_10_2",
+      "file": "free-furniture-sprites/sprite-10-2.png",
+      "name": "sprite 10 2",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_10_3",
+      "file": "free-furniture-sprites/sprite-10-3.png",
+      "name": "sprite 10 3",
+      "category": "free",
+      "width": 114,
+      "height": 63,
+      "footX": 57,
+      "footY": 63,
+      "collision": {
+        "x": 49,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_10_4",
+      "file": "free-furniture-sprites/sprite-10-4.png",
+      "name": "sprite 10 4",
+      "category": "free",
+      "width": 27,
+      "height": 27,
+      "footX": 13,
+      "footY": 27,
+      "collision": {
+        "x": 5,
+        "y": 19,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_10_5",
+      "file": "free-furniture-sprites/sprite-10-5.png",
+      "name": "sprite 10 5",
+      "category": "free",
+      "width": 27,
+      "height": 24,
+      "footX": 13,
+      "footY": 24,
+      "collision": {
+        "x": 5,
+        "y": 16,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_11_1",
+      "file": "free-furniture-sprites/sprite-11-1.png",
+      "name": "sprite 11 1",
+      "category": "free",
+      "width": 75,
+      "height": 45,
+      "footX": 37,
+      "footY": 45,
+      "collision": {
+        "x": 29,
+        "y": 37,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_12_1",
+      "file": "free-furniture-sprites/sprite-12-1.png",
+      "name": "sprite 12 1",
+      "category": "free",
+      "width": 33,
+      "height": 33,
+      "footX": 16,
+      "footY": 33,
+      "collision": {
+        "x": 8,
+        "y": 25,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_12_2",
+      "file": "free-furniture-sprites/sprite-12-2.png",
+      "name": "sprite 12 2",
+      "category": "free",
+      "width": 27,
+      "height": 30,
+      "footX": 13,
+      "footY": 30,
+      "collision": {
+        "x": 5,
+        "y": 22,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_13_1",
+      "file": "free-furniture-sprites/sprite-13-1.png",
+      "name": "sprite 13 1",
+      "category": "free",
+      "width": 78,
+      "height": 54,
+      "footX": 39,
+      "footY": 54,
+      "collision": {
+        "x": 31,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_13_2",
+      "file": "free-furniture-sprites/sprite-13-2.png",
+      "name": "sprite 13 2",
+      "category": "free",
+      "width": 48,
+      "height": 48,
+      "footX": 24,
+      "footY": 48,
+      "collision": {
+        "x": 16,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_14_1",
+      "file": "free-furniture-sprites/sprite-14-1.png",
+      "name": "sprite 14 1",
+      "category": "free",
+      "width": 12,
+      "height": 21,
+      "footX": 6,
+      "footY": 21,
+      "collision": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_14_2",
+      "file": "free-furniture-sprites/sprite-14-2.png",
+      "name": "sprite 14 2",
+      "category": "free",
+      "width": 189,
+      "height": 84,
+      "footX": 94,
+      "footY": 84,
+      "collision": {
+        "x": 86,
+        "y": 76,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_14_3",
+      "file": "free-furniture-sprites/sprite-14-3.png",
+      "name": "sprite 14 3",
+      "category": "free",
+      "width": 180,
+      "height": 120,
+      "footX": 90,
+      "footY": 120,
+      "collision": {
+        "x": 82,
+        "y": 112,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_14_4",
+      "file": "free-furniture-sprites/sprite-14-4.png",
+      "name": "sprite 14 4",
+      "category": "free",
+      "width": 72,
+      "height": 54,
+      "footX": 36,
+      "footY": 54,
+      "collision": {
+        "x": 28,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_14_5",
+      "file": "free-furniture-sprites/sprite-14-5.png",
+      "name": "sprite 14 5",
+      "category": "free",
+      "width": 120,
+      "height": 180,
+      "footX": 60,
+      "footY": 180,
+      "collision": {
+        "x": 52,
+        "y": 172,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_15_1",
+      "file": "free-furniture-sprites/sprite-15-1.png",
+      "name": "sprite 15 1",
+      "category": "free",
+      "width": 144,
+      "height": 78,
+      "footX": 72,
+      "footY": 78,
+      "collision": {
+        "x": 64,
+        "y": 70,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_15_2",
+      "file": "free-furniture-sprites/sprite-15-2.png",
+      "name": "sprite 15 2",
+      "category": "free",
+      "width": 72,
+      "height": 54,
+      "footX": 36,
+      "footY": 54,
+      "collision": {
+        "x": 28,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_16_1",
+      "file": "free-furniture-sprites/sprite-16-1.png",
+      "name": "sprite 16 1",
+      "category": "free",
+      "width": 192,
+      "height": 96,
+      "footX": 96,
+      "footY": 96,
+      "collision": {
+        "x": 88,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_16_2",
+      "file": "free-furniture-sprites/sprite-16-2.png",
+      "name": "sprite 16 2",
+      "category": "free",
+      "width": 63,
+      "height": 93,
+      "footX": 31,
+      "footY": 93,
+      "collision": {
+        "x": 23,
+        "y": 85,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_17_1",
+      "file": "free-furniture-sprites/sprite-17-1.png",
+      "name": "sprite 17 1",
+      "category": "free",
+      "width": 15,
+      "height": 18,
+      "footX": 7,
+      "footY": 18,
+      "collision": {
+        "x": 0,
+        "y": 10,
+        "w": 15,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_18_1",
+      "file": "free-furniture-sprites/sprite-18-1.png",
+      "name": "sprite 18 1",
+      "category": "free",
+      "width": 72,
+      "height": 54,
+      "footX": 36,
+      "footY": 54,
+      "collision": {
+        "x": 28,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_19_1",
+      "file": "free-furniture-sprites/sprite-19-1.png",
+      "name": "sprite 19 1",
+      "category": "free",
+      "width": 63,
+      "height": 42,
+      "footX": 31,
+      "footY": 42,
+      "collision": {
+        "x": 23,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_19_2",
+      "file": "free-furniture-sprites/sprite-19-2.png",
+      "name": "sprite 19 2",
+      "category": "free",
+      "width": 84,
+      "height": 39,
+      "footX": 42,
+      "footY": 39,
+      "collision": {
+        "x": 34,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_19_3",
+      "file": "free-furniture-sprites/sprite-19-3.png",
+      "name": "sprite 19 3",
+      "category": "free",
+      "width": 72,
+      "height": 54,
+      "footX": 36,
+      "footY": 54,
+      "collision": {
+        "x": 28,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_2_1",
+      "file": "free-furniture-sprites/sprite-2-1.png",
+      "name": "sprite 2 1",
+      "category": "free",
+      "width": 87,
+      "height": 210,
+      "footX": 43,
+      "footY": 210,
+      "collision": {
+        "x": 35,
+        "y": 202,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_2_2",
+      "file": "free-furniture-sprites/sprite-2-2.png",
+      "name": "sprite 2 2",
+      "category": "free",
+      "width": 39,
+      "height": 48,
+      "footX": 19,
+      "footY": 48,
+      "collision": {
+        "x": 11,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_2_3",
+      "file": "free-furniture-sprites/sprite-2-3.png",
+      "name": "sprite 2 3",
+      "category": "free",
+      "width": 96,
+      "height": 237,
+      "footX": 48,
+      "footY": 237,
+      "collision": {
+        "x": 40,
+        "y": 229,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_2_4",
+      "file": "free-furniture-sprites/sprite-2-4.png",
+      "name": "sprite 2 4",
+      "category": "free",
+      "width": 156,
+      "height": 222,
+      "footX": 78,
+      "footY": 222,
+      "collision": {
+        "x": 70,
+        "y": 214,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_2_5",
+      "file": "free-furniture-sprites/sprite-2-5.png",
+      "name": "sprite 2 5",
+      "category": "free",
+      "width": 36,
+      "height": 27,
+      "footX": 18,
+      "footY": 27,
+      "collision": {
+        "x": 10,
+        "y": 19,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_20_1",
+      "file": "free-furniture-sprites/sprite-20-1.png",
+      "name": "sprite 20 1",
+      "category": "free",
+      "width": 144,
+      "height": 78,
+      "footX": 72,
+      "footY": 78,
+      "collision": {
+        "x": 64,
+        "y": 70,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_20_2",
+      "file": "free-furniture-sprites/sprite-20-2.png",
+      "name": "sprite 20 2",
+      "category": "free",
+      "width": 42,
+      "height": 66,
+      "footX": 21,
+      "footY": 66,
+      "collision": {
+        "x": 13,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_20_3",
+      "file": "free-furniture-sprites/sprite-20-3.png",
+      "name": "sprite 20 3",
+      "category": "free",
+      "width": 39,
+      "height": 75,
+      "footX": 19,
+      "footY": 75,
+      "collision": {
+        "x": 11,
+        "y": 67,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_20_4",
+      "file": "free-furniture-sprites/sprite-20-4.png",
+      "name": "sprite 20 4",
+      "category": "free",
+      "width": 39,
+      "height": 75,
+      "footX": 19,
+      "footY": 75,
+      "collision": {
+        "x": 11,
+        "y": 67,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_20_5",
+      "file": "free-furniture-sprites/sprite-20-5.png",
+      "name": "sprite 20 5",
+      "category": "free",
+      "width": 63,
+      "height": 39,
+      "footX": 31,
+      "footY": 39,
+      "collision": {
+        "x": 23,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_21_1",
+      "file": "free-furniture-sprites/sprite-21-1.png",
+      "name": "sprite 21 1",
+      "category": "free",
+      "width": 63,
+      "height": 42,
+      "footX": 31,
+      "footY": 42,
+      "collision": {
+        "x": 23,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_21_2",
+      "file": "free-furniture-sprites/sprite-21-2.png",
+      "name": "sprite 21 2",
+      "category": "free",
+      "width": 84,
+      "height": 39,
+      "footX": 42,
+      "footY": 39,
+      "collision": {
+        "x": 34,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_21_3",
+      "file": "free-furniture-sprites/sprite-21-3.png",
+      "name": "sprite 21 3",
+      "category": "free",
+      "width": 72,
+      "height": 54,
+      "footX": 36,
+      "footY": 54,
+      "collision": {
+        "x": 28,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_22_1",
+      "file": "free-furniture-sprites/sprite-22-1.png",
+      "name": "sprite 22 1",
+      "category": "free",
+      "width": 63,
+      "height": 42,
+      "footX": 31,
+      "footY": 42,
+      "collision": {
+        "x": 23,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_22_2",
+      "file": "free-furniture-sprites/sprite-22-2.png",
+      "name": "sprite 22 2",
+      "category": "free",
+      "width": 63,
+      "height": 42,
+      "footX": 31,
+      "footY": 42,
+      "collision": {
+        "x": 23,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_22_3",
+      "file": "free-furniture-sprites/sprite-22-3.png",
+      "name": "sprite 22 3",
+      "category": "free",
+      "width": 75,
+      "height": 60,
+      "footX": 37,
+      "footY": 60,
+      "collision": {
+        "x": 29,
+        "y": 52,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_22_4",
+      "file": "free-furniture-sprites/sprite-22-4.png",
+      "name": "sprite 22 4",
+      "category": "free",
+      "width": 75,
+      "height": 60,
+      "footX": 37,
+      "footY": 60,
+      "collision": {
+        "x": 29,
+        "y": 52,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_22_5",
+      "file": "free-furniture-sprites/sprite-22-5.png",
+      "name": "sprite 22 5",
+      "category": "free",
+      "width": 96,
+      "height": 84,
+      "footX": 48,
+      "footY": 84,
+      "collision": {
+        "x": 40,
+        "y": 76,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_23_1",
+      "file": "free-furniture-sprites/sprite-23-1.png",
+      "name": "sprite 23 1",
+      "category": "free",
+      "width": 21,
+      "height": 24,
+      "footX": 10,
+      "footY": 24,
+      "collision": {
+        "x": 2,
+        "y": 16,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_24_1",
+      "file": "free-furniture-sprites/sprite-24-1.png",
+      "name": "sprite 24 1",
+      "category": "free",
+      "width": 114,
+      "height": 75,
+      "footX": 57,
+      "footY": 75,
+      "collision": {
+        "x": 49,
+        "y": 67,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_24_2",
+      "file": "free-furniture-sprites/sprite-24-2.png",
+      "name": "sprite 24 2",
+      "category": "free",
+      "width": 21,
+      "height": 24,
+      "footX": 10,
+      "footY": 24,
+      "collision": {
+        "x": 2,
+        "y": 16,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_24_3",
+      "file": "free-furniture-sprites/sprite-24-3.png",
+      "name": "sprite 24 3",
+      "category": "free",
+      "width": 36,
+      "height": 48,
+      "footX": 18,
+      "footY": 48,
+      "collision": {
+        "x": 10,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_24_4",
+      "file": "free-furniture-sprites/sprite-24-4.png",
+      "name": "sprite 24 4",
+      "category": "free",
+      "width": 36,
+      "height": 48,
+      "footX": 18,
+      "footY": 48,
+      "collision": {
+        "x": 10,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_25_1",
+      "file": "free-furniture-sprites/sprite-25-1.png",
+      "name": "sprite 25 1",
+      "category": "free",
+      "width": 18,
+      "height": 27,
+      "footX": 9,
+      "footY": 27,
+      "collision": {
+        "x": 1,
+        "y": 19,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_25_2",
+      "file": "free-furniture-sprites/sprite-25-2.png",
+      "name": "sprite 25 2",
+      "category": "free",
+      "width": 78,
+      "height": 84,
+      "footX": 39,
+      "footY": 84,
+      "collision": {
+        "x": 31,
+        "y": 76,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_25_3",
+      "file": "free-furniture-sprites/sprite-25-3.png",
+      "name": "sprite 25 3",
+      "category": "free",
+      "width": 48,
+      "height": 84,
+      "footX": 24,
+      "footY": 84,
+      "collision": {
+        "x": 16,
+        "y": 76,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_26_1",
+      "file": "free-furniture-sprites/sprite-26-1.png",
+      "name": "sprite 26 1",
+      "category": "free",
+      "width": 192,
+      "height": 75,
+      "footX": 96,
+      "footY": 75,
+      "collision": {
+        "x": 88,
+        "y": 67,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_26_2",
+      "file": "free-furniture-sprites/sprite-26-2.png",
+      "name": "sprite 26 2",
+      "category": "free",
+      "width": 18,
+      "height": 27,
+      "footX": 9,
+      "footY": 27,
+      "collision": {
+        "x": 1,
+        "y": 19,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_26_3",
+      "file": "free-furniture-sprites/sprite-26-3.png",
+      "name": "sprite 26 3",
+      "category": "free",
+      "width": 84,
+      "height": 63,
+      "footX": 42,
+      "footY": 63,
+      "collision": {
+        "x": 34,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_26_4",
+      "file": "free-furniture-sprites/sprite-26-4.png",
+      "name": "sprite 26 4",
+      "category": "free",
+      "width": 36,
+      "height": 48,
+      "footX": 18,
+      "footY": 48,
+      "collision": {
+        "x": 10,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_1",
+      "file": "free-furniture-sprites/sprite-27-1.png",
+      "name": "sprite 27 1",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_10",
+      "file": "free-furniture-sprites/sprite-27-10.png",
+      "name": "sprite 27 10",
+      "category": "free",
+      "width": 30,
+      "height": 63,
+      "footX": 15,
+      "footY": 63,
+      "collision": {
+        "x": 7,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_11",
+      "file": "free-furniture-sprites/sprite-27-11.png",
+      "name": "sprite 27 11",
+      "category": "free",
+      "width": 30,
+      "height": 63,
+      "footX": 15,
+      "footY": 63,
+      "collision": {
+        "x": 7,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_2",
+      "file": "free-furniture-sprites/sprite-27-2.png",
+      "name": "sprite 27 2",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_3",
+      "file": "free-furniture-sprites/sprite-27-3.png",
+      "name": "sprite 27 3",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_4",
+      "file": "free-furniture-sprites/sprite-27-4.png",
+      "name": "sprite 27 4",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_5",
+      "file": "free-furniture-sprites/sprite-27-5.png",
+      "name": "sprite 27 5",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_6",
+      "file": "free-furniture-sprites/sprite-27-6.png",
+      "name": "sprite 27 6",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_7",
+      "file": "free-furniture-sprites/sprite-27-7.png",
+      "name": "sprite 27 7",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_8",
+      "file": "free-furniture-sprites/sprite-27-8.png",
+      "name": "sprite 27 8",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_27_9",
+      "file": "free-furniture-sprites/sprite-27-9.png",
+      "name": "sprite 27 9",
+      "category": "free",
+      "width": 30,
+      "height": 63,
+      "footX": 15,
+      "footY": 63,
+      "collision": {
+        "x": 7,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_28_1",
+      "file": "free-furniture-sprites/sprite-28-1.png",
+      "name": "sprite 28 1",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_28_2",
+      "file": "free-furniture-sprites/sprite-28-2.png",
+      "name": "sprite 28 2",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_28_3",
+      "file": "free-furniture-sprites/sprite-28-3.png",
+      "name": "sprite 28 3",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_28_4",
+      "file": "free-furniture-sprites/sprite-28-4.png",
+      "name": "sprite 28 4",
+      "category": "free",
+      "width": 42,
+      "height": 42,
+      "footX": 21,
+      "footY": 42,
+      "collision": {
+        "x": 13,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_29_1",
+      "file": "free-furniture-sprites/sprite-29-1.png",
+      "name": "sprite 29 1",
+      "category": "free",
+      "width": 432,
+      "height": 81,
+      "footX": 216,
+      "footY": 81,
+      "collision": {
+        "x": 208,
+        "y": 73,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_29_2",
+      "file": "free-furniture-sprites/sprite-29-2.png",
+      "name": "sprite 29 2",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_29_3",
+      "file": "free-furniture-sprites/sprite-29-3.png",
+      "name": "sprite 29 3",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_29_4",
+      "file": "free-furniture-sprites/sprite-29-4.png",
+      "name": "sprite 29 4",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_29_5",
+      "file": "free-furniture-sprites/sprite-29-5.png",
+      "name": "sprite 29 5",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_29_6",
+      "file": "free-furniture-sprites/sprite-29-6.png",
+      "name": "sprite 29 6",
+      "category": "free",
+      "width": 30,
+      "height": 63,
+      "footX": 15,
+      "footY": 63,
+      "collision": {
+        "x": 7,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_29_7",
+      "file": "free-furniture-sprites/sprite-29-7.png",
+      "name": "sprite 29 7",
+      "category": "free",
+      "width": 30,
+      "height": 63,
+      "footX": 15,
+      "footY": 63,
+      "collision": {
+        "x": 7,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_29_8",
+      "file": "free-furniture-sprites/sprite-29-8.png",
+      "name": "sprite 29 8",
+      "category": "free",
+      "width": 30,
+      "height": 63,
+      "footX": 15,
+      "footY": 63,
+      "collision": {
+        "x": 7,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_3_1",
+      "file": "free-furniture-sprites/sprite-3-1.png",
+      "name": "sprite 3 1",
+      "category": "free",
+      "width": 126,
+      "height": 162,
+      "footX": 63,
+      "footY": 162,
+      "collision": {
+        "x": 55,
+        "y": 154,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_3_2",
+      "file": "free-furniture-sprites/sprite-3-2.png",
+      "name": "sprite 3 2",
+      "category": "free",
+      "width": 9,
+      "height": 69,
+      "footX": 4,
+      "footY": 69,
+      "collision": {
+        "x": 0,
+        "y": 61,
+        "w": 9,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_3_3",
+      "file": "free-furniture-sprites/sprite-3-3.png",
+      "name": "sprite 3 3",
+      "category": "free",
+      "width": 51,
+      "height": 48,
+      "footX": 25,
+      "footY": 48,
+      "collision": {
+        "x": 17,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_3_4",
+      "file": "free-furniture-sprites/sprite-3-4.png",
+      "name": "sprite 3 4",
+      "category": "free",
+      "width": 36,
+      "height": 27,
+      "footX": 18,
+      "footY": 27,
+      "collision": {
+        "x": 10,
+        "y": 19,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_1",
+      "file": "free-furniture-sprites/sprite-30-1.png",
+      "name": "sprite 30 1",
+      "category": "free",
+      "width": 42,
+      "height": 69,
+      "footX": 21,
+      "footY": 69,
+      "collision": {
+        "x": 13,
+        "y": 61,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_2",
+      "file": "free-furniture-sprites/sprite-30-2.png",
+      "name": "sprite 30 2",
+      "category": "free",
+      "width": 192,
+      "height": 69,
+      "footX": 96,
+      "footY": 69,
+      "collision": {
+        "x": 88,
+        "y": 61,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_3",
+      "file": "free-furniture-sprites/sprite-30-3.png",
+      "name": "sprite 30 3",
+      "category": "free",
+      "width": 84,
+      "height": 75,
+      "footX": 42,
+      "footY": 75,
+      "collision": {
+        "x": 34,
+        "y": 67,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_4",
+      "file": "free-furniture-sprites/sprite-30-4.png",
+      "name": "sprite 30 4",
+      "category": "free",
+      "width": 72,
+      "height": 105,
+      "footX": 36,
+      "footY": 105,
+      "collision": {
+        "x": 28,
+        "y": 97,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_5",
+      "file": "free-furniture-sprites/sprite-30-5.png",
+      "name": "sprite 30 5",
+      "category": "free",
+      "width": 39,
+      "height": 57,
+      "footX": 19,
+      "footY": 57,
+      "collision": {
+        "x": 11,
+        "y": 49,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_6",
+      "file": "free-furniture-sprites/sprite-30-6.png",
+      "name": "sprite 30 6",
+      "category": "free",
+      "width": 39,
+      "height": 57,
+      "footX": 19,
+      "footY": 57,
+      "collision": {
+        "x": 11,
+        "y": 49,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_7",
+      "file": "free-furniture-sprites/sprite-30-7.png",
+      "name": "sprite 30 7",
+      "category": "free",
+      "width": 72,
+      "height": 105,
+      "footX": 36,
+      "footY": 105,
+      "collision": {
+        "x": 28,
+        "y": 97,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_8",
+      "file": "free-furniture-sprites/sprite-30-8.png",
+      "name": "sprite 30 8",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_30_9",
+      "file": "free-furniture-sprites/sprite-30-9.png",
+      "name": "sprite 30 9",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_1",
+      "file": "free-furniture-sprites/sprite-31-1.png",
+      "name": "sprite 31 1",
+      "category": "free",
+      "width": 42,
+      "height": 33,
+      "footX": 21,
+      "footY": 33,
+      "collision": {
+        "x": 13,
+        "y": 25,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_2",
+      "file": "free-furniture-sprites/sprite-31-2.png",
+      "name": "sprite 31 2",
+      "category": "free",
+      "width": 42,
+      "height": 48,
+      "footX": 21,
+      "footY": 48,
+      "collision": {
+        "x": 13,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_3",
+      "file": "free-furniture-sprites/sprite-31-3.png",
+      "name": "sprite 31 3",
+      "category": "free",
+      "width": 39,
+      "height": 66,
+      "footX": 19,
+      "footY": 66,
+      "collision": {
+        "x": 11,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_4",
+      "file": "free-furniture-sprites/sprite-31-4.png",
+      "name": "sprite 31 4",
+      "category": "free",
+      "width": 36,
+      "height": 63,
+      "footX": 18,
+      "footY": 63,
+      "collision": {
+        "x": 10,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_5",
+      "file": "free-furniture-sprites/sprite-31-5.png",
+      "name": "sprite 31 5",
+      "category": "free",
+      "width": 39,
+      "height": 66,
+      "footX": 19,
+      "footY": 66,
+      "collision": {
+        "x": 11,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_6",
+      "file": "free-furniture-sprites/sprite-31-6.png",
+      "name": "sprite 31 6",
+      "category": "free",
+      "width": 66,
+      "height": 66,
+      "footX": 33,
+      "footY": 66,
+      "collision": {
+        "x": 25,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_7",
+      "file": "free-furniture-sprites/sprite-31-7.png",
+      "name": "sprite 31 7",
+      "category": "free",
+      "width": 84,
+      "height": 66,
+      "footX": 42,
+      "footY": 66,
+      "collision": {
+        "x": 34,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_8",
+      "file": "free-furniture-sprites/sprite-31-8.png",
+      "name": "sprite 31 8",
+      "category": "free",
+      "width": 141,
+      "height": 162,
+      "footX": 70,
+      "footY": 162,
+      "collision": {
+        "x": 62,
+        "y": 154,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_31_9",
+      "file": "free-furniture-sprites/sprite-31-9.png",
+      "name": "sprite 31 9",
+      "category": "free",
+      "width": 93,
+      "height": 63,
+      "footX": 46,
+      "footY": 63,
+      "collision": {
+        "x": 38,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_1",
+      "file": "free-furniture-sprites/sprite-32-1.png",
+      "name": "sprite 32 1",
+      "category": "free",
+      "width": 24,
+      "height": 39,
+      "footX": 12,
+      "footY": 39,
+      "collision": {
+        "x": 4,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_2",
+      "file": "free-furniture-sprites/sprite-32-2.png",
+      "name": "sprite 32 2",
+      "category": "free",
+      "width": 24,
+      "height": 39,
+      "footX": 12,
+      "footY": 39,
+      "collision": {
+        "x": 4,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_3",
+      "file": "free-furniture-sprites/sprite-32-3.png",
+      "name": "sprite 32 3",
+      "category": "free",
+      "width": 66,
+      "height": 66,
+      "footX": 33,
+      "footY": 66,
+      "collision": {
+        "x": 25,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_4",
+      "file": "free-furniture-sprites/sprite-32-4.png",
+      "name": "sprite 32 4",
+      "category": "free",
+      "width": 39,
+      "height": 66,
+      "footX": 19,
+      "footY": 66,
+      "collision": {
+        "x": 11,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_5",
+      "file": "free-furniture-sprites/sprite-32-5.png",
+      "name": "sprite 32 5",
+      "category": "free",
+      "width": 36,
+      "height": 63,
+      "footX": 18,
+      "footY": 63,
+      "collision": {
+        "x": 10,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_6",
+      "file": "free-furniture-sprites/sprite-32-6.png",
+      "name": "sprite 32 6",
+      "category": "free",
+      "width": 39,
+      "height": 66,
+      "footX": 19,
+      "footY": 66,
+      "collision": {
+        "x": 11,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_7",
+      "file": "free-furniture-sprites/sprite-32-7.png",
+      "name": "sprite 32 7",
+      "category": "free",
+      "width": 84,
+      "height": 75,
+      "footX": 42,
+      "footY": 75,
+      "collision": {
+        "x": 34,
+        "y": 67,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_8",
+      "file": "free-furniture-sprites/sprite-32-8.png",
+      "name": "sprite 32 8",
+      "category": "free",
+      "width": 84,
+      "height": 69,
+      "footX": 42,
+      "footY": 69,
+      "collision": {
+        "x": 34,
+        "y": 61,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_32_9",
+      "file": "free-furniture-sprites/sprite-32-9.png",
+      "name": "sprite 32 9",
+      "category": "free",
+      "width": 12,
+      "height": 105,
+      "footX": 6,
+      "footY": 105,
+      "collision": {
+        "x": 0,
+        "y": 97,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_33_1",
+      "file": "free-furniture-sprites/sprite-33-1.png",
+      "name": "sprite 33 1",
+      "category": "free",
+      "width": 78,
+      "height": 39,
+      "footX": 39,
+      "footY": 39,
+      "collision": {
+        "x": 31,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_34_1",
+      "file": "free-furniture-sprites/sprite-34-1.png",
+      "name": "sprite 34 1",
+      "category": "free",
+      "width": 129,
+      "height": 84,
+      "footX": 64,
+      "footY": 84,
+      "collision": {
+        "x": 56,
+        "y": 76,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_34_2",
+      "file": "free-furniture-sprites/sprite-34-2.png",
+      "name": "sprite 34 2",
+      "category": "free",
+      "width": 144,
+      "height": 84,
+      "footX": 72,
+      "footY": 84,
+      "collision": {
+        "x": 64,
+        "y": 76,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_35_1",
+      "file": "free-furniture-sprites/sprite-35-1.png",
+      "name": "sprite 35 1",
+      "category": "free",
+      "width": 90,
+      "height": 54,
+      "footX": 45,
+      "footY": 54,
+      "collision": {
+        "x": 37,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_35_2",
+      "file": "free-furniture-sprites/sprite-35-2.png",
+      "name": "sprite 35 2",
+      "category": "free",
+      "width": 54,
+      "height": 93,
+      "footX": 27,
+      "footY": 93,
+      "collision": {
+        "x": 19,
+        "y": 85,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_35_3",
+      "file": "free-furniture-sprites/sprite-35-3.png",
+      "name": "sprite 35 3",
+      "category": "free",
+      "width": 69,
+      "height": 93,
+      "footX": 34,
+      "footY": 93,
+      "collision": {
+        "x": 26,
+        "y": 85,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_36_1",
+      "file": "free-furniture-sprites/sprite-36-1.png",
+      "name": "sprite 36 1",
+      "category": "free",
+      "width": 78,
+      "height": 111,
+      "footX": 39,
+      "footY": 111,
+      "collision": {
+        "x": 31,
+        "y": 103,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_36_2",
+      "file": "free-furniture-sprites/sprite-36-2.png",
+      "name": "sprite 36 2",
+      "category": "free",
+      "width": 90,
+      "height": 45,
+      "footX": 45,
+      "footY": 45,
+      "collision": {
+        "x": 37,
+        "y": 37,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_36_3",
+      "file": "free-furniture-sprites/sprite-36-3.png",
+      "name": "sprite 36 3",
+      "category": "free",
+      "width": 42,
+      "height": 69,
+      "footX": 21,
+      "footY": 69,
+      "collision": {
+        "x": 13,
+        "y": 61,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_37_1",
+      "file": "free-furniture-sprites/sprite-37-1.png",
+      "name": "sprite 37 1",
+      "category": "free",
+      "width": 48,
+      "height": 93,
+      "footX": 24,
+      "footY": 93,
+      "collision": {
+        "x": 16,
+        "y": 85,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_37_2",
+      "file": "free-furniture-sprites/sprite-37-2.png",
+      "name": "sprite 37 2",
+      "category": "free",
+      "width": 90,
+      "height": 93,
+      "footX": 45,
+      "footY": 93,
+      "collision": {
+        "x": 37,
+        "y": 85,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_37_3",
+      "file": "free-furniture-sprites/sprite-37-3.png",
+      "name": "sprite 37 3",
+      "category": "free",
+      "width": 114,
+      "height": 111,
+      "footX": 57,
+      "footY": 111,
+      "collision": {
+        "x": 49,
+        "y": 103,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_38_1",
+      "file": "free-furniture-sprites/sprite-38-1.png",
+      "name": "sprite 38 1",
+      "category": "free",
+      "width": 66,
+      "height": 54,
+      "footX": 33,
+      "footY": 54,
+      "collision": {
+        "x": 25,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_38_2",
+      "file": "free-furniture-sprites/sprite-38-2.png",
+      "name": "sprite 38 2",
+      "category": "free",
+      "width": 81,
+      "height": 30,
+      "footX": 40,
+      "footY": 30,
+      "collision": {
+        "x": 32,
+        "y": 22,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_1",
+      "file": "free-furniture-sprites/sprite-39-1.png",
+      "name": "sprite 39 1",
+      "category": "free",
+      "width": 36,
+      "height": 42,
+      "footX": 18,
+      "footY": 42,
+      "collision": {
+        "x": 10,
+        "y": 34,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_2",
+      "file": "free-furniture-sprites/sprite-39-2.png",
+      "name": "sprite 39 2",
+      "category": "free",
+      "width": 42,
+      "height": 96,
+      "footX": 21,
+      "footY": 96,
+      "collision": {
+        "x": 13,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_3",
+      "file": "free-furniture-sprites/sprite-39-3.png",
+      "name": "sprite 39 3",
+      "category": "free",
+      "width": 84,
+      "height": 90,
+      "footX": 42,
+      "footY": 90,
+      "collision": {
+        "x": 34,
+        "y": 82,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_4",
+      "file": "free-furniture-sprites/sprite-39-4.png",
+      "name": "sprite 39 4",
+      "category": "free",
+      "width": 84,
+      "height": 90,
+      "footX": 42,
+      "footY": 90,
+      "collision": {
+        "x": 34,
+        "y": 82,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_5",
+      "file": "free-furniture-sprites/sprite-39-5.png",
+      "name": "sprite 39 5",
+      "category": "free",
+      "width": 45,
+      "height": 96,
+      "footX": 22,
+      "footY": 96,
+      "collision": {
+        "x": 14,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_6",
+      "file": "free-furniture-sprites/sprite-39-6.png",
+      "name": "sprite 39 6",
+      "category": "free",
+      "width": 81,
+      "height": 117,
+      "footX": 40,
+      "footY": 117,
+      "collision": {
+        "x": 32,
+        "y": 109,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_7",
+      "file": "free-furniture-sprites/sprite-39-7.png",
+      "name": "sprite 39 7",
+      "category": "free",
+      "width": 81,
+      "height": 81,
+      "footX": 40,
+      "footY": 81,
+      "collision": {
+        "x": 32,
+        "y": 73,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_8",
+      "file": "free-furniture-sprites/sprite-39-8.png",
+      "name": "sprite 39 8",
+      "category": "free",
+      "width": 81,
+      "height": 96,
+      "footX": 40,
+      "footY": 96,
+      "collision": {
+        "x": 32,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_39_9",
+      "file": "free-furniture-sprites/sprite-39-9.png",
+      "name": "sprite 39 9",
+      "category": "free",
+      "width": 81,
+      "height": 96,
+      "footX": 40,
+      "footY": 96,
+      "collision": {
+        "x": 32,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_4_1",
+      "file": "free-furniture-sprites/sprite-4-1.png",
+      "name": "sprite 4 1",
+      "category": "free",
+      "width": 36,
+      "height": 27,
+      "footX": 18,
+      "footY": 27,
+      "collision": {
+        "x": 10,
+        "y": 19,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_40_1",
+      "file": "free-furniture-sprites/sprite-40-1.png",
+      "name": "sprite 40 1",
+      "category": "free",
+      "width": 27,
+      "height": 48,
+      "footX": 13,
+      "footY": 48,
+      "collision": {
+        "x": 5,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_40_2",
+      "file": "free-furniture-sprites/sprite-40-2.png",
+      "name": "sprite 40 2",
+      "category": "free",
+      "width": 48,
+      "height": 66,
+      "footX": 24,
+      "footY": 66,
+      "collision": {
+        "x": 16,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_40_3",
+      "file": "free-furniture-sprites/sprite-40-3.png",
+      "name": "sprite 40 3",
+      "category": "free",
+      "width": 48,
+      "height": 66,
+      "footX": 24,
+      "footY": 66,
+      "collision": {
+        "x": 16,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_40_4",
+      "file": "free-furniture-sprites/sprite-40-4.png",
+      "name": "sprite 40 4",
+      "category": "free",
+      "width": 81,
+      "height": 117,
+      "footX": 40,
+      "footY": 117,
+      "collision": {
+        "x": 32,
+        "y": 109,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_40_5",
+      "file": "free-furniture-sprites/sprite-40-5.png",
+      "name": "sprite 40 5",
+      "category": "free",
+      "width": 144,
+      "height": 117,
+      "footX": 72,
+      "footY": 117,
+      "collision": {
+        "x": 64,
+        "y": 109,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_41_1",
+      "file": "free-furniture-sprites/sprite-41-1.png",
+      "name": "sprite 41 1",
+      "category": "free",
+      "width": 90,
+      "height": 54,
+      "footX": 45,
+      "footY": 54,
+      "collision": {
+        "x": 37,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_41_2",
+      "file": "free-furniture-sprites/sprite-41-2.png",
+      "name": "sprite 41 2",
+      "category": "free",
+      "width": 90,
+      "height": 54,
+      "footX": 45,
+      "footY": 54,
+      "collision": {
+        "x": 37,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_41_3",
+      "file": "free-furniture-sprites/sprite-41-3.png",
+      "name": "sprite 41 3",
+      "category": "free",
+      "width": 96,
+      "height": 66,
+      "footX": 48,
+      "footY": 66,
+      "collision": {
+        "x": 40,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_41_4",
+      "file": "free-furniture-sprites/sprite-41-4.png",
+      "name": "sprite 41 4",
+      "category": "free",
+      "width": 36,
+      "height": 51,
+      "footX": 18,
+      "footY": 51,
+      "collision": {
+        "x": 10,
+        "y": 43,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_41_5",
+      "file": "free-furniture-sprites/sprite-41-5.png",
+      "name": "sprite 41 5",
+      "category": "free",
+      "width": 36,
+      "height": 57,
+      "footX": 18,
+      "footY": 57,
+      "collision": {
+        "x": 10,
+        "y": 49,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_42_1",
+      "file": "free-furniture-sprites/sprite-42-1.png",
+      "name": "sprite 42 1",
+      "category": "free",
+      "width": 30,
+      "height": 30,
+      "footX": 15,
+      "footY": 30,
+      "collision": {
+        "x": 7,
+        "y": 22,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_1",
+      "file": "free-furniture-sprites/sprite-43-1.png",
+      "name": "sprite 43 1",
+      "category": "free",
+      "width": 45,
+      "height": 51,
+      "footX": 22,
+      "footY": 51,
+      "collision": {
+        "x": 14,
+        "y": 43,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_10",
+      "file": "free-furniture-sprites/sprite-43-10.png",
+      "name": "sprite 43 10",
+      "category": "free",
+      "width": 36,
+      "height": 54,
+      "footX": 18,
+      "footY": 54,
+      "collision": {
+        "x": 10,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_2",
+      "file": "free-furniture-sprites/sprite-43-2.png",
+      "name": "sprite 43 2",
+      "category": "free",
+      "width": 42,
+      "height": 54,
+      "footX": 21,
+      "footY": 54,
+      "collision": {
+        "x": 13,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_3",
+      "file": "free-furniture-sprites/sprite-43-3.png",
+      "name": "sprite 43 3",
+      "category": "free",
+      "width": 42,
+      "height": 54,
+      "footX": 21,
+      "footY": 54,
+      "collision": {
+        "x": 13,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_4",
+      "file": "free-furniture-sprites/sprite-43-4.png",
+      "name": "sprite 43 4",
+      "category": "free",
+      "width": 75,
+      "height": 63,
+      "footX": 37,
+      "footY": 63,
+      "collision": {
+        "x": 29,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_5",
+      "file": "free-furniture-sprites/sprite-43-5.png",
+      "name": "sprite 43 5",
+      "category": "free",
+      "width": 288,
+      "height": 60,
+      "footX": 144,
+      "footY": 60,
+      "collision": {
+        "x": 136,
+        "y": 52,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_6",
+      "file": "free-furniture-sprites/sprite-43-6.png",
+      "name": "sprite 43 6",
+      "category": "free",
+      "width": 45,
+      "height": 72,
+      "footX": 22,
+      "footY": 72,
+      "collision": {
+        "x": 14,
+        "y": 64,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_7",
+      "file": "free-furniture-sprites/sprite-43-7.png",
+      "name": "sprite 43 7",
+      "category": "free",
+      "width": 45,
+      "height": 99,
+      "footX": 22,
+      "footY": 99,
+      "collision": {
+        "x": 14,
+        "y": 91,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_8",
+      "file": "free-furniture-sprites/sprite-43-8.png",
+      "name": "sprite 43 8",
+      "category": "free",
+      "width": 45,
+      "height": 99,
+      "footX": 22,
+      "footY": 99,
+      "collision": {
+        "x": 14,
+        "y": 91,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_43_9",
+      "file": "free-furniture-sprites/sprite-43-9.png",
+      "name": "sprite 43 9",
+      "category": "free",
+      "width": 36,
+      "height": 48,
+      "footX": 18,
+      "footY": 48,
+      "collision": {
+        "x": 10,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_44_1",
+      "file": "free-furniture-sprites/sprite-44-1.png",
+      "name": "sprite 44 1",
+      "category": "free",
+      "width": 144,
+      "height": 66,
+      "footX": 72,
+      "footY": 66,
+      "collision": {
+        "x": 64,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_44_2",
+      "file": "free-furniture-sprites/sprite-44-2.png",
+      "name": "sprite 44 2",
+      "category": "free",
+      "width": 75,
+      "height": 63,
+      "footX": 37,
+      "footY": 63,
+      "collision": {
+        "x": 29,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_44_3",
+      "file": "free-furniture-sprites/sprite-44-3.png",
+      "name": "sprite 44 3",
+      "category": "free",
+      "width": 144,
+      "height": 66,
+      "footX": 72,
+      "footY": 66,
+      "collision": {
+        "x": 64,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_44_4",
+      "file": "free-furniture-sprites/sprite-44-4.png",
+      "name": "sprite 44 4",
+      "category": "free",
+      "width": 48,
+      "height": 36,
+      "footX": 24,
+      "footY": 36,
+      "collision": {
+        "x": 16,
+        "y": 28,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_44_5",
+      "file": "free-furniture-sprites/sprite-44-5.png",
+      "name": "sprite 44 5",
+      "category": "free",
+      "width": 45,
+      "height": 75,
+      "footX": 22,
+      "footY": 75,
+      "collision": {
+        "x": 14,
+        "y": 67,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_44_6",
+      "file": "free-furniture-sprites/sprite-44-6.png",
+      "name": "sprite 44 6",
+      "category": "free",
+      "width": 36,
+      "height": 51,
+      "footX": 18,
+      "footY": 51,
+      "collision": {
+        "x": 10,
+        "y": 43,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_44_7",
+      "file": "free-furniture-sprites/sprite-44-7.png",
+      "name": "sprite 44 7",
+      "category": "free",
+      "width": 36,
+      "height": 57,
+      "footX": 18,
+      "footY": 57,
+      "collision": {
+        "x": 10,
+        "y": 49,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_45_1",
+      "file": "free-furniture-sprites/sprite-45-1.png",
+      "name": "sprite 45 1",
+      "category": "free",
+      "width": 144,
+      "height": 60,
+      "footX": 72,
+      "footY": 60,
+      "collision": {
+        "x": 64,
+        "y": 52,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_45_2",
+      "file": "free-furniture-sprites/sprite-45-2.png",
+      "name": "sprite 45 2",
+      "category": "free",
+      "width": 96,
+      "height": 60,
+      "footX": 48,
+      "footY": 60,
+      "collision": {
+        "x": 40,
+        "y": 52,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_45_3",
+      "file": "free-furniture-sprites/sprite-45-3.png",
+      "name": "sprite 45 3",
+      "category": "free",
+      "width": 15,
+      "height": 15,
+      "footX": 7,
+      "footY": 15,
+      "collision": {
+        "x": 0,
+        "y": 7,
+        "w": 15,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_45_4",
+      "file": "free-furniture-sprites/sprite-45-4.png",
+      "name": "sprite 45 4",
+      "category": "free",
+      "width": 36,
+      "height": 54,
+      "footX": 18,
+      "footY": 54,
+      "collision": {
+        "x": 10,
+        "y": 46,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_45_5",
+      "file": "free-furniture-sprites/sprite-45-5.png",
+      "name": "sprite 45 5",
+      "category": "free",
+      "width": 36,
+      "height": 60,
+      "footX": 18,
+      "footY": 60,
+      "collision": {
+        "x": 10,
+        "y": 52,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_46_1",
+      "file": "free-furniture-sprites/sprite-46-1.png",
+      "name": "sprite 46 1",
+      "category": "free",
+      "width": 75,
+      "height": 48,
+      "footX": 37,
+      "footY": 48,
+      "collision": {
+        "x": 29,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_46_2",
+      "file": "free-furniture-sprites/sprite-46-2.png",
+      "name": "sprite 46 2",
+      "category": "free",
+      "width": 96,
+      "height": 69,
+      "footX": 48,
+      "footY": 69,
+      "collision": {
+        "x": 40,
+        "y": 61,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_47_1",
+      "file": "free-furniture-sprites/sprite-47-1.png",
+      "name": "sprite 47 1",
+      "category": "free",
+      "width": 48,
+      "height": 60,
+      "footX": 24,
+      "footY": 60,
+      "collision": {
+        "x": 16,
+        "y": 52,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_47_2",
+      "file": "free-furniture-sprites/sprite-47-2.png",
+      "name": "sprite 47 2",
+      "category": "free",
+      "width": 81,
+      "height": 69,
+      "footX": 40,
+      "footY": 69,
+      "collision": {
+        "x": 32,
+        "y": 61,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_47_3",
+      "file": "free-furniture-sprites/sprite-47-3.png",
+      "name": "sprite 47 3",
+      "category": "free",
+      "width": 75,
+      "height": 63,
+      "footX": 37,
+      "footY": 63,
+      "collision": {
+        "x": 29,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_47_4",
+      "file": "free-furniture-sprites/sprite-47-4.png",
+      "name": "sprite 47 4",
+      "category": "free",
+      "width": 96,
+      "height": 63,
+      "footX": 48,
+      "footY": 63,
+      "collision": {
+        "x": 40,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_47_5",
+      "file": "free-furniture-sprites/sprite-47-5.png",
+      "name": "sprite 47 5",
+      "category": "free",
+      "width": 45,
+      "height": 36,
+      "footX": 22,
+      "footY": 36,
+      "collision": {
+        "x": 14,
+        "y": 28,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_47_6",
+      "file": "free-furniture-sprites/sprite-47-6.png",
+      "name": "sprite 47 6",
+      "category": "free",
+      "width": 48,
+      "height": 111,
+      "footX": 24,
+      "footY": 111,
+      "collision": {
+        "x": 16,
+        "y": 103,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_48_1",
+      "file": "free-furniture-sprites/sprite-48-1.png",
+      "name": "sprite 48 1",
+      "category": "free",
+      "width": 93,
+      "height": 66,
+      "footX": 46,
+      "footY": 66,
+      "collision": {
+        "x": 38,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_48_2",
+      "file": "free-furniture-sprites/sprite-48-2.png",
+      "name": "sprite 48 2",
+      "category": "free",
+      "width": 60,
+      "height": 96,
+      "footX": 30,
+      "footY": 96,
+      "collision": {
+        "x": 22,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_48_3",
+      "file": "free-furniture-sprites/sprite-48-3.png",
+      "name": "sprite 48 3",
+      "category": "free",
+      "width": 96,
+      "height": 57,
+      "footX": 48,
+      "footY": 57,
+      "collision": {
+        "x": 40,
+        "y": 49,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_48_4",
+      "file": "free-furniture-sprites/sprite-48-4.png",
+      "name": "sprite 48 4",
+      "category": "free",
+      "width": 39,
+      "height": 63,
+      "footX": 19,
+      "footY": 63,
+      "collision": {
+        "x": 11,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_49_1",
+      "file": "free-furniture-sprites/sprite-49-1.png",
+      "name": "sprite 49 1",
+      "category": "free",
+      "width": 45,
+      "height": 48,
+      "footX": 22,
+      "footY": 48,
+      "collision": {
+        "x": 14,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_49_2",
+      "file": "free-furniture-sprites/sprite-49-2.png",
+      "name": "sprite 49 2",
+      "category": "free",
+      "width": 45,
+      "height": 48,
+      "footX": 22,
+      "footY": 48,
+      "collision": {
+        "x": 14,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_5_1",
+      "file": "free-furniture-sprites/sprite-5-1.png",
+      "name": "sprite 5 1",
+      "category": "free",
+      "width": 48,
+      "height": 66,
+      "footX": 24,
+      "footY": 66,
+      "collision": {
+        "x": 16,
+        "y": 58,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_5_2",
+      "file": "free-furniture-sprites/sprite-5-2.png",
+      "name": "sprite 5 2",
+      "category": "free",
+      "width": 39,
+      "height": 48,
+      "footX": 19,
+      "footY": 48,
+      "collision": {
+        "x": 11,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_5_3",
+      "file": "free-furniture-sprites/sprite-5-3.png",
+      "name": "sprite 5 3",
+      "category": "free",
+      "width": 42,
+      "height": 63,
+      "footX": 21,
+      "footY": 63,
+      "collision": {
+        "x": 13,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_5_4",
+      "file": "free-furniture-sprites/sprite-5-4.png",
+      "name": "sprite 5 4",
+      "category": "free",
+      "width": 42,
+      "height": 63,
+      "footX": 21,
+      "footY": 63,
+      "collision": {
+        "x": 13,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_5_5",
+      "file": "free-furniture-sprites/sprite-5-5.png",
+      "name": "sprite 5 5",
+      "category": "free",
+      "width": 48,
+      "height": 63,
+      "footX": 24,
+      "footY": 63,
+      "collision": {
+        "x": 16,
+        "y": 55,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_50_1",
+      "file": "free-furniture-sprites/sprite-50-1.png",
+      "name": "sprite 50 1",
+      "category": "free",
+      "width": 60,
+      "height": 96,
+      "footX": 30,
+      "footY": 96,
+      "collision": {
+        "x": 22,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_50_2",
+      "file": "free-furniture-sprites/sprite-50-2.png",
+      "name": "sprite 50 2",
+      "category": "free",
+      "width": 288,
+      "height": 102,
+      "footX": 144,
+      "footY": 102,
+      "collision": {
+        "x": 136,
+        "y": 94,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_51_1",
+      "file": "free-furniture-sprites/sprite-51-1.png",
+      "name": "sprite 51 1",
+      "category": "free",
+      "width": 45,
+      "height": 48,
+      "footX": 22,
+      "footY": 48,
+      "collision": {
+        "x": 14,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_51_2",
+      "file": "free-furniture-sprites/sprite-51-2.png",
+      "name": "sprite 51 2",
+      "category": "free",
+      "width": 45,
+      "height": 48,
+      "footX": 22,
+      "footY": 48,
+      "collision": {
+        "x": 14,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_52_1",
+      "file": "free-furniture-sprites/sprite-52-1.png",
+      "name": "sprite 52 1",
+      "category": "free",
+      "width": 60,
+      "height": 96,
+      "footX": 30,
+      "footY": 96,
+      "collision": {
+        "x": 22,
+        "y": 88,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_53_1",
+      "file": "free-furniture-sprites/sprite-53-1.png",
+      "name": "sprite 53 1",
+      "category": "free",
+      "width": 39,
+      "height": 45,
+      "footX": 19,
+      "footY": 45,
+      "collision": {
+        "x": 11,
+        "y": 37,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_53_2",
+      "file": "free-furniture-sprites/sprite-53-2.png",
+      "name": "sprite 53 2",
+      "category": "free",
+      "width": 39,
+      "height": 45,
+      "footX": 19,
+      "footY": 45,
+      "collision": {
+        "x": 11,
+        "y": 37,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_53_3",
+      "file": "free-furniture-sprites/sprite-53-3.png",
+      "name": "sprite 53 3",
+      "category": "free",
+      "width": 39,
+      "height": 45,
+      "footX": 19,
+      "footY": 45,
+      "collision": {
+        "x": 11,
+        "y": 37,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_54_1",
+      "file": "free-furniture-sprites/sprite-54-1.png",
+      "name": "sprite 54 1",
+      "category": "free",
+      "width": 39,
+      "height": 45,
+      "footX": 19,
+      "footY": 45,
+      "collision": {
+        "x": 11,
+        "y": 37,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_55_1",
+      "file": "free-furniture-sprites/sprite-55-1.png",
+      "name": "sprite 55 1",
+      "category": "free",
+      "width": 39,
+      "height": 39,
+      "footX": 19,
+      "footY": 39,
+      "collision": {
+        "x": 11,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_55_2",
+      "file": "free-furniture-sprites/sprite-55-2.png",
+      "name": "sprite 55 2",
+      "category": "free",
+      "width": 39,
+      "height": 39,
+      "footX": 19,
+      "footY": 39,
+      "collision": {
+        "x": 11,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_56_1",
+      "file": "free-furniture-sprites/sprite-56-1.png",
+      "name": "sprite 56 1",
+      "category": "free",
+      "width": 39,
+      "height": 45,
+      "footX": 19,
+      "footY": 45,
+      "collision": {
+        "x": 11,
+        "y": 37,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_57_1",
+      "file": "free-furniture-sprites/sprite-57-1.png",
+      "name": "sprite 57 1",
+      "category": "free",
+      "width": 39,
+      "height": 45,
+      "footX": 19,
+      "footY": 45,
+      "collision": {
+        "x": 11,
+        "y": 37,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_6_1",
+      "file": "free-furniture-sprites/sprite-6-1.png",
+      "name": "sprite 6 1",
+      "category": "free",
+      "width": 114,
+      "height": 111,
+      "footX": 57,
+      "footY": 111,
+      "collision": {
+        "x": 49,
+        "y": 103,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_6_2",
+      "file": "free-furniture-sprites/sprite-6-2.png",
+      "name": "sprite 6 2",
+      "category": "free",
+      "width": 48,
+      "height": 111,
+      "footX": 24,
+      "footY": 111,
+      "collision": {
+        "x": 16,
+        "y": 103,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_6_3",
+      "file": "free-furniture-sprites/sprite-6-3.png",
+      "name": "sprite 6 3",
+      "category": "free",
+      "width": 114,
+      "height": 111,
+      "footX": 57,
+      "footY": 111,
+      "collision": {
+        "x": 49,
+        "y": 103,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_6_4",
+      "file": "free-furniture-sprites/sprite-6-4.png",
+      "name": "sprite 6 4",
+      "category": "free",
+      "width": 48,
+      "height": 111,
+      "footX": 24,
+      "footY": 111,
+      "collision": {
+        "x": 16,
+        "y": 103,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_6_5",
+      "file": "free-furniture-sprites/sprite-6-5.png",
+      "name": "sprite 6 5",
+      "category": "free",
+      "width": 48,
+      "height": 48,
+      "footX": 24,
+      "footY": 48,
+      "collision": {
+        "x": 16,
+        "y": 40,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_7_1",
+      "file": "free-furniture-sprites/sprite-7-1.png",
+      "name": "sprite 7 1",
+      "category": "free",
+      "width": 45,
+      "height": 39,
+      "footX": 22,
+      "footY": 39,
+      "collision": {
+        "x": 14,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_8_1",
+      "file": "free-furniture-sprites/sprite-8-1.png",
+      "name": "sprite 8 1",
+      "category": "free",
+      "width": 45,
+      "height": 39,
+      "footX": 22,
+      "footY": 39,
+      "collision": {
+        "x": 14,
+        "y": 31,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_8_2",
+      "file": "free-furniture-sprites/sprite-8-2.png",
+      "name": "sprite 8 2",
+      "category": "free",
+      "width": 120,
+      "height": 180,
+      "footX": 60,
+      "footY": 180,
+      "collision": {
+        "x": 52,
+        "y": 172,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
+      "id": "free_furniture_sprite_9_1",
+      "file": "free-furniture-sprites/sprite-9-1.png",
+      "name": "sprite 9 1",
+      "category": "free",
+      "width": 27,
+      "height": 24,
+      "footX": 13,
+      "footY": 24,
+      "collision": {
+        "x": 5,
+        "y": 16,
+        "w": 16,
+        "h": 8
+      }
+    },
+    {
       "id": "floors_slice_1",
       "file": "sierrassets/floors/Slice 1.png",
       "name": "floor 1",

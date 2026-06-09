@@ -1,5 +1,4 @@
 import {
-  CONVENTION_WIDTH,
   FLOOR_SUBTILE,
   ROAD_FLOOR_TOP,
   ROAD_HEIGHT,
@@ -7,6 +6,7 @@ import {
   WORLD_HEIGHT,
   ZOOM,
 } from '../core/constants';
+import { getConventionWidth } from './ConventionVenue';
 
 export type SceneFrameId = 'convention' | 'shop';
 
@@ -43,7 +43,7 @@ export interface WorldLayoutSnapshot {
  * zoom. Convention and shop keep constant world-pixel widths; only the road
  * grows or shrinks so the three zones exactly fill the visible band:
  *
- *   roadWidth = viewportWorldWidth − CONVENTION_WIDTH − SHOP_WIDTH
+ *   roadWidth = viewportWorldWidth − conventionWidth − SHOP_WIDTH
  *
  * Road width is snapped down to the 8px floor grid so tiles paint cleanly.
  */
@@ -52,11 +52,12 @@ export function computeWorldLayout(
   zoom: number = ZOOM,
 ): WorldLayoutSnapshot {
   const viewWorldW = viewportPxWidth / zoom;
-  let roadWidth = viewWorldW - CONVENTION_WIDTH - SHOP_WIDTH;
+  const conventionWidth = getConventionWidth();
+  let roadWidth = viewWorldW - conventionWidth - SHOP_WIDTH;
   roadWidth = Math.max(MIN_ROAD_WIDTH, roadWidth);
   roadWidth = Math.floor(roadWidth / FLOOR_SUBTILE) * FLOOR_SUBTILE;
 
-  const shopX = CONVENTION_WIDTH + roadWidth;
+  const shopX = conventionWidth + roadWidth;
   const worldWidth = shopX + SHOP_WIDTH;
 
   return {
@@ -66,11 +67,11 @@ export function computeWorldLayout(
       id: 'convention',
       x: 0,
       y: 0,
-      width: CONVENTION_WIDTH,
+      width: conventionWidth,
       height: WORLD_HEIGHT,
     },
     roadZone: {
-      x: CONVENTION_WIDTH,
+      x: conventionWidth,
       y: ROAD_FLOOR_TOP,
       width: roadWidth,
       height: ROAD_HEIGHT,

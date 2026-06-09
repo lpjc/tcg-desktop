@@ -1,0 +1,16 @@
+{
+  "id": "wide_lobby",
+  "name": "Wide Lobby Expo",
+  "width": 480,
+  "rooms": [
+    { "id": "main_hall", "x": 0, "width": 256, "floorTop": 18, "label": "Main hall" },
+    { "id": "small_hall", "x": 256, "width": 80, "floorTop": 40, "label": "Hall" },
+    { "id": "lobby", "x": 336, "width": 144, "floorTop": 52, "label": "Lobby" }
+  ],
+  "floor": {
+    "fill": "floors_slice_1",
+    "border": "floors_slice_13",
+    "lipColor": "c8a868"
+  },
+  "booth": { "x": 48, "y": 84 }
+}

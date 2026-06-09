@@ -13,6 +13,28 @@ function pngSize(filePath) {
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
 }
 
+function catalogEntry({ id, file, name, category, size }) {
+  const footX = Math.floor(size.width / 2);
+  const footY = size.height;
+  const collisionH = Math.min(8, size.height);
+  return {
+    id,
+    file,
+    name,
+    category,
+    width: size.width,
+    height: size.height,
+    footX,
+    footY,
+    collision: {
+      x: Math.max(0, footX - 8),
+      y: footY - collisionH,
+      w: Math.min(16, size.width),
+      h: collisionH,
+    },
+  };
+}
+
 function scanFolder(folder, prefix, category) {
   const dir = path.join(assetsRoot, folder);
   if (!fs.existsSync(dir)) return [];
@@ -24,26 +46,37 @@ function scanFolder(folder, prefix, category) {
       const size = pngSize(path.join(dir, file));
       if (!size) return null;
       const sliceNum = file.match(/\d+/)?.[0] ?? '0';
-      const id = `${prefix}_slice_${sliceNum}`;
-      const footX = Math.floor(size.width / 2);
-      const footY = size.height;
-      const collisionH = Math.min(8, size.height);
-      return {
-        id,
+      return catalogEntry({
+        id: `${prefix}_slice_${sliceNum}`,
         file: `sierrassets/${folder}/${file}`,
         name: `${category} ${sliceNum}`,
         category,
-        width: size.width,
-        height: size.height,
-        footX,
-        footY,
-        collision: {
-          x: Math.max(0, footX - 8),
-          y: footY - collisionH,
-          w: Math.min(16, size.width),
-          h: collisionH,
-        },
-      };
+        size,
+      });
+    })
+    .filter(Boolean);
+}
+
+function scanFreeFurniture() {
+  const dir = path.join(root, 'assets', 'free-furniture-sprites');
+  if (!fs.existsSync(dir)) return [];
+
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.png'))
+    .map((file) => {
+      const size = pngSize(path.join(dir, file));
+      if (!size) return null;
+      const slug = file.replace(/\.png$/i, '').replace(/-/g, '_');
+      return catalogEntry({
+        id: `free_furniture_${slug}`,
+        file: `free-furniture-sprites/${file}`,
+        name: file.replace(/\.png$/i, '').replace(/-/g, ' '),
+        // Own category so the large free pack gets a dedicated editor tab
+        // instead of being buried behind the Sierra furniture list.
+        category: 'free',
+        size,
+      });
     })
     .filter(Boolean);
 }
@@ -57,6 +90,7 @@ const catalog = {
   },
   items: [
     ...scanFolder('furniture', 'furniture', 'furniture'),
+    ...scanFreeFurniture(),
     ...scanFolder('floors', 'floors', 'floor'),
     ...scanFolder('pets', 'pets', 'pet'),
   ],

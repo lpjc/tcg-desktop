@@ -16,11 +16,8 @@ export const ZOOM = 2;
  */
 export const BAND_HEIGHT = 96;
 
-/** Fixed world-pixel width of the convention zone (left). */
-export const CONVENTION_WIDTH = 320;
-
 /** Fixed world-pixel width of the shop zone (right). Road flexes between them. */
-export const SHOP_WIDTH = 320;
+export const SHOP_WIDTH = 200;
 
 export const WORLD_HEIGHT = BAND_HEIGHT;
 
@@ -31,8 +28,8 @@ export const WORLD_HEIGHT = BAND_HEIGHT;
  * Convention: tall floor on the left; shop: medium floor on the right; road: a
  * shallow strip at the bottom of the centre column only.
  */
-export const CONVENTION_FLOOR_TOP = 28;
-export const SHOP_FLOOR_TOP = 40;
+/** Matches tallest convention room — see `ConventionVenue.ts`. */
+export const SHOP_FLOOR_TOP = 18;
 export const ROAD_FLOOR_TOP = 72;
 
 export const ROAD_HEIGHT = WORLD_HEIGHT - ROAD_FLOOR_TOP;

@@ -1,149 +1,172 @@
-import { app, BrowserWindow, ipcMain, screen, globalShortcut } from 'electron';
-import path from 'node:path';
-import fs from 'node:fs/promises';
-
-/** Must match ZOOM and BAND_HEIGHT in src/core/constants.ts */
-const ZOOM = 2;
-const BAND_HEIGHT = 96;
-const WINDOW_HEIGHT = BAND_HEIGHT * ZOOM;
-
-const isDev = !app.isPackaged;
-// Set DEBUG_OPAQUE=1 to render the overlay as a normal opaque, framed window.
-const DEBUG_OPAQUE = process.env.DEBUG_OPAQUE === '1';
-
-let mainWindow: BrowserWindow | null = null;
-let clickThroughEnabled = true;
-
-function layoutsDir(): string {
-  return path.join(app.getAppPath(), 'assets', 'layouts');
-}
-
-/**
- * Pin the overlay to the bottom of the monitor it sits on, spanning the full
- * work-area width. Called on create and when display metrics change.
- */
-function snapToDisplayBand(win: BrowserWindow): void {
-  const display = screen.getDisplayMatching(win.getBounds());
-  const { workArea } = display;
-  win.setBounds({
-    x: workArea.x,
-    y: workArea.y + workArea.height - WINDOW_HEIGHT,
-    width: workArea.width,
-    height: WINDOW_HEIGHT,
-  });
-}
-
-function createWindow(): void {
-  const { workArea } = screen.getPrimaryDisplay();
-
-  mainWindow = new BrowserWindow({
-    x: workArea.x,
-    y: workArea.y + workArea.height - WINDOW_HEIGHT,
-    width: workArea.width,
-    height: WINDOW_HEIGHT,
-    transparent: !DEBUG_OPAQUE,
-    frame: DEBUG_OPAQUE,
-    alwaysOnTop: true,
-    resizable: false,
-    skipTaskbar: false,
-    hasShadow: false,
-    backgroundColor: DEBUG_OPAQUE ? '#202830' : '#00000000',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  if (!DEBUG_OPAQUE) {
-    mainWindow.setIgnoreMouseEvents(true, { forward: true });
-  }
-
-  if (isDev) {
-    mainWindow.webContents.on('console-message', (event) => {
-      console.log(`[renderer] ${event.message}`);
-    });
-    mainWindow.webContents.on('render-process-gone', (_event, details) => {
-      console.error('[renderer gone]', details.reason);
-    });
-  }
-
-  if (isDev) {
-    void mainWindow.loadURL('http://localhost:5173');
-  } else {
-    void mainWindow.loadFile(path.join(app.getAppPath(), 'dist', 'index.html'));
-  }
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-}
-
-function setClickThrough(enabled: boolean): void {
-  if (!mainWindow) return;
-  clickThroughEnabled = enabled;
-  if (enabled) {
-    mainWindow.setIgnoreMouseEvents(true, { forward: true });
-  } else {
-    mainWindow.setIgnoreMouseEvents(false);
-  }
-}
-
-app.whenReady().then(() => {
-  createWindow();
-
-  screen.on('display-metrics-changed', () => {
-    if (mainWindow) snapToDisplayBand(mainWindow);
-  });
-
-  globalShortcut.register('F2', () => {
-    mainWindow?.webContents.send('toggle-place-mode');
-  });
-
-  ipcMain.on('set-interactive', (_event, interactive: boolean) => {
-    setClickThrough(!interactive);
-  });
-
-  ipcMain.on('move-window', (_event, dx: number, dy: number) => {
-    if (!mainWindow) return;
-    const [x, y] = mainWindow.getPosition();
-    mainWindow.setPosition(Math.round(x + dx), Math.round(y + dy));
-  });
-
-  ipcMain.handle('save-layout', async (_event, name: string, data: string) => {
-    try {
-      const dir = layoutsDir();
-      await fs.mkdir(dir, { recursive: true });
-      await fs.writeFile(path.join(dir, `${name}.json`), data, 'utf8');
-      return true;
-    } catch {
-      return false;
-    }
-  });
-
-  ipcMain.handle('load-layout', async (_event, name: string) => {
-    try {
-      const filePath = path.join(layoutsDir(), `${name}.json`);
-      return await fs.readFile(filePath, 'utf8');
-    } catch {
-      return null;
-    }
-  });
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
+import { app, BrowserWindow, ipcMain, screen, globalShortcut } from 'electron';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+
+/** Must match ZOOM and BAND_HEIGHT in src/core/constants.ts */
+const ZOOM = 2;
+const BAND_HEIGHT = 96;
+const WINDOW_HEIGHT = BAND_HEIGHT * ZOOM;
+
+const isDev = !app.isPackaged;
+// Set DEBUG_OPAQUE=1 to render the overlay as a normal opaque, framed window.
+const DEBUG_OPAQUE = process.env.DEBUG_OPAQUE === '1';
+
+let mainWindow: BrowserWindow | null = null;
+let clickThroughEnabled = true;
+
+function layoutsDir(): string {
+  return path.join(app.getAppPath(), 'assets', 'layouts');
+}
+
+/**
+ * Pin the overlay to the bottom of the monitor it sits on, spanning the full
+ * work-area width. Called on create and when display metrics change.
+ */
+function snapToDisplayBand(win: BrowserWindow): void {
+  const display = screen.getDisplayMatching(win.getBounds());
+  const { workArea } = display;
+  win.setBounds({
+    x: workArea.x,
+    y: workArea.y + workArea.height - WINDOW_HEIGHT,
+    width: workArea.width,
+    height: WINDOW_HEIGHT,
+  });
+}
+
+/** Move the overlay to the next connected monitor (cycles back to the first). */
+function switchToNextDisplay(win: BrowserWindow): boolean {
+  const displays = screen.getAllDisplays();
+  if (displays.length <= 1) return false;
+
+  const current = screen.getDisplayMatching(win.getBounds());
+  const currentIndex = displays.findIndex((d) => d.id === current.id);
+  const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % displays.length;
+  const { workArea } = displays[nextIndex];
+  win.setBounds({
+    x: workArea.x,
+    y: workArea.y + workArea.height - WINDOW_HEIGHT,
+    width: workArea.width,
+    height: WINDOW_HEIGHT,
+  });
+  return true;
+}
+
+function createWindow(): void {
+  const { workArea } = screen.getPrimaryDisplay();
+
+  mainWindow = new BrowserWindow({
+    x: workArea.x,
+    y: workArea.y + workArea.height - WINDOW_HEIGHT,
+    width: workArea.width,
+    height: WINDOW_HEIGHT,
+    transparent: !DEBUG_OPAQUE,
+    frame: DEBUG_OPAQUE,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: false,
+    hasShadow: false,
+    backgroundColor: DEBUG_OPAQUE ? '#202830' : '#00000000',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  if (!DEBUG_OPAQUE) {
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  }
+
+  if (isDev) {
+    mainWindow.webContents.on('console-message', (event) => {
+      console.log(`[renderer] ${event.message}`);
+    });
+    mainWindow.webContents.on('render-process-gone', (_event, details) => {
+      console.error('[renderer gone]', details.reason);
+    });
+  }
+
+  if (isDev) {
+    void mainWindow.loadURL('http://localhost:5173');
+  } else {
+    void mainWindow.loadFile(path.join(app.getAppPath(), 'dist', 'index.html'));
+  }
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+function setClickThrough(enabled: boolean): void {
+  if (!mainWindow) return;
+  clickThroughEnabled = enabled;
+  if (enabled) {
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  } else {
+    mainWindow.setIgnoreMouseEvents(false);
+  }
+}
+
+app.whenReady().then(() => {
+  createWindow();
+
+  screen.on('display-metrics-changed', () => {
+    if (mainWindow) snapToDisplayBand(mainWindow);
+  });
+
+  globalShortcut.register('F2', () => {
+    mainWindow?.webContents.send('toggle-place-mode');
+  });
+
+  ipcMain.on('set-interactive', (_event, interactive: boolean) => {
+    setClickThrough(!interactive);
+  });
+
+  ipcMain.on('move-window', (_event, dx: number, dy: number) => {
+    if (!mainWindow) return;
+    const [x, y] = mainWindow.getPosition();
+    mainWindow.setPosition(Math.round(x + dx), Math.round(y + dy));
+  });
+
+  ipcMain.handle('switch-monitor', () => {
+    if (!mainWindow) return false;
+    return switchToNextDisplay(mainWindow);
+  });
+
+  ipcMain.handle('save-layout', async (_event, name: string, data: string) => {
+    try {
+      const dir = layoutsDir();
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(path.join(dir, `${name}.json`), data, 'utf8');
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  ipcMain.handle('load-layout', async (_event, name: string) => {
+    try {
+      const filePath = path.join(layoutsDir(), `${name}.json`);
+      return await fs.readFile(filePath, 'utf8');
+    } catch {
+      return null;
+    }
+  });
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+

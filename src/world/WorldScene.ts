@@ -1,9 +1,8 @@
 import Phaser from 'phaser';
-import { getCatalogItem, getFloorTileId } from '../assets/catalog';
 import { preloadCatalogAssets } from '../assets/loader';
+import { NpcCrowd } from '../characters/NpcCrowd';
+import { preloadCharacters, registerAllCharacterAnims } from '../characters/registerCharacterAnims';
 import {
-  CONVENTION_FLOOR_TOP,
-  CONVENTION_WIDTH,
   FLOOR_SUBTILE,
   FLOOR_WALK_Y,
   SHOP_FLOOR_TOP,
@@ -11,29 +10,50 @@ import {
   WORLD_HEIGHT,
   ZOOM,
 } from '../core/constants';
+import {
+  getActiveConventionVenue,
+  getBoothAnchor,
+  listConventionVenueIds,
+  parseLipColor,
+  setActiveConventionVenue,
+  type ConventionPropsLayout,
+  type PlayerBoothLayout,
+} from './ConventionVenue';
 import { Player } from '../entities/Player';
 import { PlaceMode, type LayoutData } from '../editor/PlaceMode';
 import { interaction } from '../core/interaction';
-import { paintFloorLip, paintTiledFloor } from './floorPaint';
+import { conventionRoomPicker, pickShopFloorTile } from './floorPatterns';
+import { paintFloorLip, paintPatternedFloor } from './floorPaint';
 import { buildRoadFloor } from './RoadFloor';
 import { CameraDirector } from './CameraDirector';
 import {
   computeWorldLayout,
+  frameForX,
   getWorldLayout,
   setWorldLayout,
   type SceneFrameId,
 } from './WorldLayout';
 
-import conventionLayout from '../data/layouts/convention.json';
+import playerBoothLayout from '../data/layouts/player_booth.json';
+import defaultExpoProps from '../data/layouts/conventions/default_expo_props.json';
+import wideLobbyProps from '../data/layouts/conventions/wide_lobby_props.json';
 import shopLayout from '../data/layouts/shop.json';
+
+const VENUE_PROPS_DEFAULTS: Record<string, ConventionPropsLayout> = {
+  default_expo: defaultExpoProps as ConventionPropsLayout,
+  wide_lobby: wideLobbyProps as ConventionPropsLayout,
+};
 
 export class WorldScene extends Phaser.Scene {
   private player!: Player;
+  private npcCrowd!: NpcCrowd;
+  private playerScene: SceneFrameId = 'convention';
   private cameraDirector!: CameraDirector;
   private placeMode!: PlaceMode;
   private baseFloorTiles: Phaser.GameObjects.Image[] = [];
   private floorLips: Phaser.GameObjects.Graphics[] = [];
   private roadFloor?: Phaser.GameObjects.Graphics;
+  private venueIndex = 0;
 
   constructor() {
     super('WorldScene');
@@ -41,7 +61,7 @@ export class WorldScene extends Phaser.Scene {
 
   preload(): void {
     preloadCatalogAssets(this);
-    this.load.image('player', encodeURI('/sierrassets/pets/Slice 1.png'));
+    preloadCharacters(this);
   }
 
   create(): void {
@@ -52,7 +72,13 @@ export class WorldScene extends Phaser.Scene {
     this.placeMode = new PlaceMode(this, 'convention', () => undefined);
     void this.bootstrapLayouts();
 
-    this.player = new Player(this, CONVENTION_WIDTH / 2, FLOOR_WALK_Y);
+    registerAllCharacterAnims(this);
+
+    const booth = getBoothAnchor();
+    this.player = new Player(this, booth.x + 96, FLOOR_WALK_Y);
+    this.npcCrowd = new NpcCrowd(this);
+    this.playerScene = frameForX(this.player.x);
+    this.npcCrowd.syncToPlayerScene(this.playerScene);
     this.cameraDirector = new CameraDirector(this.cameras.main, getWorldLayout().worldWidth);
 
     interaction.start();
@@ -70,6 +96,12 @@ export class WorldScene extends Phaser.Scene {
       const next: SceneFrameId =
         this.placeMode.getEditingFrame() === 'convention' ? 'shop' : 'convention';
       this.placeMode.setEditingFrame(next);
+    });
+
+    this.input.keyboard?.on('keydown-V', (event: KeyboardEvent) => {
+      if (this.placeMode.isActive()) return;
+      event.preventDefault();
+      void this.cycleConventionVenue();
     });
 
     this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
@@ -94,12 +126,18 @@ export class WorldScene extends Phaser.Scene {
 
   update(): void {
     if (!this.placeMode) return;
+
+    const scene = frameForX(this.player.x);
+    if (scene !== this.playerScene) {
+      this.npcCrowd.onPlayerSceneChange(scene);
+      this.playerScene = scene;
+    }
+
     if (!this.placeMode.isActive()) {
       this.sortDepths();
     }
   }
 
-  /** Play mode: clicking a station walks the avatar to it. */
   private onPlayClick(pointer: Phaser.Input.Pointer): void {
     if (this.placeMode.isActive()) return;
     if (pointer.rightButtonDown()) return;
@@ -113,10 +151,37 @@ export class WorldScene extends Phaser.Scene {
     this.player.walkTo(targetX, targetY);
   }
 
-  /**
-   * When the window width changes, grow or shrink the road so convention + road +
-   * shop still fill 100% of the band. Shop content shifts with the shop frame.
-   */
+  private async cycleConventionVenue(): Promise<void> {
+    const ids = listConventionVenueIds();
+    if (ids.length <= 1) return;
+    this.venueIndex = (this.venueIndex + 1) % ids.length;
+    await this.switchConventionVenue(ids[this.venueIndex]);
+  }
+
+  async switchConventionVenue(venueId: string): Promise<void> {
+    if (!setActiveConventionVenue(venueId)) return;
+
+    const oldLayout = getWorldLayout();
+    setWorldLayout(computeWorldLayout(this.scale.width, ZOOM));
+    const newLayout = getWorldLayout();
+
+    const deltaShopX = newLayout.shopFrame.x - oldLayout.shopFrame.x;
+    this.placeMode.shiftShopContent(deltaShopX, oldLayout.shopFrame.x, oldLayout.shopFrame.width);
+    this.npcCrowd.shiftShop(deltaShopX);
+
+    this.placeMode.setBoothAnchor(getBoothAnchor());
+    this.placeMode.clearConventionContent();
+    this.rebuildBaseFloors();
+    await this.loadConventionContent();
+    this.placeMode.onLayoutBoundsChanged();
+    this.cameraDirector.refit(newLayout.worldWidth);
+
+    for (const p of this.placeMode.getAllPlaceables()) {
+      p.applyDepth();
+    }
+    this.npcCrowd.relayoutConvention();
+  }
+
   private handleBandResize(viewportPxWidth: number): void {
     const oldLayout = getWorldLayout();
     const newLayout = computeWorldLayout(viewportPxWidth, ZOOM);
@@ -133,6 +198,7 @@ export class WorldScene extends Phaser.Scene {
       oldLayout.shopFrame.x,
       oldLayout.shopFrame.width,
     );
+    this.npcCrowd.shiftShop(deltaShopX);
     setWorldLayout(newLayout);
     this.rebuildBaseFloors();
     this.placeMode.onLayoutBoundsChanged();
@@ -146,35 +212,34 @@ export class WorldScene extends Phaser.Scene {
     this.floorLips = [];
     this.roadFloor?.destroy();
 
+    const venue = getActiveConventionVenue();
     const layout = getWorldLayout();
     const roomZones: Array<{
       x: number;
       width: number;
       floorTop: number;
-      tileId: string;
+      pickTile: (col: number, row: number) => string;
       lipColor: number;
     }> = [
-      {
-        x: 0,
-        width: CONVENTION_WIDTH,
-        floorTop: CONVENTION_FLOOR_TOP,
-        tileId: getFloorTileId('convention'),
-        lipColor: 0xc8a868,
-      },
+      ...venue.rooms.map((room, index) => ({
+        x: room.x,
+        width: room.width,
+        floorTop: room.floorTop,
+        pickTile: conventionRoomPicker(room, index, venue.floor),
+        lipColor: parseLipColor(venue.floor.lipColor),
+      })),
       {
         x: layout.shopFrame.x,
         width: SHOP_WIDTH,
         floorTop: SHOP_FLOOR_TOP,
-        tileId: getFloorTileId('shop'),
+        pickTile: pickShopFloorTile,
         lipColor: 0xb8b8c0,
       },
     ];
 
     for (const zone of roomZones) {
-      const item = getCatalogItem(zone.tileId);
-      if (!item) continue;
       this.baseFloorTiles.push(
-        ...paintTiledFloor(this, zone.x, zone.width, zone.floorTop, item.id),
+        ...paintPatternedFloor(this, zone.x, zone.width, zone.floorTop, zone.pickTile),
       );
       this.floorLips.push(paintFloorLip(this, zone.x, zone.width, zone.floorTop, zone.lipColor));
     }
@@ -184,33 +249,52 @@ export class WorldScene extends Phaser.Scene {
 
   private async bootstrapLayouts(): Promise<void> {
     this.placeMode.clearAllPlaceables();
+    this.placeMode.setBoothAnchor(getBoothAnchor());
+    await this.loadConventionContent();
 
-    const defaults: Record<SceneFrameId, LayoutData> = {
-      convention: conventionLayout as LayoutData,
-      shop: shopLayout as LayoutData,
-    };
-
-    for (const frame of ['convention', 'shop'] as const) {
-      let layout = defaults[frame];
-      if (window.desktop) {
-        const saved = await window.desktop.loadLayout(frame);
-        if (saved) {
-          layout = JSON.parse(saved) as LayoutData;
-        }
-      }
-      this.placeMode.seedFloor(frame, layout.floor);
-      this.placeMode.seedPlaceables(frame, layout.objects);
+    let shop = shopLayout as LayoutData;
+    if (window.desktop) {
+      const saved = await window.desktop.loadLayout('shop');
+      if (saved) shop = JSON.parse(saved) as LayoutData;
     }
+    this.placeMode.seedPlaceables('shop', shop.objects);
 
     for (const p of this.placeMode.getAllPlaceables()) {
       p.applyDepth();
     }
   }
 
+  private async loadConventionContent(): Promise<void> {
+    const venueId = getActiveConventionVenue().id;
+
+    let booth = playerBoothLayout as PlayerBoothLayout;
+    if (window.desktop) {
+      const savedBooth = await window.desktop.loadLayout('player_booth');
+      if (savedBooth) booth = JSON.parse(savedBooth) as PlayerBoothLayout;
+    }
+    this.placeMode.seedBooth(booth);
+
+    let props = VENUE_PROPS_DEFAULTS[venueId] ?? { venueId, objects: [] };
+    const propsName = `convention_${venueId}_props`;
+    if (window.desktop) {
+      const savedProps = await window.desktop.loadLayout(propsName);
+      if (savedProps) props = JSON.parse(savedProps) as ConventionPropsLayout;
+      else {
+        const legacy = await window.desktop.loadLayout('convention');
+        if (legacy && venueId === 'default_expo') {
+          const old = JSON.parse(legacy) as LayoutData;
+          props = { venueId, objects: old.objects, floor: old.floor };
+        }
+      }
+    }
+    this.placeMode.seedVenueProps(props);
+  }
+
   private sortDepths(): void {
     for (const entity of this.placeMode.getAllPlaceables()) {
       entity.applyDepth();
     }
+    this.npcCrowd.applyDepths();
     this.player.applyDepth();
   }
 }

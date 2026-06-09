@@ -57,8 +57,13 @@ TCG Desktop/
 │  │  ├─ WorldScene.ts          # single-screen world + responsive road resize
 │  │  ├─ WorldLayout.ts         # convention | flex road | shop layout math
 │  │  └─ CameraDirector.ts      # centres camera on full world (no panning)
+│  ├─ characters/
+│  │  ├─ characterSheets.ts     # LimeZu roster + 16×32 sheet layout (dir order: down,up,left,right)
+│  │  ├─ registerCharacterAnims.ts # preload sheets, build L/R idle+walk anims, playFacing()
+│  │  ├─ Npc.ts                 # one background goer: fade-in arrive → wander → fade-out leave
+│  │  └─ NpcCrowd.ts            # keeps convention + shop populated, independent of the player
 │  ├─ entities/
-│  │  ├─ Player.ts              # movement, foot-anchored depth
+│  │  ├─ Player.ts              # protagonist (Adam); walks station→station, never fades
 │  │  └─ Placeable.ts           # a placed furniture instance (foot-anchored, depth-sorted)
 │  ├─ editor/
 │  │  ├─ PlaceMode.ts           # edit/play toggle, grid, drag-snap-place, delete
@@ -138,6 +143,25 @@ dynamic: convention (320px) + responsive road + shop (320px) = viewport width at
 behind it. Renderer `console.log` is forwarded to the terminal in dev.
 
 ---
+
+## 6.2 Characters & crowd
+
+- **Protagonist (Adam):** `Player.ts`. Only moves when commanded (`walkTo`), always
+  fully opaque. Walk timing comes from `core/walkMotion.ts` — a **fixed-acceleration**
+  trapezoidal profile (constant ramp to a fixed top speed, then cruise). Ramp feel is
+  identical for every trip; only the cruise length grows with distance. Do **not** swap
+  this back to a normalized ease, which makes short hops snappy and long hops sluggish.
+- **NPCs (Alex / Amelia / Bob):** `NpcCrowd.ts` keeps the convention (many) and shop
+  (a few) populated **independently of the player** — both scenes stay alive no matter
+  where Adam is. Wander areas come from `characters/wanderZones.ts`: one rectangle per
+  convention room (each room's `width` + `floorTop` from the active venue preset), and
+  for the shop the full floor minus the centre-top behind-counter strip (`SHOP_BACK_COUNTER`
+  in `floorPatterns.ts`). NPCs arrive at a zone edge fading in, stroll a few legs, then
+  walk to an edge fading out and despawn; the crowd trickles in replacements. NPCs are
+  decorative (no interaction, no game state).
+- **Sheets:** LimeZu "Modern Interiors" free pack, 16×32 frames, strips ordered
+  `down,up,left,right` (6 frames each). The world only moves horizontally, so only
+  left/right idle+walk anims are built (`run` sheet drives "walk").
 
 ## 7. Depth (walk behind / in front)
 

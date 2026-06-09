@@ -5,9 +5,16 @@ export type PaletteSelectHandler = (item: CatalogItem) => void;
 
 const CATEGORIES: Array<{ id: string; label: string }> = [
   { id: 'furniture', label: 'Furniture' },
+  { id: 'free', label: 'Free' },
   { id: 'floor', label: 'Floors' },
   { id: 'pet', label: 'Decor' },
 ];
+
+/**
+ * Max thumbnails rendered per category. High enough to show a full pack
+ * (the free-furniture set alone is ~200) while still bounding DOM cost.
+ */
+const MAX_VISIBLE_ITEMS = 1000;
 
 export class AssetPalette {
   private root: HTMLElement;
@@ -17,6 +24,7 @@ export class AssetPalette {
   private onSelect: PaletteSelectHandler;
   private selectedId: string | null = null;
   private activeCategory = 'furniture';
+  private floorOnly = false;
 
   constructor(containerId: string, onSelect: PaletteSelectHandler) {
     const host = document.getElementById(containerId);
@@ -28,6 +36,7 @@ export class AssetPalette {
     this.root.innerHTML = `
       <div class="palette-header">
         <strong>Assets</strong>
+        <div class="palette-mode-hint"></div>
         <div class="palette-tabs"></div>
         <input type="search" placeholder="Search…" />
       </div>
@@ -49,6 +58,14 @@ export class AssetPalette {
 
   setVisible(visible: boolean): void {
     this.root.style.display = visible ? 'flex' : 'none';
+    this.updateModeHint();
+  }
+
+  private updateModeHint(): void {
+    const hint = this.root.querySelector('.palette-mode-hint') as HTMLElement | null;
+    if (!hint) return;
+    hint.textContent = this.floorOnly ? 'Tile paint — pick a floor tile' : '';
+    hint.style.display = this.floorOnly ? 'block' : 'none';
   }
 
   getSelectedId(): string | null {
@@ -60,14 +77,30 @@ export class AssetPalette {
     this.renderList();
   }
 
+  /** Lock palette to floor tiles (tile-paint mode). */
+  setFloorOnly(floorOnly: boolean): void {
+    this.floorOnly = floorOnly;
+    if (floorOnly) {
+      this.activeCategory = 'floor';
+      this.selectedId = null;
+    }
+    this.updateModeHint();
+    this.renderTabs();
+    this.renderList();
+  }
+
   private renderTabs(): void {
     this.tabsEl.innerHTML = '';
-    for (const cat of CATEGORIES) {
+    const categories = this.floorOnly
+      ? CATEGORIES.filter((c) => c.id === 'floor')
+      : CATEGORIES;
+    for (const cat of categories) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = `palette-tab${this.activeCategory === cat.id ? ' active' : ''}`;
       btn.textContent = cat.label;
       btn.addEventListener('click', () => {
+        if (this.floorOnly && cat.id !== 'floor') return;
         this.activeCategory = cat.id;
         this.renderTabs();
         this.renderList();
@@ -84,7 +117,7 @@ export class AssetPalette {
     });
 
     this.listEl.innerHTML = '';
-    for (const item of items.slice(0, 200)) {
+    for (const item of items.slice(0, MAX_VISIBLE_ITEMS)) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = `palette-item${this.selectedId === item.id ? ' selected' : ''}`;
@@ -136,6 +169,11 @@ export class AssetPalette {
         flex-direction: column;
         gap: 6px;
         font-size: 12px;
+      }
+      #asset-palette .palette-mode-hint {
+        font-size: 10px;
+        color: #6ecfff;
+        padding: 2px 0;
       }
       #asset-palette .palette-tabs {
         display: flex;
@@ -204,7 +242,7 @@ export class AssetPalette {
       #hud-banner {
         position: absolute;
         left: 8px;
-        top: 8px;
+        top: 30px;
         padding: 6px 10px;
         border-radius: 6px;
         background: rgba(12, 14, 20, 0.82);

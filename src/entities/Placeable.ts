@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { getCatalogItem, type CatalogItem } from '../assets/catalog';
 import { depthFromFootY } from '../core/depth';
 
+export type PlaceableLayer = 'booth' | 'venue' | 'shop';
+
 export interface PlacedObjectData {
   catalogId: string;
   x: number;
@@ -13,11 +15,13 @@ export class Placeable extends Phaser.GameObjects.Image {
   readonly catalogId: string;
   readonly catalogItem: CatalogItem;
   readonly instanceId: string;
+  readonly layer: PlaceableLayer;
 
   constructor(
     scene: Phaser.Scene,
     instanceId: string,
     data: PlacedObjectData,
+    layer: PlaceableLayer = 'venue',
   ) {
     const item = getCatalogItem(data.catalogId);
     if (!item) {
@@ -28,6 +32,7 @@ export class Placeable extends Phaser.GameObjects.Image {
     this.catalogId = data.catalogId;
     this.catalogItem = item;
     this.instanceId = instanceId;
+    this.layer = layer;
 
     this.setOrigin(item.footX / item.width, 1);
     this.applyDepth();
