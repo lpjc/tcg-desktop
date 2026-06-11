@@ -9,11 +9,17 @@ import { depthFromFootY } from '../core/depth';
 
 export type PlaceableLayer = 'booth' | 'venue' | 'shop';
 
+/** Which side of a station's collision box the player stands at when arriving. */
+export type StationAnchor = 'below' | 'left' | 'right' | 'above';
+
 export interface PlacedObjectData {
   catalogId: string;
   x: number;
   y: number;
-  interaction?: string;
+  /** When true, the player can click this object to walk here (off by default). */
+  station?: boolean;
+  /** Stand side for a station (editor: A cycles). Omitted = 'below'. */
+  anchor?: StationAnchor;
   /**
    * Editor override: does this item block walkers? Omitted = derive from the
    * catalog collision box (tables block, rugs/wall decor do not).
@@ -32,6 +38,10 @@ export class Placeable extends Phaser.GameObjects.Image {
   collidableOverride: boolean | null;
   /** null = use catalog collision; set when resized in the editor. */
   collisionBoxOverride: CollisionBox | null;
+  /** Walk target for the player when clicked in play mode. */
+  isStation: boolean;
+  /** Side of the collision box where the player stands at this station. */
+  stationAnchor: StationAnchor;
 
   constructor(
     scene: Phaser.Scene,
@@ -51,6 +61,8 @@ export class Placeable extends Phaser.GameObjects.Image {
     this.layer = layer;
     this.collidableOverride = data.collidable ?? null;
     this.collisionBoxOverride = data.collision ? { ...data.collision } : null;
+    this.isStation = data.station ?? false;
+    this.stationAnchor = data.anchor ?? 'below';
 
     this.setOrigin(item.footX / item.width, 1);
     applyCatalogScale(this, item);
@@ -88,6 +100,10 @@ export class Placeable extends Phaser.GameObjects.Image {
       catalogId: this.catalogId,
       x: this.x,
       y: this.y,
+      ...(this.isStation ? { station: true } : {}),
+      ...(this.isStation && this.stationAnchor !== 'below'
+        ? { anchor: this.stationAnchor }
+        : {}),
       ...(this.collidableOverride !== null ? { collidable: this.collidableOverride } : {}),
       ...(this.collisionBoxOverride ? { collision: { ...this.collisionBoxOverride } } : {}),
     };

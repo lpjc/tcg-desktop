@@ -37,6 +37,7 @@
       "catalogId": "furniture_slice_66",
       "x": 168,
       "y": 32,
+      "station": true,
       "collidable": true
     },
     {
@@ -71,25 +72,23 @@
     {
       "catalogId": "free_furniture_sprite_31_3",
       "x": 72,
-      "y": 48,
-      "collidable": true
-    },
-    {
-      "catalogId": "free_furniture_sprite_31_3",
-      "x": 72,
       "y": 40,
       "collidable": true
     },
     {
       "catalogId": "free_furniture_sprite_31_3",
       "x": 72,
-      "y": 56,
+      "y": 48,
+      "station": true,
+      "anchor": "right",
       "collidable": true
     },
     {
       "catalogId": "free_furniture_sprite_30_2",
       "x": 104,
       "y": 64,
+      "station": true,
+      "anchor": "above",
       "collidable": true,
       "collision": {
         "x": 0,

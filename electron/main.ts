@@ -16,6 +16,11 @@ const DEBUG_OPAQUE = process.env.DEBUG_OPAQUE === '1';
 let mainWindow: BrowserWindow | null = null;
 let clickThroughEnabled = true;
 
+/** Re-apply topmost z-order — toggling click-through or moving the window can drop it on Windows. */
+function pinOverlayOnTop(win: BrowserWindow): void {
+  win.setAlwaysOnTop(true, 'screen-saver');
+}
+
 function layoutsDir(): string {
   return path.join(app.getAppPath(), 'assets', 'layouts');
 }
@@ -33,6 +38,7 @@ function snapToDisplayBand(win: BrowserWindow): void {
     width: workArea.width,
     height: WINDOW_HEIGHT,
   });
+  pinOverlayOnTop(win);
 }
 
 /** Move the overlay to the next connected monitor (cycles back to the first). */
@@ -50,6 +56,7 @@ function switchToNextDisplay(win: BrowserWindow): boolean {
     width: workArea.width,
     height: WINDOW_HEIGHT,
   });
+  pinOverlayOnTop(win);
   return true;
 }
 
@@ -75,6 +82,8 @@ function createWindow(): void {
     },
   });
 
+  pinOverlayOnTop(mainWindow);
+
   if (!DEBUG_OPAQUE) {
     mainWindow.setIgnoreMouseEvents(true, { forward: true });
   }
@@ -94,6 +103,11 @@ function createWindow(): void {
     void mainWindow.loadFile(path.join(app.getAppPath(), 'dist', 'index.html'));
   }
 
+  // Another app taking focus can drop z-order on Windows; re-pin without stealing focus.
+  mainWindow.on('blur', () => {
+    pinOverlayOnTop(mainWindow!);
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -107,6 +121,7 @@ function setClickThrough(enabled: boolean): void {
   } else {
     mainWindow.setIgnoreMouseEvents(false);
   }
+  pinOverlayOnTop(mainWindow);
 }
 
 app.whenReady().then(() => {
@@ -128,6 +143,7 @@ app.whenReady().then(() => {
     if (!mainWindow) return;
     const [x, y] = mainWindow.getPosition();
     mainWindow.setPosition(Math.round(x + dx), Math.round(y + dy));
+    pinOverlayOnTop(mainWindow);
   });
 
   ipcMain.handle('switch-monitor', () => {

@@ -41,7 +41,6 @@ export class Player extends Phaser.GameObjects.Sprite {
 
     const path = getObstacleField().findPath(this.x, this.y, targetX, targetY);
     if (path.length === 0) {
-      onArrive?.();
       return;
     }
 

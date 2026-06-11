@@ -2,8 +2,10 @@
   "objects": [
     {
       "catalogId": "furniture_slice_2",
-      "x": 88,
+      "x": 72,
       "y": -36,
+      "station": true,
+      "anchor": "above",
       "collidable": true,
       "collision": {
         "x": 0,
@@ -26,6 +28,20 @@
       "catalogId": "free_furniture_sprite_53_3",
       "x": 104,
       "y": -68
+    },
+    {
+      "catalogId": "furniture_slice_164",
+      "x": 104,
+      "y": -36,
+      "station": true,
+      "anchor": "above",
+      "collidable": true,
+      "collision": {
+        "x": 0,
+        "y": 8,
+        "w": 32,
+        "h": 8
+      }
     }
   ]
 }

@@ -7,7 +7,6 @@ import {
   FLOOR_WALK_Y,
   SHOP_FLOOR_TOP,
   SHOP_WIDTH,
-  WORLD_HEIGHT,
   ZOOM,
 } from '../core/constants';
 import {
@@ -26,7 +25,11 @@ import { interaction } from '../core/interaction';
 import { conventionRoomPicker, pickShopFloorTile } from './floorPatterns';
 import { paintFloorLip, paintPatternedFloor } from './floorPaint';
 import { buildRoadFloor } from './RoadFloor';
-import { rebuildObstacleField } from './obstacleField';
+import {
+  getObstacleField,
+  placeableCollisionWorld,
+  rebuildObstacleField,
+} from './obstacleField';
 import { isOverWorldSurface } from './worldSurface';
 import { CameraDirector } from './CameraDirector';
 import {
@@ -77,10 +80,14 @@ export class WorldScene extends Phaser.Scene {
     registerAllCharacterAnims(this);
 
     const booth = getBoothAnchor();
-    this.player = new Player(this, booth.x + 96, FLOOR_WALK_Y);
+    const spawn =
+      getObstacleField().findStandPointNear(booth.x + 96, FLOOR_WALK_Y) ??
+      { x: booth.x + 96, y: FLOOR_WALK_Y };
+    this.player = new Player(this, spawn.x, spawn.y);
     this.npcCrowd = new NpcCrowd(this);
     this.playerScene = frameForX(this.player.x);
     void this.bootstrapLayouts().then(() => {
+      this.snapPlayerToWalkable();
       this.syncCurrentStation();
       this.npcCrowd.syncToPlayerScene(this.playerScene);
     });
@@ -148,9 +155,23 @@ export class WorldScene extends Phaser.Scene {
     const station = this.placeMode.stationAtWorld(world.x, world.y);
     if (!station) return;
 
-    const targetX = station.x;
-    const targetY = Phaser.Math.Clamp(station.y + 4, 16, WORLD_HEIGHT - 4);
-    this.player.walkTo(targetX, targetY, () => this.syncCurrentStation(station));
+    const stand = getObstacleField().standPointForStation(
+      placeableCollisionWorld(station),
+      station.stationAnchor,
+    );
+    if (!stand) return;
+
+    this.player.walkTo(stand.x, stand.y, () => this.syncCurrentStation(station));
+  }
+
+  /** Layout furniture can cover the default booth spawn — snap onto a free tile. */
+  private snapPlayerToWalkable(): void {
+    const field = getObstacleField();
+    if (field.isWalkable(this.player.x, this.player.y)) return;
+    const stand = field.findStandPointNear(this.player.x, FLOOR_WALK_Y);
+    if (!stand) return;
+    this.player.setPosition(stand.x, stand.y);
+    this.player.applyDepth();
   }
 
   private syncCurrentStation(station?: Placeable): void {
@@ -188,6 +209,7 @@ export class WorldScene extends Phaser.Scene {
       p.applyDepth();
     }
     this.rebuildObstacles();
+    this.snapPlayerToWalkable();
     this.npcCrowd.relayoutConvention();
   }
 

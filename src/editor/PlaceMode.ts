@@ -16,6 +16,7 @@ import {
   Placeable,
   type PlacedObjectData,
   type PlaceableLayer,
+  type StationAnchor,
 } from '../entities/Placeable';
 import {
   conventionPropsLayoutName,
@@ -30,7 +31,11 @@ import {
   type PlayerBoothLayout,
 } from '../world/ConventionVenue';
 import { frameForX, getSceneFrames, type SceneFrameId } from '../world/WorldLayout';
-import { placeableBlocksWalking, placeableCollisionWorld } from '../world/obstacleField';
+import {
+  placeableBlocksWalking,
+  placeableCollisionWorld,
+  stationAnchorPoint,
+} from '../world/obstacleField';
 import { devUi } from '../ui/devUi';
 import { enablePanelDrag } from '../ui/draggablePanel';
 import { AssetPalette } from './AssetPalette';
@@ -135,6 +140,8 @@ export class PlaceMode {
     });
     scene.input.keyboard?.on('keydown-DELETE', () => this.deleteSelected());
     scene.input.keyboard?.on('keydown-C', () => this.toggleSelectedCollidable());
+    scene.input.keyboard?.on('keydown-T', () => this.toggleSelectedStation());
+    scene.input.keyboard?.on('keydown-A', () => this.cycleSelectedStationAnchor());
     scene.input.keyboard?.on('keydown-S', (event: KeyboardEvent) => {
       if (event.ctrlKey) {
         event.preventDefault();
@@ -248,6 +255,7 @@ export class PlaceMode {
     let best: Placeable | null = null;
     let bestDist = threshold;
     for (const p of this.placeables) {
+      if (!p.isStation) continue;
       const dist = Math.hypot(p.x - worldX, p.y - worldY);
       if (dist < bestDist) {
         bestDist = dist;
@@ -338,7 +346,7 @@ export class PlaceMode {
   ): Placeable | null {
     const frame = frameId === 'all' ? null : getSceneFrames()[frameId];
     const layerFilter = frameId !== 'all' ? this.editLayerFilter() : null;
-    return this.pickPlaceableAt(worldX, worldY, frame, layerFilter);
+    return this.pickPlaceableAt(worldX, worldY, frame, layerFilter, 0, true);
   }
 
   /**
@@ -367,11 +375,13 @@ export class PlaceMode {
     frame: { x: number; width: number } | null,
     layerFilter: PlaceableLayer | null,
     hitPad = 0,
+    stationsOnly = false,
   ): Placeable | null {
     const hits: Placeable[] = [];
     for (const p of this.placeables) {
       if (frame && !this.isInFrame(p.x, frame)) continue;
       if (layerFilter && p.layer !== layerFilter) continue;
+      if (stationsOnly && !p.isStation) continue;
       if (this.hitsPlaceable(p, worldX, worldY, hitPad)) hits.push(p);
     }
     if (hits.length === 0) return null;
@@ -679,6 +689,28 @@ export class PlaceMode {
    * Mark the selected item as walkable-through (rug) or blocking (table).
    * Stored as an explicit per-object override in the layout JSON.
    */
+  /** Mark the selected item as a player walk target (station) or plain decor. */
+  toggleSelectedStation(): void {
+    if (!this.active || !this.selectedPlaceable || this.paintMode) return;
+    const p = this.selectedPlaceable;
+    p.isStation = !p.isStation;
+    this.drawGrid();
+    this.updateSelectionOutline();
+    this.updateHud(`${p.catalogItem.name}: ${p.isStation ? 'station ON' : 'station off'}`);
+    this.notifyChange();
+  }
+
+  /** Cycle which side of the station's collision box the player stands at. */
+  cycleSelectedStationAnchor(): void {
+    if (!this.active || !this.selectedPlaceable?.isStation || this.paintMode) return;
+    const order: StationAnchor[] = ['below', 'left', 'above', 'right'];
+    const p = this.selectedPlaceable;
+    p.stationAnchor = order[(order.indexOf(p.stationAnchor) + 1) % order.length];
+    this.updateSelectionOutline();
+    this.updateHud(`${p.catalogItem.name}: stand ${p.stationAnchor}`);
+    this.notifyChange();
+  }
+
   toggleSelectedCollidable(): void {
     if (!this.active || !this.selectedPlaceable || this.paintMode) return;
     const p = this.selectedPlaceable;
@@ -937,6 +969,16 @@ export class PlaceMode {
     const blocks = placeableBlocksWalking(p);
     this.selectionGraphics.lineStyle(1, blocks ? 0xff5c5c : 0x7dff8a, 0.9);
     this.selectionGraphics.strokeRect(col.x, col.y, col.w, col.h);
+
+    if (p.isStation) {
+      this.selectionGraphics.lineStyle(2, 0xffd54a, 0.95);
+      this.selectionGraphics.strokeCircle(p.x, p.y - 2, 4);
+      this.selectionGraphics.lineBetween(p.x - 5, p.y, p.x + 5, p.y);
+      // Stand-side marker: where the player's feet land when walking here.
+      const standAt = stationAnchorPoint(col, p.stationAnchor);
+      this.selectionGraphics.fillStyle(0xffd54a, 0.95);
+      this.selectionGraphics.fillCircle(standAt.x, standAt.y, 2);
+    }
   }
 
   // ---- misc ------------------------------------------------------------------
@@ -964,6 +1006,12 @@ export class PlaceMode {
       this.gridGraphics.lineStyle(1, 0x6ecfff, 0.25);
       this.gridGraphics.lineBetween(zone.x, zone.floorTop, zone.x + zone.width, zone.floorTop);
       this.gridGraphics.lineStyle(1, 0xffffff, 0.1);
+    }
+
+    for (const p of this.placeables) {
+      if (!p.isStation || !this.isInFrame(p.x, frame)) continue;
+      this.gridGraphics.lineStyle(1, 0xffd54a, 0.5);
+      this.gridGraphics.strokeCircle(p.x, p.y - 2, 3);
     }
   }
 
@@ -1029,9 +1077,7 @@ export class PlaceMode {
         : 'shop';
     const hint = this.paintMode
       ? 'Paint floor · Shift+click erase tile · P exit · Ctrl+S save props'
-      : this.editingFrame === 'convention'
-        ? 'Arrows move · Shift+arrows resize collision · C walk-through · Ctrl+S'
-        : 'Arrows move · Shift+arrows resize collision · C walk-through · Ctrl+S';
+      : 'Arrows move · T station · A stand side · C walk-through · Shift+arrows collision · Ctrl+S';
 
     this.hudBody.innerHTML = `
       <div><strong>${mode}</strong> — ${frameLabel}</div>

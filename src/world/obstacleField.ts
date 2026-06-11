@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import type { Placeable } from '../entities/Placeable';
-import { FLOOR_SUBTILE, FLOOR_WALK_Y, WORLD_HEIGHT } from '../core/constants';
+import type { Placeable, StationAnchor } from '../entities/Placeable';
+import { FLOOR_SUBTILE, FLOOR_WALK_Y, TILE, WORLD_HEIGHT } from '../core/constants';
 import { getWorldLayout } from './WorldLayout';
 
 export interface WorldRect {
@@ -74,6 +74,44 @@ function cellKey(cx: number, cy: number): string {
   return `${cx},${cy}`;
 }
 
+/** Highest grid row whose cell center is still a valid foot Y. */
+function maxPathCellY(): number {
+  return Math.floor((WORLD_HEIGHT - 4) / PATH_CELL);
+}
+
+/** Unit step pointing away from the collision box for each anchor side. */
+const ANCHOR_OUTWARD: Record<StationAnchor, [number, number]> = {
+  below: [0, 1],
+  above: [0, -1],
+  left: [-1, 0],
+  right: [1, 0],
+};
+
+/**
+ * Foot position just outside a collision rect on the requested side
+ * (FOOT_PAD keeps feet off the box, +1 clears the inclusive pad check).
+ */
+export function stationAnchorPoint(
+  rect: WorldRect,
+  anchor: StationAnchor,
+): { x: number; y: number } {
+  const gap = FOOT_PAD + 1;
+  switch (anchor) {
+    case 'left':
+      return { x: rect.x - gap, y: rect.y + rect.h / 2 };
+    case 'right':
+      return { x: rect.x + rect.w + gap, y: rect.y + rect.h / 2 };
+    case 'above':
+      return { x: rect.x + rect.w / 2, y: rect.y - gap };
+    case 'below':
+      return { x: rect.x + rect.w / 2, y: rect.y + rect.h + gap };
+  }
+}
+
+function isInPathGrid(cx: number, cy: number, worldW: number): boolean {
+  return cx >= 0 && cy >= 0 && cx * PATH_CELL < worldW && cy <= maxPathCellY();
+}
+
 export class ObstacleField {
   private rects: WorldRect[] = [];
 
@@ -89,6 +127,51 @@ export class ObstacleField {
   isWalkable(x: number, y: number, allowed?: AllowedFn): boolean {
     if (allowed && !allowed(x, y)) return false;
     return !footBlockedAt(x, y, this.rects);
+  }
+
+  /**
+   * Walkable stand point at a station's anchored side. Starts at the anchor
+   * point and steps outward (away from the box) when blocked by neighbouring
+   * furniture; falls back to the nearest free grid cell.
+   */
+  standPointForStation(
+    rect: WorldRect,
+    anchor: StationAnchor,
+    allowed?: AllowedFn,
+  ): { x: number; y: number } | null {
+    const base = stationAnchorPoint(rect, anchor);
+    const [ox, oy] = ANCHOR_OUTWARD[anchor];
+    for (let step = 0; step <= PATH_CELL * 3; step += PATH_CELL / 2) {
+      const x = base.x + ox * step;
+      const y = Phaser.Math.Clamp(base.y + oy * step, 16, WORLD_HEIGHT - 4);
+      if (this.isWalkable(x, y, allowed)) return { x, y };
+    }
+    const cell = this.nearestFreeCell(base.x, base.y, allowed);
+    if (!cell) return null;
+    return { x: cellCenter(cell.cx), y: cellCenter(cell.cy) };
+  }
+
+  /**
+   * Nearest unobstructed foot position for a walker to stand at a station.
+   * Prefers the walk lane at `worldX`, then expands horizontally.
+   */
+  findStandPointNear(
+    worldX: number,
+    preferredY: number = FLOOR_WALK_Y,
+    allowed?: AllowedFn,
+  ): { x: number; y: number } | null {
+    const y = Phaser.Math.Clamp(preferredY, 16, WORLD_HEIGHT - 4);
+    const maxDx = TILE * 8;
+    for (let dx = 0; dx <= maxDx; dx += PATH_CELL) {
+      const offsets = dx === 0 ? [0] : [-dx, dx];
+      for (const off of offsets) {
+        const x = worldX + off;
+        if (this.isWalkable(x, y, allowed)) return { x, y };
+      }
+    }
+    const cell = this.nearestFreeCell(worldX, y, allowed);
+    if (!cell) return null;
+    return { x: cellCenter(cell.cx), y: cellCenter(cell.cy) };
   }
 
   segmentClear(x1: number, y1: number, x2: number, y2: number, allowed?: AllowedFn): boolean {
@@ -148,7 +231,7 @@ export class ObstacleField {
       ] as const) {
         const ncx = current.cx + dx;
         const ncy = current.cy + dy;
-        if (ncx < 0 || ncy < 0 || ncx * PATH_CELL >= worldW || ncy * PATH_CELL >= WORLD_HEIGHT) {
+        if (!isInPathGrid(ncx, ncy, worldW)) {
           continue;
         }
         const nKey = cellKey(ncx, ncy);
@@ -195,6 +278,7 @@ export class ObstacleField {
     y: number,
     allowed?: AllowedFn,
   ): { cx: number; cy: number } | null {
+    const worldW = getWorldLayout().worldWidth;
     const originCx = toCell(x);
     const originCy = toCell(y);
     for (let radius = 0; radius <= 8; radius++) {
@@ -203,6 +287,7 @@ export class ObstacleField {
           if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
           const cx = originCx + dx;
           const cy = originCy + dy;
+          if (!isInPathGrid(cx, cy, worldW)) continue;
           if (this.isWalkable(cellCenter(cx), cellCenter(cy), allowed)) {
             return { cx, cy };
           }

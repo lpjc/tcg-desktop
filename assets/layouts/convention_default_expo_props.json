@@ -26,7 +26,8 @@
     {
       "catalogId": "furniture_slice_277",
       "x": 400,
-      "y": 72
+      "y": 72,
+      "station": true
     },
     {
       "catalogId": "furniture_slice_278",
