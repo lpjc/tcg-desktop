@@ -18,7 +18,8 @@ import {
   type ConventionPropsLayout,
   type PlayerBoothLayout,
 } from './ConventionVenue';
-import { Placeable } from '../entities/Placeable';
+import { Placeable, type StationAnchor } from '../entities/Placeable';
+import type { Facing } from '../characters/characterSheets';
 import { Player } from '../entities/Player';
 import { PlaceMode, type LayoutData } from '../editor/PlaceMode';
 import { interaction } from '../core/interaction';
@@ -30,7 +31,7 @@ import {
   placeableCollisionWorld,
   rebuildObstacleField,
 } from './obstacleField';
-import { isOverWorldSurface } from './worldSurface';
+import { isOverWorldSurface, isPlayerWalkSurface } from './worldSurface';
 import { CameraDirector } from './CameraDirector';
 import {
   computeWorldLayout,
@@ -48,6 +49,14 @@ import shopLayout from '../data/layouts/shop.json';
 const VENUE_PROPS_DEFAULTS: Record<string, ConventionPropsLayout> = {
   default_expo: defaultExpoProps as ConventionPropsLayout,
   wide_lobby: wideLobbyProps as ConventionPropsLayout,
+};
+
+/** The player stands on the anchor side of a station, so they face the opposite way. */
+const FACING_TOWARD_STATION: Record<StationAnchor, Facing> = {
+  below: 'up',
+  above: 'down',
+  left: 'right',
+  right: 'left',
 };
 
 export class WorldScene extends Phaser.Scene {
@@ -81,7 +90,7 @@ export class WorldScene extends Phaser.Scene {
 
     const booth = getBoothAnchor();
     const spawn =
-      getObstacleField().findStandPointNear(booth.x + 96, FLOOR_WALK_Y) ??
+      getObstacleField().findStandPointNear(booth.x + 96, FLOOR_WALK_Y, isPlayerWalkSurface) ??
       { x: booth.x + 96, y: FLOOR_WALK_Y };
     this.player = new Player(this, spawn.x, spawn.y);
     this.npcCrowd = new NpcCrowd(this);
@@ -158,6 +167,7 @@ export class WorldScene extends Phaser.Scene {
     const stand = getObstacleField().standPointForStation(
       placeableCollisionWorld(station),
       station.stationAnchor,
+      isPlayerWalkSurface,
     );
     if (!stand) return;
 
@@ -167,8 +177,8 @@ export class WorldScene extends Phaser.Scene {
   /** Layout furniture can cover the default booth spawn — snap onto a free tile. */
   private snapPlayerToWalkable(): void {
     const field = getObstacleField();
-    if (field.isWalkable(this.player.x, this.player.y)) return;
-    const stand = field.findStandPointNear(this.player.x, FLOOR_WALK_Y);
+    if (field.isWalkable(this.player.x, this.player.y, isPlayerWalkSurface)) return;
+    const stand = field.findStandPointNear(this.player.x, FLOOR_WALK_Y, isPlayerWalkSurface);
     if (!stand) return;
     this.player.setPosition(stand.x, stand.y);
     this.player.applyDepth();
@@ -178,6 +188,9 @@ export class WorldScene extends Phaser.Scene {
     const at =
       station ?? this.placeMode.nearestStationTo(this.player.x, this.player.y);
     this.placeMode.setCurrentStation(at);
+    if (at) {
+      this.player.faceDirection(FACING_TOWARD_STATION[at.stationAnchor]);
+    }
   }
 
   private async cycleConventionVenue(): Promise<void> {

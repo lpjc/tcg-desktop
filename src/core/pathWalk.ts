@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { Facing } from '../characters/characterSheets';
 import { planWalkMotion } from './walkMotion';
 
 export interface PathWalker {
@@ -6,7 +7,7 @@ export interface PathWalker {
   y: number;
   setPosition(x: number, y: number): void;
   applyDepth?(): void;
-  setFacingLeft?(left: boolean): void;
+  setFacing?(facing: Facing): void;
   playWalk?(): void;
   playIdle?(): void;
 }
@@ -56,7 +57,10 @@ export function followPath(
       return;
     }
 
-    if (Math.abs(dx) > 0.5) walker.setFacingLeft?.(dx < 0);
+    // Face along the dominant movement axis of this leg.
+    const facing: Facing =
+      Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+    walker.setFacing?.(facing);
     walker.playWalk?.();
 
     const proxy = { t: 0 };

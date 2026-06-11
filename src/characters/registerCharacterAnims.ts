@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import {
   ALL_CHARACTERS,
+  ALL_FACINGS,
   CHAR_FRAME_HEIGHT,
   CHAR_FRAME_WIDTH,
   DIRECTION_FRAME_START,
@@ -8,10 +9,10 @@ import {
   characterSheetUrl,
   characterTextureKey,
   type CharacterKey,
+  type Facing,
 } from './characterSheets';
 
 export type CharacterAction = 'idle' | 'walk';
-type Facing = 'left' | 'right';
 
 const WALK_FRAME_RATE = 10;
 const IDLE_FRAME_RATE = 6;
@@ -57,14 +58,15 @@ function createDirectionalAnim(
 }
 
 /**
- * Build left/right idle + walk animations for every character. Idempotent, so
- * it is safe to call once per scene `create`.
+ * Build four-direction idle + walk animations for every character. Idempotent,
+ * so it is safe to call once per scene `create`.
  */
 export function registerAllCharacterAnims(scene: Phaser.Scene): void {
   for (const name of ALL_CHARACTERS) {
     for (const action of ['idle', 'walk'] as const) {
-      createDirectionalAnim(scene, name, action, 'left');
-      createDirectionalAnim(scene, name, action, 'right');
+      for (const facing of ALL_FACINGS) {
+        createDirectionalAnim(scene, name, action, facing);
+      }
     }
   }
 }
@@ -77,9 +79,9 @@ export function playFacing(
   sprite: Phaser.GameObjects.Sprite,
   name: CharacterKey,
   action: CharacterAction,
-  facingLeft: boolean,
+  facing: Facing,
 ): void {
-  const key = characterAnimKey(name, action, facingLeft ? 'left' : 'right');
+  const key = characterAnimKey(name, action, facing);
   if (sprite.anims.currentAnim?.key === key && sprite.anims.isPlaying) return;
   sprite.play(key);
 }

@@ -59,7 +59,7 @@ TCG Desktop/
 │  │  └─ CameraDirector.ts      # centres camera on full world (no panning)
 │  ├─ characters/
 │  │  ├─ characterSheets.ts     # LimeZu roster + 16×32 sheet layout (dir order: down,up,left,right)
-│  │  ├─ registerCharacterAnims.ts # preload sheets, build L/R idle+walk anims, playFacing()
+│  │  ├─ registerCharacterAnims.ts # preload sheets, build 4-dir idle+walk anims, playFacing()
 │  │  ├─ Npc.ts                 # one background goer: fade-in arrive → wander → fade-out leave
 │  │  └─ NpcCrowd.ts            # keeps convention + shop populated, independent of the player
 │  ├─ entities/
@@ -176,8 +176,9 @@ behind it. Renderer `console.log` is forwarded to the terminal in dev.
   so they never cut through the road or other scenes. The field is rebuilt on layout
   edits, venue switches, and bootstrap (`WorldScene.rebuildObstacles`).
 - **Sheets:** LimeZu "Modern Interiors" free pack, 16×32 frames, strips ordered
-  `down,up,left,right` (6 frames each). The world only moves horizontally, so only
-  left/right idle+walk anims are built (`run` sheet drives "walk").
+  `right,up,left,down` (6 frames each). Idle+walk anims are built for all four
+  facings (`run` sheet drives "walk"); walkers face the dominant axis of each
+  path leg, and the player turns toward a station's collision box on arrival.
 
 ## 7. Depth (walk behind / in front)
 

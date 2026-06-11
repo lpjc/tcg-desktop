@@ -1,9 +1,14 @@
 import Phaser from 'phaser';
-import { DIRECTION_FRAME_START, characterTextureKey } from '../characters/characterSheets';
+import {
+  DIRECTION_FRAME_START,
+  characterTextureKey,
+  type Facing,
+} from '../characters/characterSheets';
 import { playFacing } from '../characters/registerCharacterAnims';
 import { depthFromFootY } from '../core/depth';
 import { followPath } from '../core/pathWalk';
 import { getObstacleField } from '../world/obstacleField';
+import { isPlayerWalkSurface } from '../world/worldSurface';
 
 /**
  * The player is a non-controllable avatar: it represents the result of the
@@ -13,13 +18,13 @@ import { getObstacleField } from '../world/obstacleField';
  */
 export class Player extends Phaser.GameObjects.Sprite {
   private walkTween?: Phaser.Tweens.Tween;
-  private facingLeft = false;
+  private facing: Facing = 'down';
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, characterTextureKey('adam', 'idle'), DIRECTION_FRAME_START.right);
+    super(scene, x, y, characterTextureKey('adam', 'idle'), DIRECTION_FRAME_START.down);
     this.setOrigin(0.5, 1);
     scene.add.existing(this);
-    playFacing(this, 'adam', 'idle', this.facingLeft);
+    playFacing(this, 'adam', 'idle', this.facing);
     this.applyDepth();
   }
 
@@ -35,11 +40,24 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.setDepth(depthFromFootY(this.getFootY()) + 0.5);
   }
 
+  /** Turn to a direction while standing still (e.g. to face a station). */
+  faceDirection(facing: Facing): void {
+    if (this.isWalking()) return;
+    this.facing = facing;
+    playFacing(this, 'adam', 'idle', this.facing);
+  }
+
   /** Walk to a target foot position, routing around furniture obstacles. */
   walkTo(targetX: number, targetY: number, onArrive?: () => void): void {
     this.walkTween?.stop();
 
-    const path = getObstacleField().findPath(this.x, this.y, targetX, targetY);
+    const path = getObstacleField().findPath(
+      this.x,
+      this.y,
+      targetX,
+      targetY,
+      isPlayerWalkSurface,
+    );
     if (path.length === 0) {
       return;
     }
@@ -63,11 +81,11 @@ export class Player extends Phaser.GameObjects.Sprite {
       },
       setPosition: (x: number, y: number) => this.setPosition(x, y),
       applyDepth: () => this.applyDepth(),
-      setFacingLeft: (left: boolean) => {
-        this.facingLeft = left;
+      setFacing: (facing: Facing) => {
+        this.facing = facing;
       },
-      playWalk: () => playFacing(this, 'adam', 'walk', this.facingLeft),
-      playIdle: () => playFacing(this, 'adam', 'idle', this.facingLeft),
+      playWalk: () => playFacing(this, 'adam', 'walk', this.facing),
+      playIdle: () => playFacing(this, 'adam', 'idle', this.facing),
     };
   }
 }

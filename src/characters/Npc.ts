@@ -4,6 +4,7 @@ import {
   DIRECTION_FRAME_START,
   characterTextureKey,
   type CharacterKey,
+  type Facing,
 } from './characterSheets';
 import { followPath } from '../core/pathWalk';
 import { getObstacleField } from '../world/obstacleField';
@@ -77,7 +78,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
   private regions: WanderRect[];
   private readonly entrance: SceneEntrance;
   private readonly onDespawn: (npc: Npc) => void;
-  private facingLeft = false;
+  private facing: Facing = 'down';
   private moveTween?: Phaser.Tweens.Tween;
   private fadeTween?: Phaser.Tweens.Tween;
   private pauseEvent?: Phaser.Time.TimerEvent;
@@ -115,7 +116,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
     const outsideX =
       entrance.outside === 'right' ? entrance.x + DOOR_OVERSHOOT : entrance.x - DOOR_OVERSHOOT;
 
-    super(scene, outsideX, doorSpot.y, characterTextureKey(charKey, 'idle'), DIRECTION_FRAME_START.right);
+    super(scene, outsideX, doorSpot.y, characterTextureKey(charKey, 'idle'), DIRECTION_FRAME_START.down);
     this.charKey = charKey;
     this.regions = regions;
     this.entrance = entrance;
@@ -210,7 +211,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
 
   private pauseThen(next: () => void): void {
     if (!this.scene) return;
-    playFacing(this, this.charKey, 'idle', this.facingLeft);
+    playFacing(this, this.charKey, 'idle', this.facing);
     this.pauseEvent = this.scene.time.delayedCall(
       Phaser.Math.Between(MIN_PAUSE_MS, MAX_PAUSE_MS),
       next,
@@ -299,11 +300,11 @@ export class Npc extends Phaser.GameObjects.Sprite {
       },
       setPosition: (x: number, y: number) => this.setPosition(x, y),
       applyDepth: () => this.applyDepth(),
-      setFacingLeft: (left: boolean) => {
-        this.facingLeft = left;
+      setFacing: (facing: Facing) => {
+        this.facing = facing;
       },
-      playWalk: () => playFacing(this, this.charKey, 'walk', this.facingLeft),
-      playIdle: () => playFacing(this, this.charKey, 'idle', this.facingLeft),
+      playWalk: () => playFacing(this, this.charKey, 'walk', this.facing),
+      playIdle: () => playFacing(this, this.charKey, 'idle', this.facing),
     };
   }
 

@@ -12,6 +12,14 @@ import { getWorldLayout } from './WorldLayout';
  * transparent headroom above floors stays click-through. Furniture sticking up
  * above a floor top is covered separately by the station hit test.
  */
+/**
+ * Whether a foot position is on painted floor or road art — used to keep the
+ * player on walkable surfaces instead of cutting through transparent headroom.
+ */
+export function isPlayerWalkSurface(worldX: number, worldY: number): boolean {
+  return isOverWorldSurface(worldX, worldY);
+}
+
 export function isOverWorldSurface(worldX: number, worldY: number): boolean {
   for (const room of getConventionRooms()) {
     if (inZone(worldX, worldY, room.x, room.width, room.floorTop)) return true;
