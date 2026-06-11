@@ -65,9 +65,9 @@ export function findDoorSpot(
  * 1. Arrives one of two ways:
  *    - Default: spawns just outside the doorway at alpha 0, fades in while
  *      walking to a standable spot on the door line (shop visitors).
- *    - Materialized: starts fully visible at a given door spot — used by
+ *    - Materialized: starts fully visible at a given road spot — used by
  *      `ConventionGuestChargeController`, whose silhouette already stood there
- *      and "plinged" into this NPC.
+ *      and "plinged" into this NPC — then walks in through the doorway.
  * 2. Strolls between random points inside its wander regions for a few legs;
  *    every path is routed around collidable furniture and constrained to the
  *    regions, so NPCs never cut through the road or walk over tables.
@@ -96,9 +96,9 @@ export class Npc extends Phaser.GameObjects.Sprite {
    * Spawn an NPC at the scene's doorway, or null when furniture blocks the
    * entrance (the crowd simply tries again on a later maintenance tick).
    *
-   * `materializeAt` skips the outside fade-in: the NPC starts fully visible at
-   * that door spot (the guest-charge silhouette just "plinged" into it there).
-   * Callers must pass a spot they have verified walkable.
+   * `materializeAt` skips the alpha fade-in: the NPC starts fully visible at
+   * that spot on the road (the guest-charge silhouette just "plinged" into it
+   * there) and walks in through the doorway like everyone else.
    */
   static trySpawn(
     scene: Phaser.Scene,
@@ -109,9 +109,17 @@ export class Npc extends Phaser.GameObjects.Sprite {
     materializeAt?: { x: number; y: number },
   ): Npc | null {
     if (regions.length === 0) return null;
-    const doorSpot = materializeAt ?? findDoorSpot(entrance, regions);
+    const doorSpot = findDoorSpot(entrance, regions);
     if (!doorSpot) return null;
-    return new Npc(scene, charKey, regions, entrance, doorSpot, onDespawn, materializeAt != null);
+    return new Npc(
+      scene,
+      charKey,
+      regions,
+      entrance,
+      doorSpot,
+      onDespawn,
+      materializeAt ?? null,
+    );
   }
 
   private constructor(
@@ -121,18 +129,14 @@ export class Npc extends Phaser.GameObjects.Sprite {
     entrance: SceneEntrance,
     doorSpot: { x: number; y: number },
     onDespawn: (npc: Npc) => void,
-    materialized: boolean,
+    materializeAt: { x: number; y: number } | null,
   ) {
-    const outsideX =
-      entrance.outside === 'right' ? entrance.x + DOOR_OVERSHOOT : entrance.x - DOOR_OVERSHOOT;
+    const start = materializeAt ?? {
+      x: entrance.outside === 'right' ? entrance.x + DOOR_OVERSHOOT : entrance.x - DOOR_OVERSHOOT,
+      y: doorSpot.y,
+    };
 
-    super(
-      scene,
-      materialized ? doorSpot.x : outsideX,
-      doorSpot.y,
-      characterTextureKey(charKey, 'idle'),
-      DIRECTION_FRAME_START.down,
-    );
+    super(scene, start.x, start.y, characterTextureKey(charKey, 'idle'), DIRECTION_FRAME_START.down);
     this.charKey = charKey;
     this.regions = regions;
     this.entrance = entrance;
@@ -140,19 +144,16 @@ export class Npc extends Phaser.GameObjects.Sprite {
     this.legsRemaining = Phaser.Math.Between(MIN_LEGS, MAX_LEGS);
 
     this.setOrigin(0.5, 1);
-    this.setAlpha(materialized ? 1 : 0);
+    this.setAlpha(materializeAt ? 1 : 0);
     scene.add.existing(this);
     this.applyDepth();
 
-    if (materialized) {
-      this.startNextLeg();
-      return;
+    if (!materializeAt) {
+      this.fadeTween = scene.tweens.add({ targets: this, alpha: 1, duration: FADE_MS, ease: 'Linear' });
     }
 
-    this.fadeTween = scene.tweens.add({ targets: this, alpha: 1, duration: FADE_MS, ease: 'Linear' });
-
-    // The short hop from outside the doorway onto the door line. Only checked
-    // against furniture (the outside strip is not part of any wander region).
+    // The hop from the road onto the door line. Only checked against furniture
+    // (the outside strip is not part of any wander region).
     if (getObstacleField().segmentClear(this.x, this.y, doorSpot.x, doorSpot.y)) {
       this.walkAlong([doorSpot], () => this.startNextLeg());
     } else {

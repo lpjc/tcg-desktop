@@ -18,21 +18,22 @@ let mainWindow: BrowserWindow | null = null;
 let clickThroughEnabled = true;
 let globalClickHookStarted = false;
 
-/** uiohook button id for the left mouse button. */
+/** uiohook button ids. */
 const LEFT_MOUSE_BUTTON = 1;
+const RIGHT_MOUSE_BUTTON = 2;
 
 /**
- * System-wide left-click listener (uiohook-napi). The overlay is click-through,
+ * System-wide click listener (uiohook-napi). The overlay is click-through,
  * so desktop clicks never reach the renderer — this hook forwards every global
- * left mouse-down as a `global-click` IPC event, which drives the convention
- * guest charge ("your actions matter" idle mechanic).
+ * left/right mouse-down as a `global-click` IPC event, which drives the
+ * convention guest charge ("your actions matter" idle mechanic).
  *
  * Failure is non-fatal: the game still runs, guests just charge passively.
  */
 function startGlobalClickHook(): void {
   try {
     uIOhook.on('mousedown', (event) => {
-      if (event.button !== LEFT_MOUSE_BUTTON) return;
+      if (event.button !== LEFT_MOUSE_BUTTON && event.button !== RIGHT_MOUSE_BUTTON) return;
       mainWindow?.webContents.send('global-click');
     });
     uIOhook.start();

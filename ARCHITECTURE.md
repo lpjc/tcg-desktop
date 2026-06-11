@@ -97,12 +97,12 @@ TCG Desktop/
   back to click-through. In **place mode** the whole band is clickable.
 - IPC (via `preload.ts`): `setInteractive(bool)`, `saveLayout(name, json)`,
   `loadLayout(name)`, plus a global hotkey to toggle play/edit.
-- **Global click hook:** the main process runs a system-wide left-mouse-down
-  listener (`uiohook-napi`, a native N-API module with prebuilt binaries) and
-  forwards each click as a `global-click` IPC event (`onGlobalClick` on the
-  bridge). The overlay is click-through, so this is the only way desktop
-  clicks reach the game — it powers the convention guest charge (§6.2).
-  Hook failure is non-fatal: guests then charge passively only.
+- **Global click hook:** the main process runs a system-wide left/right
+  mouse-down listener (`uiohook-napi`, a native N-API module with prebuilt
+  binaries) and forwards each click as a `global-click` IPC event
+  (`onGlobalClick` on the bridge). The overlay is click-through, so this is the
+  only way desktop clicks reach the game — it powers the convention guest
+  charge (§6.2). Hook failure is non-fatal: guests then charge passively only.
 
 ---
 
@@ -176,18 +176,20 @@ behind it. Renderer `console.log` is forwarded to the terminal in dev.
   NPCs stroll a few legs, then walk back out through the same doorway and despawn.
   NPCs are decorative (no interaction, no game state).
 - **Convention guest charge ("idle, but your actions matter"):**
-  `ConventionGuestChargeController.ts`. Exactly one incoming guest charges in the
-  convention doorway at a time: a grey silhouette of the actual guest sprite stands
-  on the door line while the full-color sprite is revealed **bottom-up** by a
-  geometry mask. `guestChargeProgress` is a single 0→1 value — passive fill
-  (`GUEST_CHARGE_BASE_MS` ≈ 10s) and **global left clicks anywhere on the desktop**
-  (`CLICK_GUEST_CHARGE_BOOST` = +10% each, via the uiohook bridge in §4) feed the
-  same number, so timer and bar can never disagree. On completion the silhouette
-  "plings" (white flash + scale bounce; audio seam in `playArrivalPling`) and
-  materializes into a normal wandering `Npc` at that spot — then the next charge
-  starts immediately. Guardrails: `MIN_GUEST_CHARGE_MS` (600ms) floors the arrival
-  rate against autoclickers; at `CONVENTION_FLOOD_CAP` (30) the full silhouette
-  waits in the doorway until a guest wanders out; a furniture-blocked doorway
+  `ConventionGuestChargeController.ts`. Exactly one incoming guest charges **out on
+  the road in front of the lobby doorway** at a time: a grey silhouette of the
+  actual guest sprite stands still while the full-color sprite is revealed
+  **bottom-up** by a geometry mask. `guestChargeProgress` is a single 0→1 value —
+  passive fill (`GUEST_CHARGE_BASE_MS` ≈ 10s) and **global clicks (left or right)
+  anywhere on the desktop** (`CLICK_GUEST_CHARGE_BOOST` = +10% each, via the
+  uiohook bridge in §4) feed the same number, so timer and bar can never disagree.
+  Each click fires a small squash pulse + spark on the silhouette. On completion
+  the silhouette "plings" (white flash + scale bounce; audio seam in
+  `playArrivalPling`) and materializes into a normal wandering `Npc` at that road
+  spot, which walks in through the doorway — then the next charge starts
+  immediately. Guardrails: `MIN_GUEST_CHARGE_MS` (600ms) floors the arrival rate
+  against autoclickers; at `CONVENTION_FLOOD_CAP` (30) the full silhouette waits
+  on the road until a guest wanders out; a blocked doorway/road spot
   pauses/retries; clicks are ignored while place mode is active.
 - **NPC lifecycle never teleports:** `Npc.trySpawn` first finds a free foot spot on the
   doorway line (`findDoorSpot`); if furniture blocks the whole entrance the spawn is

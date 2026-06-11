@@ -5,7 +5,7 @@ export interface DesktopBridge {
   saveLayout: (name: string, data: string) => Promise<boolean>;
   loadLayout: (name: string) => Promise<string | null>;
   onTogglePlaceMode: (callback: () => void) => () => void;
-  /** System-wide left mouse-down events (even outside the overlay). */
+  /** System-wide left/right mouse-down events (even outside the overlay). */
   onGlobalClick: (callback: () => void) => () => void;
 }
 

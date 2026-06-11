@@ -167,9 +167,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /**
-   * Every system-wide left click hurries the incoming guest along. In Electron
-   * the uiohook bridge sees ALL desktop clicks (the overlay is click-through);
-   * in plain-browser dev there is no bridge, so page clicks stand in.
+   * Every system-wide click (left or right) hurries the incoming guest along.
+   * In Electron the uiohook bridge sees ALL desktop clicks (the overlay is
+   * click-through); in plain-browser dev there is no bridge, so page clicks
+   * stand in.
    */
   private wireGuestChargeClicks(): void {
     const boost = () => this.guestCharge.onGlobalClick();
@@ -178,7 +179,7 @@ export class WorldScene extends Phaser.Scene {
       this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe);
     } else {
       const domListener = (event: PointerEvent) => {
-        if (event.button === 0) boost();
+        if (event.button === 0 || event.button === 2) boost();
       };
       window.addEventListener('pointerdown', domListener);
       this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>

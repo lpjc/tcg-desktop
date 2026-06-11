@@ -89,9 +89,9 @@ export class NpcCrowd {
   }
 
   /**
-   * Spawn a fully-charged convention guest, already visible at the doorway
-   * spot where its silhouette just "plinged" (no outside fade-in). Returns
-   * null only if the venue currently has no wander regions.
+   * Spawn a fully-charged convention guest, already visible at the road spot
+   * where its silhouette just "plinged" (no fade-in); it walks in through the
+   * doorway. Returns null when furniture blocks the door line.
    */
   spawnConventionGuest(charKey: CharacterKey, at: { x: number; y: number }): Npc | null {
     return this.spawn(this.convention, charKey, at);

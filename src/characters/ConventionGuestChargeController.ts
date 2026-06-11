@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ROAD_FLOOR_TOP, WORLD_HEIGHT } from '../core/constants';
 import { depthFromFootY } from '../core/depth';
 import { getObstacleField } from '../world/obstacleField';
 import {
@@ -11,15 +12,11 @@ import {
 } from './characterSheets';
 import { findDoorSpot } from './Npc';
 import type { NpcCrowd } from './NpcCrowd';
-import {
-  conventionRoadEntrance,
-  conventionWanderRegions,
-  withinAnyRegion,
-} from './wanderZones';
+import { conventionRoadEntrance, conventionWanderRegions } from './wanderZones';
 
 /** Passive fill: an unattended charge completes in this long. */
 const GUEST_CHARGE_BASE_MS = 10_000;
-/** Charge added per global left click (≈1s of passive fill; ~10 clicks fills the bar). */
+/** Charge added per global click, left or right (≈1s of passive fill; ~10 clicks fills the bar). */
 const CLICK_GUEST_CHARGE_BOOST = 0.1;
 /**
  * Hard floor between arrivals: even a maxed-out bar waits this long after the
@@ -28,38 +25,94 @@ const CLICK_GUEST_CHARGE_BOOST = 0.1;
 const MIN_GUEST_CHARGE_MS = 600;
 /**
  * Perf ceiling on concurrent convention NPCs. At the cap the fully-charged
- * silhouette waits in the doorway ("the con is packed") until someone leaves.
+ * silhouette waits on the road ("the con is packed") until someone leaves.
  */
 const CONVENTION_FLOOD_CAP = 30;
-/** Retry delay when furniture fully blocks the doorway line. */
+/** Retry delay when furniture fully blocks the doorway or road spot. */
 const BLOCKED_DOOR_RETRY_MS = 1300;
+
+/**
+ * How far past the doorway line the silhouette stands — clears the convention
+ * frame edge so the incoming guest visibly waits out on the road.
+ */
+const ROAD_STANDOFF = 18;
+/** Foot-Y insets keeping the silhouette in the lower half of the road strip. */
+const ROAD_FOOT_INSET_TOP = 12;
+const ROAD_FOOT_INSET_BOTTOM = 8;
+/** Foot positions sampled along the road strip when placing the silhouette. */
+const ROAD_SPOT_SAMPLES = 5;
 
 /** Grey-ish translucent look of the uncharged silhouette. */
 const SILHOUETTE_TINT = 0x32323c;
 const SILHOUETTE_ALPHA = 0.45;
+/**
+ * The fill mask is padded sideways so the click pulse (slight horizontal
+ * stretch) never clips against the mask edges; only the bottom-up reveal
+ * line is meaningful.
+ */
+const FILL_MASK_SIDE_PAD = 4;
+
+/** Per-click feedback: quick squash pulse + sparks popping off the fill line. */
+const CLICK_PULSE_MS = 80;
+const CLICK_PULSE_SCALE_X = 1.2;
+const CLICK_PULSE_SCALE_Y = 0.85;
+const CLICK_SPARK_COUNT = 3;
+const CLICK_SPARK_RISE = 10;
+const CLICK_SPARK_MS = 280;
 
 /** Arrival "pling" (visual-only for now — see playArrivalPling). */
 const PLING_FLASH_MS = 160;
 const PLING_BOUNCE_MS = 240;
 const PLING_BOUNCE_SCALE = 1.15;
 
+/** Visible art height per idle-down frame, keyed by texture key. */
+const artHeightCache = new Map<string, number>();
+
+/**
+ * The 16×32 character frames are mostly transparent padding above the head —
+ * the drawn art only occupies the bottom ~21px. The bottom-up reveal must span
+ * the ART, not the frame, or the silhouette looks "full" at ~65% progress and
+ * then seems to stall for seconds before the pling. Measured once per
+ * character by scanning the frame for its first non-transparent row.
+ */
+function measureArtHeight(scene: Phaser.Scene, charKey: CharacterKey): number {
+  const textureKey = characterTextureKey(charKey, 'idle');
+  const cached = artHeightCache.get(textureKey);
+  if (cached !== undefined) return cached;
+
+  const frameIndex = DIRECTION_FRAME_START.down;
+  let artHeight = CHAR_FRAME_HEIGHT; // fallback: full frame
+  scan: for (let row = 0; row < CHAR_FRAME_HEIGHT; row++) {
+    for (let col = 0; col < CHAR_FRAME_WIDTH; col++) {
+      const alpha = scene.textures.getPixelAlpha(col, row, textureKey, frameIndex);
+      if (alpha > 0) {
+        artHeight = CHAR_FRAME_HEIGHT - row;
+        break scan;
+      }
+    }
+  }
+  artHeightCache.set(textureKey, artHeight);
+  return artHeight;
+}
+
 /**
  * The "idle, but your actions matter" doorway: exactly one incoming convention
- * guest charges in the road doorway at a time.
+ * guest charges out on the road in front of the lobby doorway at a time.
  *
- * - A grey silhouette of the actual guest sprite stands still on the door
- *   line; the full-color sprite is revealed bottom-up (feet first) by a
- *   geometry mask as `guestChargeProgress` fills.
+ * - A grey silhouette of the actual guest sprite stands still on the road just
+ *   outside the doorway; the full-color sprite is revealed bottom-up (feet
+ *   first) by a geometry mask as `guestChargeProgress` fills.
  * - Progress is a single 0→1 value: passive time (full in ~10s) and global
- *   left-click boosts (+10% each, forwarded from the Electron uiohook via
- *   `desktop.onGlobalClick`) feed the same number, so timer and bar can never
- *   disagree. Spamming front-loads the bar; the `MIN_GUEST_CHARGE_MS` floor
- *   caps the arrival rate.
+ *   click boosts — left or right, anywhere on the desktop, forwarded from the
+ *   Electron uiohook via `desktop.onGlobalClick` — feed the same number, so
+ *   timer and bar can never disagree. Each click also fires a small squash
+ *   pulse + spark on the silhouette. The `MIN_GUEST_CHARGE_MS` floor caps the
+ *   arrival rate.
  * - On completion the silhouette "plings" (white flash + scale bounce), turns
- *   into a normal wandering `Npc` via `NpcCrowd.spawnConventionGuest`, and the
- *   next silhouette immediately starts charging.
- * - At `CONVENTION_FLOOD_CAP` the full silhouette waits in the doorway until a
- *   guest wanders out. A furniture-blocked doorway pauses/retries, mirroring
+ *   into a normal wandering `Npc` via `NpcCrowd.spawnConventionGuest` (which
+ *   walks in through the doorway), and the next silhouette starts charging.
+ * - At `CONVENTION_FLOOD_CAP` the full silhouette waits on the road until a
+ *   guest wanders out. A blocked doorway/road spot pauses/retries, mirroring
  *   `Npc.trySpawn`'s skip-and-retry.
  *
  * This replaces the convention's old random top-up; the shop crowd is
@@ -76,12 +129,16 @@ export class ConventionGuestChargeController {
   /** scene.time.now when the current charge began — drives the min-charge floor. */
   private chargeStartedAt = 0;
   private charKey: CharacterKey = NPC_CHARACTERS[0];
-  private doorSpot: { x: number; y: number } | null = null;
+  /** Visible art height of the current guest's frame — the reveal's full span. */
+  private artHeight = CHAR_FRAME_HEIGHT;
+  /** Where the silhouette stands: out on the road, past the doorway line. */
+  private roadSpot: { x: number; y: number } | null = null;
 
   private silhouette?: Phaser.GameObjects.Sprite;
   private colorFill?: Phaser.GameObjects.Sprite;
   private fillMaskGraphics?: Phaser.GameObjects.Graphics;
   private retryEvent?: Phaser.Time.TimerEvent;
+  private pulseTween?: Phaser.Tweens.Tween;
   private plinging = false;
   private started = false;
   private destroyed = false;
@@ -103,20 +160,21 @@ export class ConventionGuestChargeController {
     this.beginNextCharge();
   }
 
-  /** A global left click anywhere on the desktop hurries the guest along. */
+  /** A global click (left or right) anywhere hurries the guest along. */
   onGlobalClick(): void {
-    if (this.destroyed || this.plinging || !this.doorSpot) return;
+    if (this.destroyed || this.plinging || !this.roadSpot) return;
     if (!this.isBoostAllowed()) return;
     this.guestChargeProgress = Math.min(1, this.guestChargeProgress + CLICK_GUEST_CHARGE_BOOST);
+    this.playClickPulse();
   }
 
   /**
    * Venue switch moved/rebuilt the convention doorway: re-anchor the charging
-   * silhouette to the new entrance, keeping its progress.
+   * silhouette to the new road spot, keeping its progress.
    */
   relayout(): void {
     if (!this.started || this.destroyed || this.plinging) return;
-    this.relocateDoorSpot();
+    this.relocateRoadSpot();
   }
 
   destroy(): void {
@@ -128,7 +186,7 @@ export class ConventionGuestChargeController {
   }
 
   private update(_time: number, delta: number): void {
-    if (this.destroyed || this.plinging || !this.doorSpot) return;
+    if (this.destroyed || this.plinging || !this.roadSpot) return;
 
     this.guestChargeProgress = Math.min(
       1,
@@ -138,55 +196,70 @@ export class ConventionGuestChargeController {
 
     const elapsed = this.scene.time.now - this.chargeStartedAt;
     if (this.guestChargeProgress < 1 || elapsed < MIN_GUEST_CHARGE_MS) return;
-    if (this.crowd.conventionCount() >= CONVENTION_FLOOD_CAP) return; // wait at the door
+    if (this.crowd.conventionCount() >= CONVENTION_FLOOD_CAP) return; // wait on the road
     this.pling();
   }
 
-  /** Reset progress and stand a fresh grey silhouette in the doorway. */
+  /** Reset progress and stand a fresh grey silhouette out on the road. */
   private beginNextCharge(): void {
     if (this.destroyed) return;
-    this.clearVisuals();
     this.guestChargeProgress = 0;
     this.chargeStartedAt = this.scene.time.now;
     this.charKey = Phaser.Utils.Array.GetRandom(NPC_CHARACTERS as unknown as CharacterKey[]);
-
-    this.doorSpot = findDoorSpot(conventionRoadEntrance(), conventionWanderRegions());
-    if (!this.doorSpot) {
-      this.scheduleDoorRetry(() => this.beginNextCharge());
-      return;
-    }
-    this.buildSilhouette();
+    this.relocateRoadSpot();
   }
 
-  /** Move an in-progress charge to a fresh door spot (or pause if none). */
-  private relocateDoorSpot(): void {
+  /** (Re)place the silhouette, keeping progress; pause+retry when blocked. */
+  private relocateRoadSpot(): void {
     this.clearVisuals();
-    this.doorSpot = findDoorSpot(conventionRoadEntrance(), conventionWanderRegions());
-    if (!this.doorSpot) {
-      this.scheduleDoorRetry(() => this.relocateDoorSpot());
+    this.roadSpot = this.findRoadSpot();
+    if (!this.roadSpot) {
+      this.scheduleRetry(() => this.relocateRoadSpot());
       return;
     }
     this.buildSilhouette();
   }
 
-  private scheduleDoorRetry(retry: () => void): void {
+  /**
+   * A standable foot spot on the road strip just past the doorway. Requires
+   * the door line itself to be enterable (findDoorSpot) so a finished guest
+   * can actually walk in.
+   */
+  private findRoadSpot(): { x: number; y: number } | null {
+    const entrance = conventionRoadEntrance();
+    if (!findDoorSpot(entrance, conventionWanderRegions())) return null;
+
+    const field = getObstacleField();
+    const x = entrance.x + ROAD_STANDOFF;
+    const minY = ROAD_FLOOR_TOP + ROAD_FOOT_INSET_TOP;
+    const maxY = WORLD_HEIGHT - ROAD_FOOT_INSET_BOTTOM;
+    const startOffset = Math.random() * (maxY - minY);
+    for (let i = 0; i < ROAD_SPOT_SAMPLES; i++) {
+      const y = minY + ((startOffset + ((maxY - minY) * i) / ROAD_SPOT_SAMPLES) % (maxY - minY + 1));
+      if (field.isWalkable(x, y)) return { x, y };
+    }
+    return null;
+  }
+
+  private scheduleRetry(retry: () => void): void {
     this.retryEvent?.remove(false);
     this.retryEvent = this.scene.time.delayedCall(BLOCKED_DOOR_RETRY_MS, retry);
   }
 
   /**
-   * Two stacked copies of the guest's idle frame at the door spot:
+   * Two stacked copies of the guest's idle frame at the road spot:
    * - `silhouette`: solid dark tint at low alpha (the grey "incoming" ghost),
    * - `colorFill`: the real sprite, masked to its bottom `progress` fraction so
    *   color rises from the feet as the charge fills.
    * Both use a static frame — the guest only comes alive on the pling.
    */
   private buildSilhouette(): void {
-    if (!this.doorSpot) return;
-    const { x, y } = this.doorSpot;
+    if (!this.roadSpot) return;
+    const { x, y } = this.roadSpot;
     const texture = characterTextureKey(this.charKey, 'idle');
     const frame = DIRECTION_FRAME_START.down;
     const depth = depthFromFootY(y);
+    this.artHeight = measureArtHeight(this.scene, this.charKey);
 
     this.silhouette = this.scene.add
       .sprite(x, y, texture, frame)
@@ -208,42 +281,73 @@ export class ConventionGuestChargeController {
   }
 
   private redrawFillMask(): void {
-    if (!this.fillMaskGraphics || !this.doorSpot) return;
-    const { x, y } = this.doorSpot;
-    const revealedHeight = CHAR_FRAME_HEIGHT * this.guestChargeProgress;
+    if (!this.fillMaskGraphics || !this.roadSpot) return;
+    const { x, y } = this.roadSpot;
+    const width = CHAR_FRAME_WIDTH + FILL_MASK_SIDE_PAD * 2;
+    // Span the visible art, not the frame: full color exactly at progress 1.
+    const revealedHeight = this.artHeight * this.guestChargeProgress;
     this.fillMaskGraphics
       .clear()
       .fillStyle(0xffffff)
-      .fillRect(x - CHAR_FRAME_WIDTH / 2, y - revealedHeight, CHAR_FRAME_WIDTH, revealedHeight);
+      .fillRect(x - width / 2, y - revealedHeight, width, revealedHeight);
+  }
+
+  /** Per-click juice: quick squash pulse + white sparks off the fill line. */
+  private playClickPulse(): void {
+    if (!this.silhouette || !this.colorFill || !this.roadSpot) return;
+
+    this.pulseTween?.stop();
+    this.silhouette.setScale(1);
+    this.colorFill.setScale(1);
+    this.pulseTween = this.scene.tweens.add({
+      targets: [this.silhouette, this.colorFill],
+      scaleX: CLICK_PULSE_SCALE_X,
+      scaleY: CLICK_PULSE_SCALE_Y,
+      duration: CLICK_PULSE_MS,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+    });
+
+    // Sparks pop out of the current fill line and drift up while fading.
+    const { x, y } = this.roadSpot;
+    const fillLineY = y - this.artHeight * this.guestChargeProgress;
+    for (let i = 0; i < CLICK_SPARK_COUNT; i++) {
+      const spark = this.scene.add
+        .rectangle(
+          x + Phaser.Math.Between(-7, 7),
+          fillLineY + Phaser.Math.Between(-2, 2),
+          2,
+          2,
+          0xffffff,
+        )
+        .setDepth(depthFromFootY(y) + 1);
+      this.scene.tweens.add({
+        targets: spark,
+        y: spark.y - CLICK_SPARK_RISE - Phaser.Math.Between(0, 4),
+        alpha: 0,
+        duration: CLICK_SPARK_MS,
+        ease: 'Quad.easeOut',
+        onComplete: () => spark.destroy(),
+      });
+    }
   }
 
   /**
    * Arrival! White flash + scale bounce, then the silhouette becomes a real
-   * wandering NPC and the next charge starts immediately.
+   * NPC that walks in through the doorway, and the next charge starts.
    */
   private pling(): void {
-    if (!this.doorSpot || !this.colorFill) return;
-
-    // Furniture may have been placed on the doorway mid-charge (place mode):
-    // re-verify before materializing a guest inside a table.
-    const regions = conventionWanderRegions();
-    const standable = getObstacleField().isWalkable(
-      this.doorSpot.x,
-      this.doorSpot.y,
-      (px, py) => withinAnyRegion(px, py, regions),
-    );
-    if (!standable) {
-      this.relocateDoorSpot();
-      return;
-    }
+    if (!this.roadSpot || !this.colorFill) return;
 
     this.plinging = true;
-    const spot = this.doorSpot;
+    const spot = this.roadSpot;
     const arrivingChar = this.charKey;
 
     // Fully revealed for the pop — drop the mask so the bounce isn't clipped
     // to the unscaled frame rectangle.
     this.guestChargeProgress = 1;
+    this.pulseTween?.stop();
+    this.colorFill.setScale(1);
     this.colorFill.clearMask(true);
     this.fillMaskGraphics?.destroy();
     this.fillMaskGraphics = undefined;
@@ -270,7 +374,13 @@ export class ConventionGuestChargeController {
       ease: 'Quad.easeOut',
       onComplete: () => {
         this.plinging = false;
-        this.crowd.spawnConventionGuest(arrivingChar, spot);
+        const guest = this.crowd.spawnConventionGuest(arrivingChar, spot);
+        if (!guest) {
+          // Doorway got blocked mid-charge: keep the full silhouette waiting
+          // at a fresh spot until the door line opens up again.
+          this.relocateRoadSpot();
+          return;
+        }
         this.beginNextCharge();
       },
     });
@@ -287,6 +397,8 @@ export class ConventionGuestChargeController {
   private clearVisuals(): void {
     this.retryEvent?.remove(false);
     this.retryEvent = undefined;
+    this.pulseTween?.stop();
+    this.pulseTween = undefined;
     this.colorFill?.clearMask(true);
     this.fillMaskGraphics?.destroy();
     this.fillMaskGraphics = undefined;
@@ -294,6 +406,6 @@ export class ConventionGuestChargeController {
     this.silhouette = undefined;
     this.colorFill?.destroy();
     this.colorFill = undefined;
-    this.doorSpot = null;
+    this.roadSpot = null;
   }
 }
