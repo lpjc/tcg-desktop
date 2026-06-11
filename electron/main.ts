@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen, globalShortcut } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { uIOhook } from 'uiohook-napi';
 
 /** Must match ZOOM, BAND_HEIGHT and TOP_MARGIN in src/core/constants.ts */
 const ZOOM = 2;
@@ -15,6 +16,31 @@ const DEBUG_OPAQUE = process.env.DEBUG_OPAQUE === '1';
 
 let mainWindow: BrowserWindow | null = null;
 let clickThroughEnabled = true;
+let globalClickHookStarted = false;
+
+/** uiohook button id for the left mouse button. */
+const LEFT_MOUSE_BUTTON = 1;
+
+/**
+ * System-wide left-click listener (uiohook-napi). The overlay is click-through,
+ * so desktop clicks never reach the renderer — this hook forwards every global
+ * left mouse-down as a `global-click` IPC event, which drives the convention
+ * guest charge ("your actions matter" idle mechanic).
+ *
+ * Failure is non-fatal: the game still runs, guests just charge passively.
+ */
+function startGlobalClickHook(): void {
+  try {
+    uIOhook.on('mousedown', (event) => {
+      if (event.button !== LEFT_MOUSE_BUTTON) return;
+      mainWindow?.webContents.send('global-click');
+    });
+    uIOhook.start();
+    globalClickHookStarted = true;
+  } catch (error) {
+    console.error('[global-click] failed to start input hook:', error);
+  }
+}
 
 /** Re-apply topmost z-order — toggling click-through or moving the window can drop it on Windows. */
 function pinOverlayOnTop(win: BrowserWindow): void {
@@ -126,6 +152,7 @@ function setClickThrough(enabled: boolean): void {
 
 app.whenReady().then(() => {
   createWindow();
+  startGlobalClickHook();
 
   screen.on('display-metrics-changed', () => {
     if (mainWindow) snapToDisplayBand(mainWindow);
@@ -180,6 +207,7 @@ app.whenReady().then(() => {
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
+  if (globalClickHookStarted) uIOhook.stop();
 });
 
 app.on('window-all-closed', () => {

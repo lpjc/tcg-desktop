@@ -60,8 +60,9 @@ TCG Desktop/
 │  ├─ characters/
 │  │  ├─ characterSheets.ts     # LimeZu roster + 16×32 sheet layout (dir order: down,up,left,right)
 │  │  ├─ registerCharacterAnims.ts # preload sheets, build 4-dir idle+walk anims, playFacing()
-│  │  ├─ Npc.ts                 # one background goer: fade-in arrive → wander → fade-out leave
-│  │  └─ NpcCrowd.ts            # keeps convention + shop populated, independent of the player
+│  │  ├─ Npc.ts                 # one background goer: arrive (fade or materialize) → wander → fade-out leave
+│  │  ├─ NpcCrowd.ts            # owns all background NPCs; random top-up for the shop only
+│  │  └─ ConventionGuestChargeController.ts # doorway silhouette charge: timed + global-click-boosted guest spawn
 │  ├─ entities/
 │  │  ├─ Player.ts              # protagonist (Adam); walks station→station, never fades
 │  │  └─ Placeable.ts           # a placed furniture instance (foot-anchored, depth-sorted)
@@ -96,6 +97,12 @@ TCG Desktop/
   back to click-through. In **place mode** the whole band is clickable.
 - IPC (via `preload.ts`): `setInteractive(bool)`, `saveLayout(name, json)`,
   `loadLayout(name)`, plus a global hotkey to toggle play/edit.
+- **Global click hook:** the main process runs a system-wide left-mouse-down
+  listener (`uiohook-napi`, a native N-API module with prebuilt binaries) and
+  forwards each click as a `global-click` IPC event (`onGlobalClick` on the
+  bridge). The overlay is click-through, so this is the only way desktop
+  clicks reach the game — it powers the convention guest charge (§6.2).
+  Hook failure is non-fatal: guests then charge passively only.
 
 ---
 
@@ -154,15 +161,34 @@ behind it. Renderer `console.log` is forwarded to the terminal in dev.
   trapezoidal profile (constant ramp to a fixed top speed, then cruise). Ramp feel is
   identical for every trip; only the cruise length grows with distance. Do **not** swap
   this back to a normalized ease, which makes short hops snappy and long hops sluggish.
-- **NPCs (Alex / Amelia / Bob):** `NpcCrowd.ts` keeps the convention (many) and shop
-  (a few) populated **independently of the player** — both scenes stay alive no matter
-  where Adam is. Wander areas come from `characters/wanderZones.ts`: one rectangle per
+- **NPCs (Alex / Amelia / Bob):** `NpcCrowd.ts` owns every background NPC,
+  **independently of the player** — both scenes stay alive no matter where Adam is.
+  The two zones are populated differently:
+  - **Shop:** random top-up to a small target on a maintenance timer (unchanged).
+  - **Convention:** guests arrive **only** via the guest charge (below); the crowd
+    still owns their wander regions, relayout handling, and despawn bookkeeping.
+
+  Wander areas come from `characters/wanderZones.ts`: one rectangle per
   convention room (each room's `width` + `floorTop` from the active venue preset), and
   for the shop the full floor minus the centre-top behind-counter strip (`SHOP_BACK_COUNTER`
   in `floorPatterns.ts`). Convention NPCs may cross all room thresholds; both scenes
-  only fade in/out at their road doorway (lobby for convention, left edge for shop).
-  NPCs stroll a few legs, then walk back out through the same doorway and despawn;
-  the crowd trickles in replacements. NPCs are decorative (no interaction, no game state).
+  only enter/exit at their road doorway (lobby for convention, left edge for shop).
+  NPCs stroll a few legs, then walk back out through the same doorway and despawn.
+  NPCs are decorative (no interaction, no game state).
+- **Convention guest charge ("idle, but your actions matter"):**
+  `ConventionGuestChargeController.ts`. Exactly one incoming guest charges in the
+  convention doorway at a time: a grey silhouette of the actual guest sprite stands
+  on the door line while the full-color sprite is revealed **bottom-up** by a
+  geometry mask. `guestChargeProgress` is a single 0→1 value — passive fill
+  (`GUEST_CHARGE_BASE_MS` ≈ 10s) and **global left clicks anywhere on the desktop**
+  (`CLICK_GUEST_CHARGE_BOOST` = +10% each, via the uiohook bridge in §4) feed the
+  same number, so timer and bar can never disagree. On completion the silhouette
+  "plings" (white flash + scale bounce; audio seam in `playArrivalPling`) and
+  materializes into a normal wandering `Npc` at that spot — then the next charge
+  starts immediately. Guardrails: `MIN_GUEST_CHARGE_MS` (600ms) floors the arrival
+  rate against autoclickers; at `CONVENTION_FLOOD_CAP` (30) the full silhouette
+  waits in the doorway until a guest wanders out; a furniture-blocked doorway
+  pauses/retries; clicks are ignored while place mode is active.
 - **NPC lifecycle never teleports:** `Npc.trySpawn` first finds a free foot spot on the
   doorway line (`findDoorSpot`); if furniture blocks the whole entrance the spawn is
   skipped and the maintenance timer retries later. Exits walk to the doorway and fade

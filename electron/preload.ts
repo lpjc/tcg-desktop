@@ -21,4 +21,11 @@ contextBridge.exposeInMainWorld('desktop', {
     ipcRenderer.on('toggle-place-mode', listener);
     return () => ipcRenderer.removeListener('toggle-place-mode', listener);
   },
+  // Fired for every system-wide left mouse-down (uiohook in main process),
+  // including clicks outside the overlay — drives the guest charge boost.
+  onGlobalClick: (callback: () => void) => {
+    const listener = () => callback();
+    ipcRenderer.on('global-click', listener);
+    return () => ipcRenderer.removeListener('global-click', listener);
+  },
 });

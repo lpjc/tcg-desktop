@@ -62,8 +62,12 @@ export function findDoorSpot(
  * A background convention-goer / shop visitor.
  *
  * Lifecycle (never teleports, always enters/exits through the road doorway):
- * 1. Spawns just outside the doorway at alpha 0, fades in while walking to a
- *    standable spot on the door line.
+ * 1. Arrives one of two ways:
+ *    - Default: spawns just outside the doorway at alpha 0, fades in while
+ *      walking to a standable spot on the door line (shop visitors).
+ *    - Materialized: starts fully visible at a given door spot — used by
+ *      `ConventionGuestChargeController`, whose silhouette already stood there
+ *      and "plinged" into this NPC.
  * 2. Strolls between random points inside its wander regions for a few legs;
  *    every path is routed around collidable furniture and constrained to the
  *    regions, so NPCs never cut through the road or walk over tables.
@@ -91,6 +95,10 @@ export class Npc extends Phaser.GameObjects.Sprite {
   /**
    * Spawn an NPC at the scene's doorway, or null when furniture blocks the
    * entrance (the crowd simply tries again on a later maintenance tick).
+   *
+   * `materializeAt` skips the outside fade-in: the NPC starts fully visible at
+   * that door spot (the guest-charge silhouette just "plinged" into it there).
+   * Callers must pass a spot they have verified walkable.
    */
   static trySpawn(
     scene: Phaser.Scene,
@@ -98,11 +106,12 @@ export class Npc extends Phaser.GameObjects.Sprite {
     regions: WanderRect[],
     entrance: SceneEntrance,
     onDespawn: (npc: Npc) => void,
+    materializeAt?: { x: number; y: number },
   ): Npc | null {
     if (regions.length === 0) return null;
-    const doorSpot = findDoorSpot(entrance, regions);
+    const doorSpot = materializeAt ?? findDoorSpot(entrance, regions);
     if (!doorSpot) return null;
-    return new Npc(scene, charKey, regions, entrance, doorSpot, onDespawn);
+    return new Npc(scene, charKey, regions, entrance, doorSpot, onDespawn, materializeAt != null);
   }
 
   private constructor(
@@ -112,11 +121,18 @@ export class Npc extends Phaser.GameObjects.Sprite {
     entrance: SceneEntrance,
     doorSpot: { x: number; y: number },
     onDespawn: (npc: Npc) => void,
+    materialized: boolean,
   ) {
     const outsideX =
       entrance.outside === 'right' ? entrance.x + DOOR_OVERSHOOT : entrance.x - DOOR_OVERSHOOT;
 
-    super(scene, outsideX, doorSpot.y, characterTextureKey(charKey, 'idle'), DIRECTION_FRAME_START.down);
+    super(
+      scene,
+      materialized ? doorSpot.x : outsideX,
+      doorSpot.y,
+      characterTextureKey(charKey, 'idle'),
+      DIRECTION_FRAME_START.down,
+    );
     this.charKey = charKey;
     this.regions = regions;
     this.entrance = entrance;
@@ -124,9 +140,14 @@ export class Npc extends Phaser.GameObjects.Sprite {
     this.legsRemaining = Phaser.Math.Between(MIN_LEGS, MAX_LEGS);
 
     this.setOrigin(0.5, 1);
-    this.setAlpha(0);
+    this.setAlpha(materialized ? 1 : 0);
     scene.add.existing(this);
     this.applyDepth();
+
+    if (materialized) {
+      this.startNextLeg();
+      return;
+    }
 
     this.fadeTween = scene.tweens.add({ targets: this, alpha: 1, duration: FADE_MS, ease: 'Linear' });
 

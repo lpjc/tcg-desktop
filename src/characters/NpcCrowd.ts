@@ -11,31 +11,37 @@ import {
   type WanderRect,
 } from './wanderZones';
 
-/** A populated area of the world that maintains its own background crowd. */
+/** A populated area of the world whose background crowd this class owns. */
 interface CrowdZone {
   id: 'convention' | 'shop';
   /** Rebuilt on venue switch / shop relayout; each NPC holds this reference. */
   regions: WanderRect[];
   entrance: SceneEntrance;
-  target: number;
   chars: readonly CharacterKey[];
   npcs: Npc[];
 }
 
-/** Convention is busy; the shop only ever has a couple of browsers. */
-const CONVENTION_TARGET = 7;
+/** The shop only ever has a couple of random browsers. */
 const SHOP_TARGET = 2;
 
-/** How often we top a zone back up toward its target (one NPC at a time). */
+/** How often the shop is topped back up toward its target (one NPC at a time). */
 const MAINTAIN_INTERVAL_MS = 1300;
 
 /**
  * Owns every background character in the world.
  *
- * Convention NPCs wander across all venue rooms but only fade in/out at the
- * rightmost room's road doorway (lobby or foyer, depending on venue preset). Shop visitors use the full shop
- * floor except the centre-top behind-the-counter strip, entering from the road
- * on the left.
+ * The two zones are populated differently:
+ * - **Shop:** random top-up to `SHOP_TARGET` on a maintenance timer, visitors
+ *   fading in/out at the road doorway on the shop's left edge.
+ * - **Convention:** no random spawning. Guests arrive **only** through
+ *   `ConventionGuestChargeController` (the timed/click-boosted doorway charge)
+ *   via `spawnConventionGuest`. The crowd still owns their wander regions,
+ *   relayout handling, and despawn bookkeeping.
+ *
+ * Convention NPCs wander across all venue rooms but only enter/exit at the
+ * rightmost room's road doorway (lobby or foyer, depending on venue preset).
+ * Shop visitors use the full shop floor except the centre-top behind-the-counter
+ * strip.
  */
 export class NpcCrowd {
   private readonly scene: Phaser.Scene;
@@ -50,7 +56,6 @@ export class NpcCrowd {
       id: 'convention',
       regions: conventionWanderRegions(),
       entrance: conventionRoadEntrance(),
-      target: CONVENTION_TARGET,
       chars: NPC_CHARACTERS,
       npcs: [],
     };
@@ -58,7 +63,6 @@ export class NpcCrowd {
       id: 'shop',
       regions: shopWanderRegions(getWorldLayout().shopFrame.x),
       entrance: shopRoadEntrance(getWorldLayout().shopFrame.x),
-      target: SHOP_TARGET,
       chars: NPC_CHARACTERS,
       npcs: [],
     };
@@ -74,8 +78,23 @@ export class NpcCrowd {
   }
 
   syncToPlayerScene(_playerScene: 'convention' | 'shop'): void {
-    this.fillZone(this.convention);
+    // Only the shop bulk-fills; the convention starts empty and fills one
+    // charged guest at a time.
     this.fillZone(this.shop);
+  }
+
+  /** Live convention headcount — the charge controller's flood-cap input. */
+  conventionCount(): number {
+    return this.convention.npcs.length;
+  }
+
+  /**
+   * Spawn a fully-charged convention guest, already visible at the doorway
+   * spot where its silhouette just "plinged" (no outside fade-in). Returns
+   * null only if the venue currently has no wander regions.
+   */
+  spawnConventionGuest(charKey: CharacterKey, at: { x: number; y: number }): Npc | null {
+    return this.spawn(this.convention, charKey, at);
   }
 
   onPlayerSceneChange(_playerScene: 'convention' | 'shop'): void {
@@ -106,32 +125,40 @@ export class NpcCrowd {
   }
 
   private maintain(): void {
-    this.topUp(this.convention);
-    this.topUp(this.shop);
-  }
-
-  private topUp(zone: CrowdZone): void {
-    if (zone.npcs.length < zone.target) this.spawn(zone);
+    if (this.shop.npcs.length < SHOP_TARGET) {
+      this.spawn(this.shop, Phaser.Utils.Array.GetRandom(this.shop.chars as CharacterKey[]));
+    }
   }
 
   private fillZone(zone: CrowdZone): void {
     // Stop at the first failed spawn (blocked doorway); the maintenance timer
     // keeps topping up later, so a temporarily blocked entrance is harmless.
-    while (zone.npcs.length < zone.target) {
-      if (!this.spawn(zone)) return;
+    while (zone.npcs.length < SHOP_TARGET) {
+      const charKey = Phaser.Utils.Array.GetRandom(zone.chars as CharacterKey[]);
+      if (!this.spawn(zone, charKey)) return;
     }
   }
 
-  /** True when an NPC was actually spawned (doorway clear). */
-  private spawn(zone: CrowdZone): boolean {
-    const charKey = Phaser.Utils.Array.GetRandom(zone.chars as CharacterKey[]);
-    const npc = Npc.trySpawn(this.scene, charKey, zone.regions, zone.entrance, (gone) => {
-      const index = zone.npcs.indexOf(gone);
-      if (index >= 0) zone.npcs.splice(index, 1);
-    });
-    if (!npc) return false;
+  /** Spawned NPC, or null when the doorway is blocked / regions are empty. */
+  private spawn(
+    zone: CrowdZone,
+    charKey: CharacterKey,
+    materializeAt?: { x: number; y: number },
+  ): Npc | null {
+    const npc = Npc.trySpawn(
+      this.scene,
+      charKey,
+      zone.regions,
+      zone.entrance,
+      (gone) => {
+        const index = zone.npcs.indexOf(gone);
+        if (index >= 0) zone.npcs.splice(index, 1);
+      },
+      materializeAt,
+    );
+    if (!npc) return null;
     zone.npcs.push(npc);
-    return true;
+    return npc;
   }
 
   private rebuildConventionRegions(): void {

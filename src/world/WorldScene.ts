@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { preloadCatalogAssets } from '../assets/loader';
+import { ConventionGuestChargeController } from '../characters/ConventionGuestChargeController';
 import { NpcCrowd } from '../characters/NpcCrowd';
 import { preloadCharacters, registerAllCharacterAnims } from '../characters/registerCharacterAnims';
 import {
@@ -62,6 +63,7 @@ const FACING_TOWARD_STATION: Record<StationAnchor, Facing> = {
 export class WorldScene extends Phaser.Scene {
   private player!: Player;
   private npcCrowd!: NpcCrowd;
+  private guestCharge!: ConventionGuestChargeController;
   private playerScene: SceneFrameId = 'convention';
   private cameraDirector!: CameraDirector;
   private placeMode!: PlaceMode;
@@ -94,11 +96,19 @@ export class WorldScene extends Phaser.Scene {
       { x: booth.x + 96, y: FLOOR_WALK_Y };
     this.player = new Player(this, spawn.x, spawn.y);
     this.npcCrowd = new NpcCrowd(this);
+    this.guestCharge = new ConventionGuestChargeController(
+      this,
+      this.npcCrowd,
+      () => !this.placeMode.isActive(),
+    );
+    this.wireGuestChargeClicks();
     this.playerScene = frameForX(this.player.x);
     void this.bootstrapLayouts().then(() => {
       this.snapPlayerToWalkable();
       this.syncCurrentStation();
       this.npcCrowd.syncToPlayerScene(this.playerScene);
+      // First charge only after obstacles exist, so the door spot is real.
+      this.guestCharge.start();
     });
     this.cameraDirector = new CameraDirector(this.cameras.main, getWorldLayout().worldWidth);
 
@@ -153,6 +163,27 @@ export class WorldScene extends Phaser.Scene {
 
     if (!this.placeMode.isActive()) {
       this.sortDepths();
+    }
+  }
+
+  /**
+   * Every system-wide left click hurries the incoming guest along. In Electron
+   * the uiohook bridge sees ALL desktop clicks (the overlay is click-through);
+   * in plain-browser dev there is no bridge, so page clicks stand in.
+   */
+  private wireGuestChargeClicks(): void {
+    const boost = () => this.guestCharge.onGlobalClick();
+    if (window.desktop?.onGlobalClick) {
+      const unsubscribe = window.desktop.onGlobalClick(boost);
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe);
+    } else {
+      const domListener = (event: PointerEvent) => {
+        if (event.button === 0) boost();
+      };
+      window.addEventListener('pointerdown', domListener);
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+        window.removeEventListener('pointerdown', domListener),
+      );
     }
   }
 
@@ -224,6 +255,7 @@ export class WorldScene extends Phaser.Scene {
     this.rebuildObstacles();
     this.snapPlayerToWalkable();
     this.npcCrowd.relayoutConvention();
+    this.guestCharge.relayout();
   }
 
   private handleBandResize(viewportPxWidth: number): void {
