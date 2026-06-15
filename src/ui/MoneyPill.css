@@ -1,0 +1,55 @@
+#money-pill {
+  position: fixed;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  font-family: 'Trebuchet MS', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #3a2a10;
+  background: linear-gradient(#ffe08a, #f2b341);
+  border: 2px solid #9a6a10;
+  border-radius: 999px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  user-select: none;
+  z-index: 50;
+}
+
+.money-pill__coin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff4cf;
+  border: 2px solid #9a6a10;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.money-pill__amount {
+  min-width: 1ch;
+  letter-spacing: 0.02em;
+}
+
+.money-pill--pulse {
+  animation: money-pill-pop 260ms ease-out;
+}
+
+@keyframes money-pill-pop {
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+  45% {
+    transform: translateX(-50%) scale(1.14);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+}

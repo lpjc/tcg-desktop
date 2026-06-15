@@ -31,9 +31,15 @@ import {
   getObstacleField,
   placeableCollisionWorld,
   rebuildObstacleField,
+  stationAnchorPoint,
 } from './obstacleField';
+import { emoteForPile, preloadEmotes, showEmote } from '../characters/emotes';
+import type { Npc, NpcErrand } from '../characters/Npc';
 import { isOverWorldSurface, isPlayerWalkSurface } from './worldSurface';
 import { CameraDirector } from './CameraDirector';
+import { BoothEconomy } from '../game/economy/BoothEconomy';
+import { BoothCashBubble } from './BoothCashBubble';
+import { playBoothPayout } from './boothFx';
 import {
   computeWorldLayout,
   frameForX,
@@ -60,10 +66,20 @@ const FACING_TOWARD_STATION: Record<StationAnchor, Facing> = {
   right: 'left',
 };
 
+/** Customers stand opposite the player at the booth (the front of the counter). */
+const OPPOSITE_ANCHOR: Record<StationAnchor, StationAnchor> = {
+  below: 'above',
+  above: 'below',
+  left: 'right',
+  right: 'left',
+};
+
 export class WorldScene extends Phaser.Scene {
   private player!: Player;
   private npcCrowd!: NpcCrowd;
   private guestCharge!: ConventionGuestChargeController;
+  private boothEconomy!: BoothEconomy;
+  private boothCashBubble!: BoothCashBubble;
   private playerScene: SceneFrameId = 'convention';
   private cameraDirector!: CameraDirector;
   private placeMode!: PlaceMode;
@@ -79,6 +95,7 @@ export class WorldScene extends Phaser.Scene {
   preload(): void {
     preloadCatalogAssets(this);
     preloadCharacters(this);
+    preloadEmotes(this);
   }
 
   create(): void {
@@ -96,16 +113,20 @@ export class WorldScene extends Phaser.Scene {
       { x: booth.x + 96, y: FLOOR_WALK_Y };
     this.player = new Player(this, spawn.x, spawn.y);
     this.npcCrowd = new NpcCrowd(this);
+    this.boothEconomy = new BoothEconomy();
+    this.boothCashBubble = new BoothCashBubble(this);
     this.guestCharge = new ConventionGuestChargeController(
       this,
       this.npcCrowd,
       () => !this.placeMode.isActive(),
+      () => this.buildGuestErrand(),
     );
     this.wireGuestChargeClicks();
     this.playerScene = frameForX(this.player.x);
     void this.bootstrapLayouts().then(() => {
       this.snapPlayerToWalkable();
       this.syncCurrentStation();
+      this.refreshBoothAnchor();
       this.npcCrowd.syncToPlayerScene(this.playerScene);
       // First charge only after obstacles exist, so the door spot is real.
       this.guestCharge.start();
@@ -203,7 +224,53 @@ export class WorldScene extends Phaser.Scene {
     );
     if (!stand) return;
 
-    this.player.walkTo(stand.x, stand.y, () => this.syncCurrentStation(station));
+    this.player.walkTo(stand.x, stand.y, () => {
+      this.syncCurrentStation(station);
+      // Booth-layer stations are the player's booth: arriving collects sales.
+      if (station.layer === 'booth') this.collectBooth();
+    });
+  }
+
+  /**
+   * Build a "walk to the booth front and buy" errand for an arriving guest.
+   * Returns null when no booth exists yet — guests then just wander.
+   */
+  private buildGuestErrand(): NpcErrand | null {
+    const booths = this.placeMode
+      .getAllPlaceables()
+      .filter((p) => p.isStation && p.layer === 'booth');
+    if (booths.length === 0) return null;
+
+    const booth = Phaser.Utils.Array.GetRandom(booths);
+    const front = stationAnchorPoint(
+      placeableCollisionWorld(booth),
+      OPPOSITE_ANCHOR[booth.stationAnchor],
+    );
+    // Jitter so several buyers don't stack on the exact same spot.
+    const target = { x: front.x + Phaser.Math.Between(-10, 10), y: front.y };
+    return { target, onArrive: (npc) => this.onBuyerAtBooth(npc) };
+  }
+
+  /** A guest reached the booth: make the sale and pop the rarity-cue emote. */
+  private onBuyerAtBooth(npc: Npc): void {
+    const sale = this.boothEconomy.onGuestArrived();
+    if (!sale) return;
+    showEmote(this, npc.x, npc.y - 22, emoteForPile(sale.pile));
+  }
+
+  /** Flush the booth cash box into the bank with a payout callout + coin burst. */
+  private collectBooth(): void {
+    const collected = this.boothEconomy.collect();
+    if (collected.sales <= 0) return;
+    playBoothPayout(this, this.player.x, this.player.y, collected);
+  }
+
+  /** Re-anchor the pending-cash tag above the current booth station. */
+  private refreshBoothAnchor(): void {
+    const booth = this.placeMode
+      .getAllPlaceables()
+      .find((p) => p.isStation && p.layer === 'booth');
+    if (booth) this.boothCashBubble.setAnchor(booth.x, booth.y - booth.displayHeight - 2);
   }
 
   /** Layout furniture can cover the default booth spawn — snap onto a free tile. */
@@ -257,6 +324,7 @@ export class WorldScene extends Phaser.Scene {
     this.snapPlayerToWalkable();
     this.npcCrowd.relayoutConvention();
     this.guestCharge.relayout();
+    this.refreshBoothAnchor();
   }
 
   private handleBandResize(viewportPxWidth: number): void {

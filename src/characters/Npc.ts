@@ -36,6 +36,19 @@ const DOOR_OVERSHOOT = 10;
 /** Doorway foot positions sampled when spawning/exiting. */
 const DOOR_SAMPLES = 7;
 
+/** How long a buyer lingers at the booth (emote visible) before leaving. */
+const ERRAND_PAUSE_MS = 1100;
+
+/**
+ * A one-off destination for an NPC: walk here, run `onArrive`, then leave. Used
+ * for convention buyers (walk to the booth → purchase + emote → walk away)
+ * instead of the default aimless wandering.
+ */
+export interface NpcErrand {
+  target: { x: number; y: number };
+  onArrive: (npc: Npc) => void;
+}
+
 /**
  * Find a standable foot position on the doorway line (inside the scene, clear
  * of furniture, inside a wander region). Returns null when furniture fully
@@ -91,6 +104,9 @@ export class Npc extends Phaser.GameObjects.Sprite {
   private exitFailures = 0;
   private leaving = false;
   private despawned = false;
+  /** Optional walk-to-booth-and-buy errand; once done the NPC just leaves. */
+  private errand: NpcErrand | null;
+  private errandDone = false;
 
   /**
    * Spawn an NPC at the scene's doorway, or null when furniture blocks the
@@ -107,6 +123,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
     entrance: SceneEntrance,
     onDespawn: (npc: Npc) => void,
     materializeAt?: { x: number; y: number },
+    errand?: NpcErrand | null,
   ): Npc | null {
     if (regions.length === 0) return null;
     const doorSpot = findDoorSpot(entrance, regions);
@@ -119,6 +136,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
       doorSpot,
       onDespawn,
       materializeAt ?? null,
+      errand ?? null,
     );
   }
 
@@ -130,6 +148,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
     doorSpot: { x: number; y: number },
     onDespawn: (npc: Npc) => void,
     materializeAt: { x: number; y: number } | null,
+    errand: NpcErrand | null,
   ) {
     const start = materializeAt ?? {
       x: entrance.outside === 'right' ? entrance.x + DOOR_OVERSHOOT : entrance.x - DOOR_OVERSHOOT,
@@ -141,6 +160,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
     this.regions = regions;
     this.entrance = entrance;
     this.onDespawn = onDespawn;
+    this.errand = errand;
     this.legsRemaining = Phaser.Math.Between(MIN_LEGS, MAX_LEGS);
 
     this.setOrigin(0.5, 1);
@@ -202,6 +222,10 @@ export class Npc extends Phaser.GameObjects.Sprite {
 
   private startNextLeg(): void {
     if (this.leaving || !this.scene) return;
+    if (this.errand && !this.errandDone) {
+      this.goToErrand();
+      return;
+    }
     if (this.legsRemaining <= 0 || this.targetFailures >= MAX_TARGET_FAILURES) {
       this.leave();
       return;
@@ -216,6 +240,38 @@ export class Npc extends Phaser.GameObjects.Sprite {
     this.targetFailures = 0;
     this.legsRemaining -= 1;
     this.walkAlong(target.path, () => this.pauseThen(() => this.startNextLeg()));
+  }
+
+  /**
+   * Walk to the errand target (e.g. the booth front), run its callback, then
+   * linger briefly (so the emote reads) before leaving. Falls back to normal
+   * wandering if the target can't be reached.
+   */
+  private goToErrand(): void {
+    if (!this.errand || !this.scene) return;
+    const errand = this.errand;
+    const obstacles = getObstacleField();
+    const allowed = this.allowedFn();
+    const dest = obstacles.isWalkable(errand.target.x, errand.target.y, allowed)
+      ? errand.target
+      : obstacles.findStandPointNear(errand.target.x, errand.target.y, allowed);
+
+    this.errandDone = true; // one attempt; never loop on the errand
+    if (!dest) {
+      this.startNextLeg();
+      return;
+    }
+    const path = obstacles.findPath(this.x, this.y, dest.x, dest.y, allowed);
+    if (path.length === 0) {
+      this.startNextLeg();
+      return;
+    }
+    this.walkAlong(path, () => {
+      this.facing = 'up'; // face the booth across the counter
+      playFacing(this, this.charKey, 'idle', this.facing);
+      errand.onArrive(this);
+      this.pauseEvent = this.scene.time.delayedCall(ERRAND_PAUSE_MS, () => this.leave());
+    });
   }
 
   private pickReachableTarget(): { path: Array<{ x: number; y: number }> } | null {

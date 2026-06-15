@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import { DevToggleButton } from './ui/DevToggleButton';
+import { DevGamePanel } from './ui/DevGamePanel';
+import { MoneyPill } from './ui/MoneyPill';
 import { MonitorSwitchButton } from './ui/MonitorSwitchButton';
+import { registerPlaceholderSet } from './game/cards/placeholderSet';
+import { gameState } from './game/state/GameState';
 import { WorldScene } from './world/WorldScene';
 
 /**
@@ -35,7 +39,13 @@ function resizeCanvas(): void {
 
 window.addEventListener('resize', resizeCanvas);
 
+// Game state: register card data, then hydrate the save (async) before UI binds.
+registerPlaceholderSet();
+void gameState.load();
+
 new DevToggleButton('editor-ui');
+new MoneyPill('editor-ui');
+new DevGamePanel('editor-ui');
 
 if (window.desktop) {
   new MonitorSwitchButton('editor-ui');

@@ -8,7 +8,8 @@ const ZOOM = 2;
 const BAND_HEIGHT = 96;
 /** Transparent click-through headroom above the band (world px). */
 const TOP_MARGIN = 10;
-const WINDOW_HEIGHT = (BAND_HEIGHT + TOP_MARGIN) * ZOOM;
+/** Small framed height used only in DEBUG_OPAQUE mode (tidy band-only view). */
+const BAND_WINDOW_HEIGHT = (BAND_HEIGHT + TOP_MARGIN) * ZOOM;
 
 const isDev = !app.isPackaged;
 // Set DEBUG_OPAQUE=1 to render the overlay as a normal opaque, framed window.
@@ -52,19 +53,34 @@ function layoutsDir(): string {
   return path.join(app.getAppPath(), 'assets', 'layouts');
 }
 
+function gameStateFile(): string {
+  return path.join(app.getPath('userData'), 'game-state.json');
+}
+
+/**
+ * The overlay covers the full work area of its monitor: a tall, transparent,
+ * click-through window whose bottom holds the small world band while the rest is
+ * empty headroom for floating panels (matches inspirational-references). In
+ * DEBUG_OPAQUE mode we shrink to just the band so the framed debug window stays
+ * tidy.
+ */
+function overlayBounds(workArea: Electron.Rectangle): Electron.Rectangle {
+  const height = DEBUG_OPAQUE ? BAND_WINDOW_HEIGHT : workArea.height;
+  return {
+    x: workArea.x,
+    y: workArea.y + workArea.height - height,
+    width: workArea.width,
+    height,
+  };
+}
+
 /**
  * Pin the overlay to the bottom of the monitor it sits on, spanning the full
- * work-area width. Called on create and when display metrics change.
+ * work area. Called on create and when display metrics change.
  */
 function snapToDisplayBand(win: BrowserWindow): void {
   const display = screen.getDisplayMatching(win.getBounds());
-  const { workArea } = display;
-  win.setBounds({
-    x: workArea.x,
-    y: workArea.y + workArea.height - WINDOW_HEIGHT,
-    width: workArea.width,
-    height: WINDOW_HEIGHT,
-  });
+  win.setBounds(overlayBounds(display.workArea));
   pinOverlayOnTop(win);
 }
 
@@ -76,25 +92,20 @@ function switchToNextDisplay(win: BrowserWindow): boolean {
   const current = screen.getDisplayMatching(win.getBounds());
   const currentIndex = displays.findIndex((d) => d.id === current.id);
   const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % displays.length;
-  const { workArea } = displays[nextIndex];
-  win.setBounds({
-    x: workArea.x,
-    y: workArea.y + workArea.height - WINDOW_HEIGHT,
-    width: workArea.width,
-    height: WINDOW_HEIGHT,
-  });
+  win.setBounds(overlayBounds(displays[nextIndex].workArea));
   pinOverlayOnTop(win);
   return true;
 }
 
 function createWindow(): void {
   const { workArea } = screen.getPrimaryDisplay();
+  const bounds = overlayBounds(workArea);
 
   mainWindow = new BrowserWindow({
-    x: workArea.x,
-    y: workArea.y + workArea.height - WINDOW_HEIGHT,
-    width: workArea.width,
-    height: WINDOW_HEIGHT,
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
     transparent: !DEBUG_OPAQUE,
     frame: DEBUG_OPAQUE,
     alwaysOnTop: true,
@@ -194,6 +205,25 @@ app.whenReady().then(() => {
     try {
       const filePath = path.join(layoutsDir(), `${name}.json`);
       return await fs.readFile(filePath, 'utf8');
+    } catch {
+      return null;
+    }
+  });
+
+  // Player save data lives in userData (not the app bundle) so packaged builds
+  // can write it. One JSON blob; the renderer owns the schema.
+  ipcMain.handle('save-game-state', async (_event, data: string) => {
+    try {
+      await fs.writeFile(gameStateFile(), data, 'utf8');
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  ipcMain.handle('load-game-state', async () => {
+    try {
+      return await fs.readFile(gameStateFile(), 'utf8');
     } catch {
       return null;
     }

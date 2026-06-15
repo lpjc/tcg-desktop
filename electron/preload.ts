@@ -16,6 +16,12 @@ contextBridge.exposeInMainWorld('desktop', {
   loadLayout: (name: string) => {
     return ipcRenderer.invoke('load-layout', name) as Promise<string | null>;
   },
+  saveGameState: (data: string) => {
+    return ipcRenderer.invoke('save-game-state', data) as Promise<boolean>;
+  },
+  loadGameState: () => {
+    return ipcRenderer.invoke('load-game-state') as Promise<string | null>;
+  },
   onTogglePlaceMode: (callback: () => void) => {
     const listener = () => callback();
     ipcRenderer.on('toggle-place-mode', listener);

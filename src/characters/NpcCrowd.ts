@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { getWorldLayout } from '../world/WorldLayout';
-import { Npc } from './Npc';
+import { Npc, type NpcErrand } from './Npc';
 import { NPC_CHARACTERS, type CharacterKey } from './characterSheets';
 import {
   conventionRoadEntrance,
@@ -93,8 +93,12 @@ export class NpcCrowd {
    * where its silhouette just "plinged" (no fade-in); it walks in through the
    * doorway. Returns null when furniture blocks the door line.
    */
-  spawnConventionGuest(charKey: CharacterKey, at: { x: number; y: number }): Npc | null {
-    return this.spawn(this.convention, charKey, at);
+  spawnConventionGuest(
+    charKey: CharacterKey,
+    at: { x: number; y: number },
+    errand?: NpcErrand | null,
+  ): Npc | null {
+    return this.spawn(this.convention, charKey, at, errand);
   }
 
   onPlayerSceneChange(_playerScene: 'convention' | 'shop'): void {
@@ -144,6 +148,7 @@ export class NpcCrowd {
     zone: CrowdZone,
     charKey: CharacterKey,
     materializeAt?: { x: number; y: number },
+    errand?: NpcErrand | null,
   ): Npc | null {
     const npc = Npc.trySpawn(
       this.scene,
@@ -155,6 +160,7 @@ export class NpcCrowd {
         if (index >= 0) zone.npcs.splice(index, 1);
       },
       materializeAt,
+      errand,
     );
     if (!npc) return null;
     zone.npcs.push(npc);

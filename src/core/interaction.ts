@@ -43,7 +43,13 @@ class InteractionManager {
   }
 
   registerHotElement(el: HTMLElement): void {
-    if (!this.hotElements.includes(el)) this.hotElements.push(el);
+    if (this.hotElements.includes(el)) return;
+    this.hotElements.push(el);
+    // Eagerly grab interactivity on entry so the first click isn't lost while
+    // click-through is still forwarding events to the desktop.
+    const activate = () => setWindowInteractive(true);
+    el.addEventListener('pointerenter', activate);
+    el.addEventListener('mouseenter', activate);
   }
 
   /** Hit test for drawn world content (floors, road, stations) in client coords. */
@@ -63,7 +69,8 @@ class InteractionManager {
 }
 
 function isOverElement(el: HTMLElement, x: number, y: number): boolean {
-  if (el.offsetParent === null && el.style.display === 'none') return false;
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden') return false;
   const r = el.getBoundingClientRect();
   if (r.width === 0 && r.height === 0) return false;
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;

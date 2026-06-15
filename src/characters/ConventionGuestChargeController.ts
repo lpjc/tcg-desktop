@@ -10,7 +10,7 @@ import {
   characterTextureKey,
   type CharacterKey,
 } from './characterSheets';
-import { findDoorSpot } from './Npc';
+import { findDoorSpot, type NpcErrand } from './Npc';
 import type { NpcCrowd } from './NpcCrowd';
 import { conventionRoadEntrance, conventionWanderRegions } from './wanderZones';
 
@@ -123,6 +123,11 @@ export class ConventionGuestChargeController {
   private readonly crowd: NpcCrowd;
   /** False while place mode is active — editing clicks must not spawn guests. */
   private readonly isBoostAllowed: () => boolean;
+  /**
+   * Builds the walk-to-booth-and-buy errand for each arriving guest (drives the
+   * money loop). Null/absent = the guest just wanders (e.g. before a booth exists).
+   */
+  private readonly buildGuestErrand?: () => NpcErrand | null;
 
   /** The one number that is both "time remaining" and "bar fill" (0→1). */
   private guestChargeProgress = 0;
@@ -143,10 +148,16 @@ export class ConventionGuestChargeController {
   private started = false;
   private destroyed = false;
 
-  constructor(scene: Phaser.Scene, crowd: NpcCrowd, isBoostAllowed: () => boolean) {
+  constructor(
+    scene: Phaser.Scene,
+    crowd: NpcCrowd,
+    isBoostAllowed: () => boolean,
+    buildGuestErrand?: () => NpcErrand | null,
+  ) {
     this.scene = scene;
     this.crowd = crowd;
     this.isBoostAllowed = isBoostAllowed;
+    this.buildGuestErrand = buildGuestErrand;
 
     scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());
@@ -374,7 +385,8 @@ export class ConventionGuestChargeController {
       ease: 'Quad.easeOut',
       onComplete: () => {
         this.plinging = false;
-        const guest = this.crowd.spawnConventionGuest(arrivingChar, spot);
+        const errand = this.buildGuestErrand?.() ?? undefined;
+        const guest = this.crowd.spawnConventionGuest(arrivingChar, spot, errand);
         if (!guest) {
           // Doorway got blocked mid-charge: keep the full silhouette waiting
           // at a fresh spot until the door line opens up again.
