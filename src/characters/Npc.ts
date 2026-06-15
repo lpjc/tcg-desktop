@@ -36,8 +36,22 @@ const DOOR_OVERSHOOT = 10;
 /** Doorway foot positions sampled when spawning/exiting. */
 const DOOR_SAMPLES = 7;
 
-/** How long a buyer lingers at the booth (emote visible) before leaving. */
-const ERRAND_PAUSE_MS = 1100;
+/** A buyer roams this many legs around the floor before heading to the booth. */
+const ERRAND_MIN_WANDER_LEGS = 2;
+const ERRAND_MAX_WANDER_LEGS = 12;
+/** Legs to stroll after buying, before leaving. */
+const ERRAND_POST_WANDER_MIN = 2;
+const ERRAND_POST_WANDER_MAX = 6;
+/** Once at the booth, stand and "look" before buying. */
+const ERRAND_BROWSE_MIN_MS = 2000;
+const ERRAND_BROWSE_MAX_MS = 8000;
+/** Short beat after buying (emote visible) before wandering on. */
+const ERRAND_POST_BUY_MS = 900;
+/** Chance a wander leg targets decor instead of a random tile. */
+const FURNITURE_VISIT_CHANCE = 0.42;
+/** How long an NPC lingers in front of a piece of furniture. */
+const FURNITURE_LOOK_MIN_MS = 1800;
+const FURNITURE_LOOK_MAX_MS = 4500;
 
 /**
  * A one-off destination for an NPC: walk here, run `onArrive`, then leave. Used
@@ -107,6 +121,12 @@ export class Npc extends Phaser.GameObjects.Sprite {
   /** Optional walk-to-booth-and-buy errand; once done the NPC just leaves. */
   private errand: NpcErrand | null;
   private errandDone = false;
+  /** Random legs a buyer roams before heading to the booth (0 for non-buyers). */
+  private errandWanderLegs: number;
+  /** Legs after buying, before exit (0 until purchase completes). */
+  private errandPostWanderLegs = 0;
+  /** Optional hook: stroll to a decor spot instead of a random tile. */
+  private readonly furnitureSpotPicker: (() => { x: number; y: number } | null) | null;
 
   /**
    * Spawn an NPC at the scene's doorway, or null when furniture blocks the
@@ -124,6 +144,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
     onDespawn: (npc: Npc) => void,
     materializeAt?: { x: number; y: number },
     errand?: NpcErrand | null,
+    furnitureSpotPicker?: (() => { x: number; y: number } | null) | null,
   ): Npc | null {
     if (regions.length === 0) return null;
     const doorSpot = findDoorSpot(entrance, regions);
@@ -137,6 +158,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
       onDespawn,
       materializeAt ?? null,
       errand ?? null,
+      furnitureSpotPicker ?? null,
     );
   }
 
@@ -149,6 +171,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
     onDespawn: (npc: Npc) => void,
     materializeAt: { x: number; y: number } | null,
     errand: NpcErrand | null,
+    furnitureSpotPicker: (() => { x: number; y: number } | null) | null,
   ) {
     const start = materializeAt ?? {
       x: entrance.outside === 'right' ? entrance.x + DOOR_OVERSHOOT : entrance.x - DOOR_OVERSHOOT,
@@ -161,6 +184,10 @@ export class Npc extends Phaser.GameObjects.Sprite {
     this.entrance = entrance;
     this.onDespawn = onDespawn;
     this.errand = errand;
+    this.furnitureSpotPicker = furnitureSpotPicker;
+    this.errandWanderLegs = errand
+      ? Phaser.Math.Between(ERRAND_MIN_WANDER_LEGS, ERRAND_MAX_WANDER_LEGS)
+      : 0;
     this.legsRemaining = Phaser.Math.Between(MIN_LEGS, MAX_LEGS);
 
     this.setOrigin(0.5, 1);
@@ -222,24 +249,65 @@ export class Npc extends Phaser.GameObjects.Sprite {
 
   private startNextLeg(): void {
     if (this.leaving || !this.scene) return;
+
+    // Buyers: pre-booth roam → booth → post-buy roam → exit.
     if (this.errand && !this.errandDone) {
-      this.goToErrand();
+      if (this.errandWanderLegs <= 0 || this.targetFailures >= MAX_TARGET_FAILURES) {
+        this.goToErrand();
+        return;
+      }
+      this.wanderLeg(() => {
+        this.errandWanderLegs -= 1;
+      });
       return;
     }
+    if (this.errand && this.errandDone) {
+      if (this.errandPostWanderLegs > 0) {
+        this.wanderLeg(() => {
+          this.errandPostWanderLegs -= 1;
+        });
+        return;
+      }
+      this.leave();
+      return;
+    }
+
+    // Non-buyers wander a fixed number of legs, then leave.
     if (this.legsRemaining <= 0 || this.targetFailures >= MAX_TARGET_FAILURES) {
       this.leave();
       return;
     }
+    this.wanderLeg(() => {
+      this.legsRemaining -= 1;
+    });
+  }
+
+  /**
+   * Walk to one random reachable spot, then pause and continue. `onLegConsumed`
+   * runs only when a target was actually found (a failed pick retries without
+   * burning a leg).
+   */
+  private wanderLeg(onLegConsumed: () => void): void {
     const target = this.pickReachableTarget();
     if (!target) {
-      // Don't burn a leg on a failed pick; pause and try again.
       this.targetFailures += 1;
       this.pauseThen(() => this.startNextLeg());
       return;
     }
     this.targetFailures = 0;
-    this.legsRemaining -= 1;
-    this.walkAlong(target.path, () => this.pauseThen(() => this.startNextLeg()));
+    onLegConsumed();
+    this.walkAlong(target.path, () => {
+      if (target.atFurniture) {
+        this.facing = 'up';
+        playFacing(this, this.charKey, 'idle', this.facing);
+        this.pauseFor(
+          Phaser.Math.Between(FURNITURE_LOOK_MIN_MS, FURNITURE_LOOK_MAX_MS),
+          () => this.startNextLeg(),
+        );
+      } else {
+        this.pauseThen(() => this.startNextLeg());
+      }
+    });
   }
 
   /**
@@ -269,31 +337,55 @@ export class Npc extends Phaser.GameObjects.Sprite {
     this.walkAlong(path, () => {
       this.facing = 'up'; // face the booth across the counter
       playFacing(this, this.charKey, 'idle', this.facing);
-      errand.onArrive(this);
-      this.pauseEvent = this.scene.time.delayedCall(ERRAND_PAUSE_MS, () => this.leave());
+      // Stand and "look" before deciding to buy, then transact and head out.
+      const browseMs = Phaser.Math.Between(ERRAND_BROWSE_MIN_MS, ERRAND_BROWSE_MAX_MS);
+      this.pauseEvent = this.scene.time.delayedCall(browseMs, () => {
+        if (!this.scene || this.leaving) return;
+        errand.onArrive(this);
+        this.errandPostWanderLegs = Phaser.Math.Between(
+          ERRAND_POST_WANDER_MIN,
+          ERRAND_POST_WANDER_MAX,
+        );
+        this.pauseEvent = this.scene.time.delayedCall(ERRAND_POST_BUY_MS, () => this.startNextLeg());
+      });
     });
   }
 
-  private pickReachableTarget(): { path: Array<{ x: number; y: number }> } | null {
+  private pickReachableTarget(): { path: Array<{ x: number; y: number }>; atFurniture: boolean } | null {
     const obstacles = getObstacleField();
     const allowed = this.allowedFn();
+
+    if (this.furnitureSpotPicker && Math.random() < FURNITURE_VISIT_CHANCE) {
+      const decor = this.furnitureSpotPicker();
+      if (decor) {
+        const dest = obstacles.isWalkable(decor.x, decor.y, allowed)
+          ? decor
+          : obstacles.findStandPointNear(decor.x, decor.y, allowed);
+        if (dest) {
+          const path = obstacles.findPath(this.x, this.y, dest.x, dest.y, allowed);
+          if (path.length > 0) return { path, atFurniture: true };
+        }
+      }
+    }
+
     for (let attempt = 0; attempt < 14; attempt++) {
       const targetRegion = pickRandomRegion(this.regions);
       const point = randomPointInRect(targetRegion);
       if (!obstacles.isWalkable(point.x, point.y, allowed)) continue;
       const path = obstacles.findPath(this.x, this.y, point.x, point.y, allowed);
-      if (path.length > 0) return { path };
+      if (path.length > 0) return { path, atFurniture: false };
     }
     return null;
   }
 
   private pauseThen(next: () => void): void {
+    this.pauseFor(Phaser.Math.Between(MIN_PAUSE_MS, MAX_PAUSE_MS), next);
+  }
+
+  private pauseFor(ms: number, next: () => void): void {
     if (!this.scene) return;
     playFacing(this, this.charKey, 'idle', this.facing);
-    this.pauseEvent = this.scene.time.delayedCall(
-      Phaser.Math.Between(MIN_PAUSE_MS, MAX_PAUSE_MS),
-      next,
-    );
+    this.pauseEvent = this.scene.time.delayedCall(ms, next);
   }
 
   private leave(): void {

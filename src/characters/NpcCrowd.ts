@@ -48,6 +48,8 @@ export class NpcCrowd {
   private readonly convention: CrowdZone;
   private readonly shop: CrowdZone;
   private maintainTimer?: Phaser.Time.TimerEvent;
+  /** Convention decor spots — NPCs occasionally stroll here and linger. */
+  private conventionFurniturePicker: (() => { x: number; y: number } | null) | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -86,6 +88,11 @@ export class NpcCrowd {
   /** Live convention headcount — the charge controller's flood-cap input. */
   conventionCount(): number {
     return this.convention.npcs.length;
+  }
+
+  /** Lets convention guests occasionally browse decor (booth props, venue furniture). */
+  setConventionFurniturePicker(picker: () => { x: number; y: number } | null): void {
+    this.conventionFurniturePicker = picker;
   }
 
   /**
@@ -150,6 +157,8 @@ export class NpcCrowd {
     materializeAt?: { x: number; y: number },
     errand?: NpcErrand | null,
   ): Npc | null {
+    const furniturePicker =
+      zone.id === 'convention' ? this.conventionFurniturePicker : null;
     const npc = Npc.trySpawn(
       this.scene,
       charKey,
@@ -161,6 +170,7 @@ export class NpcCrowd {
       },
       materializeAt,
       errand,
+      furniturePicker,
     );
     if (!npc) return null;
     zone.npcs.push(npc);

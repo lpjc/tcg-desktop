@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { preloadCatalogAssets } from '../assets/loader';
 import { ConventionGuestChargeController } from '../characters/ConventionGuestChargeController';
 import { NpcCrowd } from '../characters/NpcCrowd';
+import { conventionWanderRegions, withinAnyRegion } from '../characters/wanderZones';
 import { preloadCharacters, registerAllCharacterAnims } from '../characters/registerCharacterAnims';
 import {
   FLOOR_SUBTILE,
@@ -113,6 +114,7 @@ export class WorldScene extends Phaser.Scene {
       { x: booth.x + 96, y: FLOOR_WALK_Y };
     this.player = new Player(this, spawn.x, spawn.y);
     this.npcCrowd = new NpcCrowd(this);
+    this.npcCrowd.setConventionFurniturePicker(() => this.pickFurnitureBrowseSpot());
     this.boothEconomy = new BoothEconomy();
     this.boothCashBubble = new BoothCashBubble(this);
     this.guestCharge = new ConventionGuestChargeController(
@@ -256,6 +258,30 @@ export class WorldScene extends Phaser.Scene {
     const sale = this.boothEconomy.onGuestArrived();
     if (!sale) return;
     showEmote(this, npc.x, npc.y - 22, emoteForPile(sale.pile));
+  }
+
+  /**
+   * A stand spot in front of random booth/venue decor — NPCs occasionally stroll
+   * here and linger to make the floor feel browsed, not scripted.
+   */
+  private pickFurnitureBrowseSpot(): { x: number; y: number } | null {
+    const regions = conventionWanderRegions();
+    const allowed = (x: number, y: number) => withinAnyRegion(x, y, regions);
+    const decor = this.placeMode
+      .getAllPlaceables()
+      .filter((p) => (p.layer === 'booth' || p.layer === 'venue') && !p.isStation);
+    if (decor.length === 0) return null;
+
+    const field = getObstacleField();
+    const picks = Phaser.Utils.Array.Shuffle([...decor]).slice(0, 5);
+    for (const piece of picks) {
+      const front = stationAnchorPoint(placeableCollisionWorld(piece), 'below');
+      const stand = field.isWalkable(front.x, front.y, allowed)
+        ? front
+        : field.findStandPointNear(front.x, front.y, allowed);
+      if (stand) return stand;
+    }
+    return null;
   }
 
   /** Flush the booth cash box into the bank with a payout callout + coin burst. */
