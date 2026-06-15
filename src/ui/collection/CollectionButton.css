@@ -1,0 +1,51 @@
+/* Right-edge toy toolbar button (binder opener). Chunky pixel button, warm tan
+   to match the binder; lights green while the binder is open. */
+#collection-btn {
+  position: fixed;
+  right: 8px;
+  bottom: 214px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  cursor: pointer;
+  background: #c8a772;
+  box-shadow:
+    inset 3px 3px 0 0 #e4cfa1,
+    inset -3px -3px 0 0 #8f6f3e,
+    0 0 0 3px #3a2a12,
+    0 4px 0 rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  transition: transform 90ms steps(3);
+}
+
+#collection-btn img {
+  width: 26px;
+  height: 26px;
+  image-rendering: pixelated;
+  /* Tint the white Lucid icon dark brown. */
+  filter: brightness(0) saturate(100%) invert(18%) sepia(28%) saturate(900%)
+    hue-rotate(350deg) brightness(95%) contrast(90%);
+}
+
+#collection-btn:hover {
+  background: #dcc089;
+  transform: translateY(-2px);
+}
+
+#collection-btn:active {
+  transform: translateY(0);
+}
+
+#collection-btn.active {
+  background: #f0d9a6;
+  box-shadow:
+    inset 3px 3px 0 0 #fff3d2,
+    inset -3px -3px 0 0 #b48f54,
+    0 0 0 3px #2f7d33,
+    0 0 9px 0 rgba(87, 208, 106, 0.6);
+}

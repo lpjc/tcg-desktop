@@ -1,0 +1,307 @@
+/* The Collection binder overlay. A chunky tan toy panel that rises above a dimmed
+   desktop, sitting just over the world band. Pixel-first: hard bevels via inset
+   shadows, warm tan/cream palette borrowed from the reference bestiary. */
+
+#collection-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* Float just above the world band (BAND_HEIGHT 96 × ZOOM 2 = 192px). */
+  padding-bottom: 206px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 160ms ease,
+    visibility 0s linear 160ms;
+}
+
+#collection-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 160ms ease;
+}
+
+.collection-scrim {
+  position: absolute;
+  inset: 0;
+  /* Darker toward the band so the binder feels lifted off the world. */
+  background: radial-gradient(120% 85% at 50% 100%, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.36));
+  pointer-events: auto;
+}
+
+/* ---- The panel ----------------------------------------------------------- */
+.binder {
+  --pocket-h: 96px;
+  --mx: 0.5;
+  --my: 0.5;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: min(440px, 94vw);
+  max-height: calc(100vh - 24px);
+  padding: 6px;
+  background: #d8bd86;
+  border-radius: 6px;
+  box-shadow:
+    inset 3px 3px 0 0 #efd9a8,
+    inset -3px -3px 0 0 #a9854c,
+    0 0 0 3px #3a2a12,
+    0 12px 28px rgba(0, 0, 0, 0.5);
+  image-rendering: pixelated;
+  transform: translateY(26px) scale(0.97);
+  transition: transform 200ms cubic-bezier(0.18, 0.9, 0.26, 1.1);
+}
+
+#collection-overlay.is-open .binder {
+  transform: translateY(0) scale(1);
+}
+
+/* ---- Title bar ----------------------------------------------------------- */
+.binder__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1px 2px 3px;
+}
+
+.binder__icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  background: #2a2014;
+  box-shadow:
+    inset 2px 2px 0 0 #4a3a22,
+    inset -2px -2px 0 0 #1a130a,
+    0 0 0 2px #3a2a12;
+}
+
+.binder__titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.binder__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #3a2a12;
+  line-height: 1.1;
+  text-shadow: 0 1px 0 rgba(255, 245, 214, 0.5);
+}
+
+.binder__theme {
+  font-size: 8px;
+  color: #8a6f44;
+  letter-spacing: 0.04em;
+}
+
+.binder__progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.binder__bar {
+  width: 88px;
+  height: 9px;
+  background: #2a2014;
+  box-shadow: inset 1px 1px 0 0 #1a130a;
+  overflow: hidden;
+}
+
+.binder__bar-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(#7ce88c, #43b257);
+  box-shadow: inset 0 2px 0 0 rgba(255, 255, 255, 0.35);
+  transition: width 220ms steps(8);
+}
+
+.binder__count {
+  font-size: 8px;
+  color: #5a4426;
+  letter-spacing: 0.04em;
+}
+
+.binder__close {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border: 0;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff5e6;
+  background: #d2483a;
+  box-shadow:
+    inset 2px 2px 0 0 #ef7a64,
+    inset -2px -2px 0 0 #9a2a1e,
+    0 0 0 2px #3a2a12;
+  image-rendering: pixelated;
+}
+
+.binder__close:hover {
+  background: #e85a48;
+}
+
+.binder__close:active {
+  box-shadow:
+    inset -2px -2px 0 0 #ef7a64,
+    inset 2px 2px 0 0 #9a2a1e,
+    0 0 0 2px #3a2a12;
+}
+
+/* ---- Body: tabs + page --------------------------------------------------- */
+.binder__body {
+  display: flex;
+  gap: 6px;
+  min-height: 0;
+}
+
+.binder__page-panel {
+  flex: 1;
+  min-width: 0;
+  padding: 7px;
+  /* Recessed cream "page" — dark pockets sit on it like a real binder leaf. */
+  background: #f2e7c9;
+  box-shadow:
+    inset 2px 2px 0 0 #fdf6e2,
+    inset -2px -2px 0 0 #c9b487,
+    0 0 0 2px #3a2a12;
+}
+
+/* ---- Footer: prestige + tiers + pager ------------------------------------ */
+.binder__footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1px 2px;
+}
+
+.binder__prestige {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.binder__prestige-icon {
+  width: 14px;
+  height: 14px;
+  image-rendering: pixelated;
+  /* Tint the white Lucid star gold. */
+  filter: brightness(0) saturate(100%) invert(78%) sepia(58%) saturate(620%)
+    hue-rotate(353deg) brightness(101%) contrast(95%);
+}
+
+.binder__prestige-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6a4f1c;
+  text-shadow: 0 1px 0 rgba(255, 245, 214, 0.5);
+}
+
+.binder__tiers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  justify-content: center;
+}
+
+.tier-pip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #c9bca0;
+  background: #6a5a3c;
+  box-shadow:
+    inset 1px 1px 0 0 #877055,
+    inset -1px -1px 0 0 #463a26,
+    0 0 0 1px #3a2a12;
+  opacity: 0.55;
+  image-rendering: pixelated;
+}
+
+.tier-pip[data-achieved='yes'] {
+  opacity: 1;
+  color: #0b0e14;
+  background: var(--pip, #cccccc);
+  box-shadow:
+    inset 1px 1px 0 0 rgba(255, 255, 255, 0.5),
+    inset -1px -1px 0 0 rgba(0, 0, 0, 0.35),
+    0 0 0 1px #3a2a12,
+    0 0 6px 0 var(--pip, #cccccc);
+}
+
+.tier-pip--holo[data-achieved='yes'] {
+  color: #3a2400;
+  background: linear-gradient(120deg, #ffe98a, #ffc24a, #fff0a6, #ffb347);
+  box-shadow:
+    inset 1px 1px 0 0 rgba(255, 255, 255, 0.7),
+    inset -1px -1px 0 0 rgba(120, 70, 0, 0.4),
+    0 0 0 1px #3a2a12,
+    0 0 7px 0 rgba(255, 200, 74, 0.7);
+}
+
+/* ---- Pager --------------------------------------------------------------- */
+.binder__pager {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.binder__page-label {
+  min-width: 34px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #5a4426;
+}
+
+.binder__page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 20px;
+  border: 0;
+  cursor: pointer;
+  background: #c8a772;
+  box-shadow:
+    inset 2px 2px 0 0 #e4cfa1,
+    inset -2px -2px 0 0 #8f6f3e,
+    0 0 0 2px #3a2a12;
+  image-rendering: pixelated;
+}
+
+.binder__page-btn img {
+  width: 12px;
+  height: 12px;
+  image-rendering: pixelated;
+  /* Tint the white chevron dark brown. */
+  filter: brightness(0) saturate(100%) invert(18%) sepia(28%) saturate(900%)
+    hue-rotate(350deg) brightness(95%) contrast(90%);
+}
+
+.binder__page-btn:hover:not(:disabled) {
+  background: #dcc089;
+}
+
+.binder__page-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+}

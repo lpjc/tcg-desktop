@@ -4,6 +4,8 @@ import { DevToggleButton } from './ui/DevToggleButton';
 import { DevGamePanel } from './ui/DevGamePanel';
 import { BottomHud } from './ui/BottomHud';
 import { MonitorSwitchButton } from './ui/MonitorSwitchButton';
+import { CollectionScreen } from './ui/collection/CollectionScreen';
+import { CollectionButton } from './ui/collection/CollectionButton';
 import { registerPlaceholderSet } from './game/cards/placeholderSet';
 import { gameState } from './game/state/GameState';
 import { WorldScene } from './world/WorldScene';
@@ -50,6 +52,10 @@ void gameState.load();
 new DevToggleButton('editor-ui');
 new BottomHud('editor-ui');
 new DevGamePanel('editor-ui');
+
+// Collection binder: persistent opener button + the floating screen it toggles.
+const collectionScreen = new CollectionScreen('editor-ui');
+new CollectionButton('editor-ui', collectionScreen);
 
 if (window.desktop) {
   new MonitorSwitchButton('editor-ui');

@@ -186,8 +186,10 @@ GameState {
 
 ## 5. Phased roadmap
 
-Each phase is independently runnable. We start with the **collection rolodex** per your call —
-it de-risks the hardest band-UI question and gives an immediate, satisfying screen.
+Each phase is independently runnable. **Actual build order:** Phase 0 (spine + tall window) →
+Phase 3 (convention money loop) → Phase 1 (collection binder) — the money loop was wired first
+so there was real stock/cash to play with, then the binder. Phase 2 (display case + skills) is
+next.
 
 ### Phase 0 — Economic spine + state + tall window 🔜
 - **Window/overlay change:** make the Electron window **tall + transparent + click-through**
@@ -197,16 +199,28 @@ it de-risks the hardest band-UI question and gives an immediate, satisfying scre
 - Dev/debug seed buttons ("grant stock", "grant money", "discover set").
 - No art needed.
 
-### Phase 1 — Collection binder 🔜  ← start here
-- HTML/CSS **binder page**: one **set per page** (brief), shown as a chunky page of **big card
-  pockets** (a few per row; page within a set if the set is large). Thematic + scannable — a card
-  binder, not a dense grid.
-- Discovered = art; undiscovered = silhouette/locked pocket; holo = shimmer.
-- Switch sets (page left/right); per-set **completion tiers** + prestige bonus display.
-- Opens from a **persistent on-screen button** (no walking); floats up over a dimmed band.
-- Components: `CollectionScreen`, `BinderPage`, `CardPocket`, `SetTabs` (+ separate CSS files).
-- The tall window (Phase 0) gives room for big pockets — no rolodex trick needed.
-- *(Optional later flourish: a zoomed "flip-through" rolodex view — only if it earns its keep.)*
+### Phase 1 — Collection binder ✅
+Shipped. A chunky tan toy panel (bestiary-inspired) that floats above the dimmed band:
+- One **set per spread**, paged in tens (5×2 grid). Panel stays compact — a touch taller than the
+  world band, never huge.
+- **Card = its monster.** Each card is mostly a creature: undiscovered reads as a pure
+  **silhouette** (dark slot + black monster, like the reference bestiary); discovered shows the
+  colour monster on a light "art window" inside a **rarity-coloured frame**; holo cards get a
+  mid-tone foil window with a **cursor-reactive rainbow sheen**.
+- Title bar: set icon (the set's chase monster) + name + green discovery bar + count + X close.
+- Footer: **5 completion-tier pips** (`+1/3/6/10/15` cumulative prestige, lit when achieved) +
+  total prestige + page pager.
+- Left rail = **binder index tabs** (`SetTabs`), one per set, active tab gets the green "you're
+  here" accent; built to grow as sets unlock.
+- Opens from a **persistent right-edge button** (`CollectionButton`), no walking; ESC / scrim /
+  button close it.
+- Components (all with separate CSS): `CollectionScreen`, `BinderPage`, `CardPocket`, `SetTabs`,
+  `CollectionButton`; tier/prestige logic in `src/game/cards/setCompletion.ts`.
+- Art: placeholder monsters copied from the bundled "Free Mythic Monsters" pack to
+  `assets/cards/embergrove/NN.png` (mapped per card in `placeholderSet.ts`); UI icons copied from
+  the pixel Lucide set to `assets/icons/`.
+- *(Optional later flourish: a zoomed "flip-through" / single-card detail view — only if it earns
+  its keep.)*
 
 ### Phase 2 — Display case + skills
 3 slots, click-to-add / click-to-remove from binder, cased-card bonuses, hidden combos,
@@ -243,8 +257,10 @@ Set unlock progression, audio (reveal/holo/cash/pling), balancing pass, more set
 ## 6. What we need from you (assets + data)
 
 ### Assets (placeholders fine until you're ready)
-- **Card faces** — start with **one set (~30)**; classic `63:88` portrait. Style? (pixel-art to
-  match, or crisp illustration in the popup.)
+- **Card faces** — *placeholder in place:* the binder currently borrows pixel monsters from the
+  bundled "Free Mythic Monsters" pack (`assets/cards/embergrove/NN.png`). The card design is
+  monster-first (the creature is the hero, silhouette until discovered), so real art slots straight
+  into the same `artKey` field. Authored set art still welcome; classic `63:88` portrait.
 - **Card back** (face-down look).
 - **Pack art** (booster you rip).
 - **Money/coin** sprite (for fly-to-bank).

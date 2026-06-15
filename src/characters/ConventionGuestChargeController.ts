@@ -15,9 +15,9 @@ import type { NpcCrowd } from './NpcCrowd';
 import { conventionRoadEntrance, conventionWanderRegions } from './wanderZones';
 
 /** Passive fill: an unattended charge completes in this long. */
-const GUEST_CHARGE_BASE_MS = 10_000;
-/** Charge added per global click, left or right (≈1s of passive fill; ~10 clicks fills the bar). */
-const CLICK_GUEST_CHARGE_BOOST = 0.1;
+const GUEST_CHARGE_BASE_MS = 20_000;
+/** Charge added per global click, left or right */
+const CLICK_GUEST_CHARGE_BOOST = 0.05;
 /**
  * Hard floor between arrivals: even a maxed-out bar waits this long after the
  * charge started, so autoclickers can't dump a frame full of guests.

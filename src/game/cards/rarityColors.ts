@@ -36,3 +36,27 @@ export function rarityTokenColors(rarity: Rarity): { base: string; hi: string; e
     edge: shadeColor(color, -0.45),
   };
 }
+
+export interface RarityCardColors {
+  base: string;
+  hi: string;
+  edge: string;
+  glow: string;
+  deep: string;
+}
+
+/**
+ * CSS values for a binder card frame of a given rarity: the flat base, a light
+ * bevel highlight, a dark bevel edge, a soft glow, and a deep tint for the card
+ * backing gradient. Keeps every hue derived from `RARITY_COLORS`.
+ */
+export function rarityCardColors(rarity: Rarity): RarityCardColors {
+  const color = RARITY_COLORS[rarity];
+  return {
+    base: shadeColor(color, 0),
+    hi: shadeColor(color, 0.5),
+    edge: shadeColor(color, -0.5),
+    glow: shadeColor(color, 0.3),
+    deep: shadeColor(color, -0.72),
+  };
+}

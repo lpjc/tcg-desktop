@@ -1,0 +1,222 @@
+/* One card slot in the binder. Pixel-first: hard edges, bevel via inset shadows,
+   no rounded corners. The monster is the hero; the frame is just its stage. */
+.pocket {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 63 / 88;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  image-rendering: pixelated;
+  font-family: var(--game-font);
+  /* Sit still by default; hover lifts (set below). */
+  transition:
+    transform 90ms steps(3),
+    filter 90ms steps(3);
+}
+
+.pocket__inner {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  /* Card silhouette: dark slot + hard outline. Rarity reskins this when found. */
+  background: #262b38;
+  box-shadow:
+    inset 2px 2px 0 0 #3a4254,
+    inset -2px -2px 0 0 #11141c,
+    0 0 0 2px #0b0e14;
+}
+
+/* ---- The monster (hero) -------------------------------------------------- */
+.pocket__art-wrap {
+  position: absolute;
+  inset: 6px 4px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pocket__art {
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+  /* Gentle idle breathing so the creatures feel alive (a modern twist). */
+  animation: pocket-bob 2.6s steps(8, end) infinite;
+  animation-delay: var(--bob-delay, 0s);
+}
+
+@keyframes pocket-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* ---- Corner number + name ------------------------------------------------ */
+.pocket__num {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1px 3px;
+  font-size: 8px;
+  line-height: 1;
+  color: #aeb6c6;
+  background: #0b0e14;
+  letter-spacing: 0.04em;
+}
+
+.pocket__name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px 3px;
+  font-size: 8px;
+  line-height: 11px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #7d869a;
+  background: #0b0e14;
+  letter-spacing: 0.02em;
+}
+
+/* ---- Mystery marker (undiscovered) --------------------------------------- */
+.pocket__mystery {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 1px 4px;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+  color: #5a647a;
+  background: #0b0e14;
+}
+
+/* ---- Undiscovered state -------------------------------------------------- */
+.pocket[data-state='undiscovered'] .pocket__inner {
+  /* A faint pool of light so the black creature reads as a silhouette. */
+  background: radial-gradient(120% 90% at 50% 42%, #3c4458 0%, #20242f 78%);
+}
+
+.pocket[data-state='undiscovered'] .pocket__art {
+  /* Pure black silhouette — "more emphasized" than the card it sits on. */
+  filter: brightness(0) opacity(0.92);
+}
+
+.pocket[data-state='undiscovered'] .pocket__name {
+  color: #525a6c;
+  letter-spacing: 0.12em;
+}
+
+.pocket[data-state='discovered'] .pocket__mystery {
+  display: none;
+}
+
+/* ---- Discovered state (rarity reskin) ------------------------------------ */
+/* Light "art window" so the colour creature reads clearly (the monster is the
+   hero), framed by a chunky rarity-coloured border. Mirrors the bestiary, where
+   found creatures are full colour on a light panel. */
+.pocket[data-state='discovered'] .pocket__inner {
+  background:
+    radial-gradient(82% 62% at 50% 36%, #fbfdff 0%, #dde7f2 50%, #b6c4d6 100%);
+  box-shadow:
+    inset 2px 2px 0 0 var(--r-hi),
+    inset -2px -2px 0 0 var(--r-edge),
+    inset 0 0 0 3px var(--r-base),
+    0 0 0 2px #0b0e14,
+    0 0 8px 0 var(--r-glow);
+}
+
+.pocket[data-state='discovered'] .pocket__art {
+  /* A soft dark rim keeps even pale monsters legible on the light window. */
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.35));
+}
+
+.pocket[data-state='discovered'] .pocket__num {
+  color: #0b0e14;
+  background: var(--r-base);
+}
+
+.pocket[data-state='discovered'] .pocket__name {
+  color: #f4f7fc;
+  background: linear-gradient(transparent, var(--r-deep) 30%);
+}
+
+/* ---- Holo foil (cursor-reactive) ----------------------------------------- */
+/* Hidden unless the card is a discovered holo. The sheen + rainbow shift with
+   the cursor (--mx/--my fed from the overlay root), the praised "shiny" feel. */
+.pocket__holo {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  /* Overlay tints the light art window with rainbow without erasing the monster
+     (color-dodge blew it out). Streaks + rainbow shift with the cursor. */
+  mix-blend-mode: overlay;
+  background-image:
+    repeating-linear-gradient(
+      115deg,
+      transparent 0 6px,
+      rgba(255, 255, 255, 0.6) 6px 8px,
+      transparent 8px 17px
+    ),
+    linear-gradient(
+      115deg,
+      #ff5d8f 0%,
+      #ffd36e 18%,
+      #6effc0 38%,
+      #58c8ff 58%,
+      #c08bff 78%,
+      #ff5d8f 100%
+    );
+  background-size:
+    220% 220%,
+    260% 260%;
+  background-position:
+    calc(var(--mx, 0.5) * 180%) calc(var(--my, 0.5) * 180%),
+    calc((1 - var(--mx, 0.5)) * 160%) calc((1 - var(--my, 0.5)) * 160%);
+  transition: opacity 120ms steps(3);
+}
+
+.pocket--holo .pocket__holo {
+  opacity: 0.85;
+}
+
+/* Holo cards get a richer, mid-tone foil window (instead of the flat light one)
+   so the rainbow reads vividly while the vivid monster still pops — a holo
+   should feel special at a glance. Specificity beats the discovered rule. */
+.pocket.pocket--holo .pocket__inner {
+  background: radial-gradient(82% 62% at 50% 36%, #6b7a96 0%, #3b465e 55%, #232b3d 100%);
+  box-shadow:
+    inset 2px 2px 0 0 var(--r-hi),
+    inset -2px -2px 0 0 var(--r-edge),
+    inset 0 0 0 3px var(--r-base),
+    0 0 0 2px #0b0e14,
+    0 0 11px 0 var(--r-glow);
+}
+
+/* ---- Hover ---------------------------------------------------------------- */
+.pocket:hover {
+  transform: translateY(-3px) scale(1.04);
+  filter: brightness(1.08);
+  z-index: 2;
+}
+
+.pocket:focus-visible {
+  outline: none;
+}
+
+.pocket:focus-visible .pocket__inner {
+  box-shadow:
+    inset 0 0 0 2px #ffffff,
+    0 0 0 2px #0b0e14,
+    0 0 8px 0 var(--r-glow, #fff);
+}

@@ -1,0 +1,9 @@
+/* The card grid for one page: five chunky pockets across, two rows down.
+   The pockets size themselves from the column width (CardPocket.css). */
+.binder-page {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px 8px;
+  align-content: start;
+  width: 100%;
+}
