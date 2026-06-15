@@ -1,88 +1,73 @@
 import { interaction } from '../../core/interaction';
-import { allSets, getCard, getSet } from '../../game/cards/cards';
+import { allSets, getCard } from '../../game/cards/cards';
 import { rarityCanHolo } from '../../game/cards/rarity';
-import { rarityCardColors } from '../../game/cards/rarityColors';
-import { computeSetCompletion, type CompletionTier } from '../../game/cards/setCompletion';
 import { gameState, type GameStateData } from '../../game/state/GameState';
 import { BinderPage, PAGE_SIZE } from './BinderPage';
+import { CardCountStrip } from './CardCountStrip';
+import { FlipBook } from './FlipBook';
 import { SetTabs, type SetTabInfo } from './SetTabs';
 import type { PocketCard } from './CardPocket';
 import './CollectionScreen.css';
 
+/** One built spread: the two cream page leaves + their live pocket grids. */
+interface BuiltSpread {
+  left: HTMLElement;
+  right: HTMLElement;
+  leftPage: BinderPage;
+  rightPage: BinderPage;
+}
+
 /**
- * The Collection binder: a chunky toy panel that floats up over a dimmed desktop
- * when the persistent Collection button is tapped. One set per spread, paged in
- * tens; left rail switches sets; the title bar shows discovery progress and the
- * footer the five completion tiers (and the prestige they grant).
- *
- * Renders as HTML/CSS over the Phaser band (IMPLEMENTATION_PLAN §1). It owns the
- * open/close lifecycle and feeds the cursor position to the holo foils.
+ * The Collection binder: a wide, open book that slides up from the bottom of the
+ * screen and floats over the world band — no dimming scrim, so it reads as part
+ * of the game rather than a modal overlay. Each set is one two-page spread (15
+ * pockets a side); the arrows and the section tabs turn pages with a 3D flip
+ * (see FlipBook). The desktop stays interactive behind it; ESC or the button
+ * close it.
  */
 export class CollectionScreen {
-  private readonly overlay: HTMLDivElement;
+  private readonly root: HTMLDivElement;
   private readonly binder: HTMLDivElement;
-  private readonly titleEl: HTMLElement;
-  private readonly themeEl: HTMLElement;
-  private readonly iconEl: HTMLImageElement;
-  private readonly progressFill: HTMLElement;
-  private readonly progressLabel: HTMLElement;
-  private readonly tiersEl: HTMLElement;
-  private readonly prestigeEl: HTMLElement;
+  private readonly setTabs: SetTabs;
+  private readonly countStrip: CardCountStrip;
+  private readonly flipBook: FlipBook;
+  private readonly currentNameEl: HTMLElement;
+  private readonly currentThemeEl: HTMLElement;
   private readonly pageLabel: HTMLElement;
   private readonly prevBtn: HTMLButtonElement;
   private readonly nextBtn: HTMLButtonElement;
-  private readonly setTabs: SetTabs;
-  private readonly page: BinderPage;
 
   private open = false;
-  private activeSetId: string;
-  private pageIndex = 0;
+  private busy = false;
+  private index = 0;
+  private leftPage: BinderPage | null = null;
+  private rightPage: BinderPage | null = null;
   private readonly openListeners = new Set<(open: boolean) => void>();
 
   constructor(containerId: string) {
     const host = document.getElementById(containerId);
     if (!host) throw new Error(`Missing #${containerId}`);
 
-    this.activeSetId = allSets()[0]?.id ?? '';
-
-    this.overlay = document.createElement('div');
-    this.overlay.id = 'collection-overlay';
-    this.overlay.setAttribute('aria-hidden', 'true');
-
-    const scrim = document.createElement('div');
-    scrim.className = 'collection-scrim';
-    scrim.addEventListener('click', () => this.close());
+    this.root = document.createElement('div');
+    this.root.id = 'collection-root';
+    this.root.setAttribute('aria-hidden', 'true');
 
     this.binder = document.createElement('div');
     this.binder.className = 'binder';
 
-    // ---- title bar --------------------------------------------------------
-    const titlebar = document.createElement('div');
-    titlebar.className = 'binder__titlebar';
+    // ---- top bar: section tabs + current set + close ----------------------
+    const topbar = document.createElement('div');
+    topbar.className = 'binder__topbar';
 
-    this.iconEl = document.createElement('img');
-    this.iconEl.className = 'binder__icon';
-    this.iconEl.alt = '';
-    this.iconEl.draggable = false;
+    this.setTabs = new SetTabs((setId) => this.goToSet(setId));
 
-    const titleWrap = document.createElement('div');
-    titleWrap.className = 'binder__titles';
-    this.titleEl = document.createElement('div');
-    this.titleEl.className = 'binder__title';
-    this.themeEl = document.createElement('div');
-    this.themeEl.className = 'binder__theme';
-    titleWrap.append(this.titleEl, this.themeEl);
-
-    const progress = document.createElement('div');
-    progress.className = 'binder__progress';
-    const bar = document.createElement('div');
-    bar.className = 'binder__bar';
-    this.progressFill = document.createElement('div');
-    this.progressFill.className = 'binder__bar-fill';
-    bar.appendChild(this.progressFill);
-    this.progressLabel = document.createElement('div');
-    this.progressLabel.className = 'binder__count';
-    progress.append(bar, this.progressLabel);
+    const current = document.createElement('div');
+    current.className = 'binder__current';
+    this.currentNameEl = document.createElement('div');
+    this.currentNameEl.className = 'binder__current-name';
+    this.currentThemeEl = document.createElement('div');
+    this.currentThemeEl.className = 'binder__current-theme';
+    current.append(this.currentNameEl, this.currentThemeEl);
 
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
@@ -91,57 +76,34 @@ export class CollectionScreen {
     closeBtn.title = 'Close (Esc)';
     closeBtn.addEventListener('click', () => this.close());
 
-    titlebar.append(this.iconEl, titleWrap, progress, closeBtn);
+    topbar.append(this.setTabs.el, current, closeBtn);
 
-    // ---- body (tabs + page) ----------------------------------------------
-    const body = document.createElement('div');
-    body.className = 'binder__body';
+    // ---- full-width card-count strip --------------------------------------
+    this.countStrip = new CardCountStrip();
 
-    this.setTabs = new SetTabs((setId) => this.setActiveSet(setId));
+    // ---- the open book ----------------------------------------------------
+    this.flipBook = new FlipBook();
 
-    const pagePanel = document.createElement('div');
-    pagePanel.className = 'binder__page-panel';
-    this.page = new BinderPage();
-    pagePanel.appendChild(this.page.el);
-
-    body.append(this.setTabs.el, pagePanel);
-
-    // ---- footer (tiers + pager) ------------------------------------------
+    // ---- footer: centred pager (turns between sets) -----------------------
     const footer = document.createElement('div');
     footer.className = 'binder__footer';
-
-    const prestigeWrap = document.createElement('div');
-    prestigeWrap.className = 'binder__prestige';
-    const star = document.createElement('img');
-    star.className = 'binder__prestige-icon';
-    star.src = '/icons/star.png';
-    star.alt = '';
-    this.prestigeEl = document.createElement('span');
-    this.prestigeEl.className = 'binder__prestige-val';
-    prestigeWrap.append(star, this.prestigeEl);
-
-    this.tiersEl = document.createElement('div');
-    this.tiersEl.className = 'binder__tiers';
-
     const pager = document.createElement('div');
     pager.className = 'binder__pager';
-    this.prevBtn = this.buildPagerButton('left', () => this.gotoPage(this.pageIndex - 1));
+    this.prevBtn = this.buildPagerButton('left', () => this.step(-1));
     this.pageLabel = document.createElement('span');
     this.pageLabel.className = 'binder__page-label';
-    this.nextBtn = this.buildPagerButton('right', () => this.gotoPage(this.pageIndex + 1));
+    this.nextBtn = this.buildPagerButton('right', () => this.step(1));
     pager.append(this.prevBtn, this.pageLabel, this.nextBtn);
+    footer.appendChild(pager);
 
-    footer.append(prestigeWrap, this.tiersEl, pager);
+    this.binder.append(topbar, this.countStrip.el, this.flipBook.el, footer);
+    this.root.appendChild(this.binder);
+    host.appendChild(this.root);
 
-    this.binder.append(titlebar, body, footer);
-    this.overlay.append(scrim, this.binder);
-    host.appendChild(this.overlay);
-
-    interaction.registerHotElement(this.overlay);
+    interaction.registerHotElement(this.binder);
     this.bindGlobalInput();
-    // Only repaint while open; the binder reads fresh state each time it opens.
     gameState.subscribe((data) => {
-      if (this.open) this.render(data);
+      if (this.open && !this.busy) this.applyState(data);
     });
   }
 
@@ -154,19 +116,20 @@ export class CollectionScreen {
   show(): void {
     if (this.open) return;
     this.open = true;
-    this.pageIndex = 0;
-    this.rebuildPage();
-    this.render(gameState.snapshot());
-    this.overlay.classList.add('is-open');
-    this.overlay.setAttribute('aria-hidden', 'false');
+    const spread = this.buildSpread(this.index);
+    this.adoptSpread(spread);
+    this.flipBook.setSpread({ left: spread.left, right: spread.right });
+    this.applyState(gameState.snapshot());
+    this.root.classList.add('is-open');
+    this.root.setAttribute('aria-hidden', 'false');
     this.emitOpen();
   }
 
   close(): void {
     if (!this.open) return;
     this.open = false;
-    this.overlay.classList.remove('is-open');
-    this.overlay.setAttribute('aria-hidden', 'true');
+    this.root.classList.remove('is-open');
+    this.root.setAttribute('aria-hidden', 'true');
     this.emitOpen();
   }
 
@@ -174,7 +137,7 @@ export class CollectionScreen {
     return this.open;
   }
 
-  /** Notify when the binder opens/closes (e.g. so the opener button can light up). */
+  /** Notify when the binder opens/closes (so the opener button can light up). */
   onOpenChange(listener: (open: boolean) => void): void {
     this.openListeners.add(listener);
     listener(this.open);
@@ -184,98 +147,107 @@ export class CollectionScreen {
     for (const listener of this.openListeners) listener(this.open);
   }
 
-  // ---- rendering -----------------------------------------------------------
+  // ---- navigation ----------------------------------------------------------
 
-  private render(data: Readonly<GameStateData>): void {
-    const set = getSet(this.activeSetId);
-    if (!set) return;
-
-    const completion = computeSetCompletion(this.activeSetId, data.collection);
-
-    this.iconEl.src = this.setIconArt(this.activeSetId);
-    this.titleEl.textContent = set.name;
-    this.themeEl.textContent = set.theme;
-    this.progressFill.style.width = `${Math.round(completion.fraction * 100)}%`;
-    this.progressLabel.textContent = `${completion.discovered}/${completion.total}`;
-    this.prestigeEl.textContent = `+${completion.prestige}`;
-
-    this.renderTiers(completion.tiers);
-    this.renderTabs(data);
-    this.page.update(data.collection);
-    this.renderPager();
+  private step(delta: number): void {
+    void this.goTo(this.index + delta);
   }
 
-  private renderTiers(tiers: CompletionTier[]): void {
-    this.tiersEl.replaceChildren();
-    for (const tier of tiers) {
-      const pip = document.createElement('div');
-      pip.className = 'tier-pip';
-      pip.dataset.achieved = tier.achieved ? 'yes' : 'no';
-      pip.title = `${tier.label}: ${tier.have}/${tier.need} \u2192 +${tier.cumulativePrestige} prestige`;
-      if (tier.id === 'holo') {
-        pip.classList.add('tier-pip--holo');
-      } else {
-        pip.style.setProperty('--pip', rarityCardColors(tier.id).base);
+  private goToSet(setId: string): void {
+    const target = allSets().findIndex((set) => set.id === setId);
+    if (target >= 0) void this.goTo(target);
+  }
+
+  /** Turn the book to a target spread, riffling one leaf at a time. */
+  private async goTo(target: number): Promise<void> {
+    const last = allSets().length - 1;
+    const clamped = Math.max(0, Math.min(target, last));
+    if (this.busy || clamped === this.index) return;
+    this.busy = true;
+    try {
+      const dir = clamped > this.index ? 'forward' : 'backward';
+      // A multi-set jump riffles quickly; a single step gets the full turn.
+      const stepMs = Math.abs(clamped - this.index) > 1 ? 280 : 520;
+      while (this.index !== clamped) {
+        const nextIndex = this.index + (dir === 'forward' ? 1 : -1);
+        const spread = this.buildSpread(nextIndex);
+        this.adoptSpread(spread);
+        await this.flipBook.flip(dir, { left: spread.left, right: spread.right }, stepMs);
+        this.index = nextIndex;
+        this.applyState(gameState.snapshot());
       }
-      const val = document.createElement('span');
-      val.className = 'tier-pip__val';
-      val.textContent = `+${tier.cumulativePrestige}`;
-      pip.appendChild(val);
-      this.tiersEl.appendChild(pip);
+    } finally {
+      this.busy = false;
+      this.applyState(gameState.snapshot());
     }
+  }
+
+  // ---- rendering -----------------------------------------------------------
+
+  private applyState(data: Readonly<GameStateData>): void {
+    const set = allSets()[this.index];
+    if (!set) return;
+
+    this.currentNameEl.textContent = set.name;
+    this.currentThemeEl.textContent = set.theme;
+
+    this.countStrip.setCards(set.cardIds);
+    this.countStrip.update(data.collection);
+
+    this.leftPage?.update(data.collection);
+    this.rightPage?.update(data.collection);
+
+    this.renderTabs(data);
+    this.renderPager();
   }
 
   private renderTabs(data: Readonly<GameStateData>): void {
     const tabs: SetTabInfo[] = allSets().map((set) => ({
       id: set.id,
       name: set.name,
-      // Every registered set is active content the player participates in; the
-      // locked-tab path is reserved for future not-yet-unlocked sets.
+      // Every registered set is playable today; the locked path is reserved for
+      // future not-yet-unlocked sets.
       unlocked: true,
-      fraction: computeSetCompletion(set.id, data.collection).fraction,
+      fraction: this.discoveredFraction(set.cardIds, data),
     }));
-    this.setTabs.render(tabs, this.activeSetId);
+    this.setTabs.render(tabs, allSets()[this.index]?.id ?? '');
   }
 
   private renderPager(): void {
-    const pages = this.pageCount();
-    this.pageLabel.textContent = `${this.pageIndex + 1} / ${pages}`;
-    this.prevBtn.disabled = this.pageIndex <= 0;
-    this.nextBtn.disabled = this.pageIndex >= pages - 1;
+    const count = allSets().length;
+    this.pageLabel.textContent = `${this.index + 1} / ${count}`;
+    this.prevBtn.disabled = this.index <= 0 || this.busy;
+    this.nextBtn.disabled = this.index >= count - 1 || this.busy;
   }
 
-  // ---- navigation ----------------------------------------------------------
+  // ---- building spreads ----------------------------------------------------
 
-  private setActiveSet(setId: string): void {
-    if (setId === this.activeSetId) return;
-    this.activeSetId = setId;
-    this.pageIndex = 0;
-    this.rebuildPage();
-    this.render(gameState.snapshot());
+  /** Make the just-built spread the live one (its pockets get state updates). */
+  private adoptSpread(spread: BuiltSpread): void {
+    this.leftPage = spread.leftPage;
+    this.rightPage = spread.rightPage;
   }
 
-  private gotoPage(index: number): void {
-    const clamped = Math.max(0, Math.min(index, this.pageCount() - 1));
-    if (clamped === this.pageIndex) return;
-    this.pageIndex = clamped;
-    this.rebuildPage();
-    this.page.update(gameState.snapshot().collection);
-    this.renderPager();
+  private buildSpread(setIndex: number): BuiltSpread {
+    const left = this.buildLeaf(setIndex, 'left');
+    const right = this.buildLeaf(setIndex, 'right');
+    return { left: left.el, right: right.el, leftPage: left.page, rightPage: right.page };
   }
 
-  /** Rebuild the visible pockets for the current set + page, then apply state. */
-  private rebuildPage(): void {
-    const cards = this.pocketCardsForPage();
-    this.page.setCards(cards);
-    this.page.update(gameState.snapshot().collection);
+  private buildLeaf(setIndex: number, side: 'left' | 'right'): { el: HTMLElement; page: BinderPage } {
+    const leaf = document.createElement('div');
+    leaf.className = `book-leaf book-leaf--${side}`;
+    const page = new BinderPage();
+    page.setCards(this.pocketCards(setIndex, side));
+    page.update(gameState.snapshot().collection);
+    leaf.appendChild(page.el);
+    return { el: leaf, page };
   }
 
-  // ---- data helpers --------------------------------------------------------
-
-  private pocketCardsForPage(): PocketCard[] {
-    const set = getSet(this.activeSetId);
+  private pocketCards(setIndex: number, side: 'left' | 'right'): PocketCard[] {
+    const set = allSets()[setIndex];
     if (!set) return [];
-    const start = this.pageIndex * PAGE_SIZE;
+    const start = side === 'left' ? 0 : PAGE_SIZE;
     return set.cardIds.slice(start, start + PAGE_SIZE).flatMap((cardId, offset) => {
       const card = getCard(cardId);
       if (!card) return [];
@@ -292,24 +264,19 @@ export class CollectionScreen {
     });
   }
 
-  private pageCount(): number {
-    const set = getSet(this.activeSetId);
-    const total = set?.cardIds.length ?? 0;
-    return Math.max(1, Math.ceil(total / PAGE_SIZE));
+  private discoveredFraction(cardIds: string[], data: Readonly<GameStateData>): number {
+    if (cardIds.length === 0) return 0;
+    const found = cardIds.filter((id) => data.collection[id]?.discovered === true).length;
+    return found / cardIds.length;
   }
 
-  /** A set's signature art = its rarest (last) card's monster. */
-  private setIconArt(setId: string): string {
-    const set = getSet(setId);
-    const lastId = set?.cardIds[set.cardIds.length - 1];
-    return (lastId && getCard(lastId)?.artKey) || '/icons/collection.png';
-  }
+  // ---- chrome + input ------------------------------------------------------
 
   private buildPagerButton(dir: 'left' | 'right', onClick: () => void): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'binder__page-btn';
-    btn.title = dir === 'left' ? 'Previous page' : 'Next page';
+    btn.title = dir === 'left' ? 'Previous set' : 'Next set';
     const icon = document.createElement('img');
     icon.src = `/icons/chevron-${dir}.png`;
     icon.alt = dir === 'left' ? 'Previous' : 'Next';
@@ -319,7 +286,7 @@ export class CollectionScreen {
   }
 
   private bindGlobalInput(): void {
-    // Feed the cursor to the holo foils (normalised 0..1, same idea as StockBar).
+    // Feed the cursor to the holo sheens (normalised 0..1, same as StockBar).
     const onMove = (event: PointerEvent | MouseEvent) => {
       if (!this.open) return;
       this.binder.style.setProperty('--mx', (event.clientX / window.innerWidth).toFixed(3));

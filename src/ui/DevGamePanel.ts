@@ -1,7 +1,6 @@
-import { allSets } from '../game/cards/cards';
+import { allSets, getCard, type Card } from '../game/cards/cards';
 import type { PileId } from '../game/cards/piles';
 import { rarityCanHolo } from '../game/cards/rarity';
-import { getCard } from '../game/cards/cards';
 import { gameState } from '../game/state/GameState';
 import { interaction } from '../core/interaction';
 import { devUi } from './devUi';
@@ -35,6 +34,7 @@ export class DevGamePanel {
     this.el.append(
       this.button('+ Stock', () => this.grantStock()),
       this.button('+ €1000', () => gameState.addMoney(1000)),
+      this.button('+ Random card', () => this.addRandomCard()),
       this.button('Discover set', () => this.discoverSets()),
       this.button('Reset save', () => gameState.reset()),
     );
@@ -62,6 +62,31 @@ export class DevGamePanel {
     }
   }
 
+  /**
+   * Discover one random card (to test the binder before packs exist). Prefers a
+   * still-undiscovered card; once a set is full it instead promotes a random
+   * holo-capable card to holo, so the holo sheen is reachable too.
+   */
+  private addRandomCard(): void {
+    const collection = gameState.snapshot().collection;
+    const cards = allSets().flatMap((set) => set.cardIds.map((id) => getCard(id)).filter(isCard));
+
+    const undiscovered = cards.filter((card) => collection[card.id]?.discovered !== true);
+    if (undiscovered.length > 0) {
+      const card = pickRandom(undiscovered);
+      const holo = rarityCanHolo(card.rarity) && Math.random() < 0.25;
+      gameState.discoverCard(card.id, holo);
+      return;
+    }
+
+    const upgradable = cards.filter(
+      (card) => rarityCanHolo(card.rarity) && collection[card.id]?.holo !== true,
+    );
+    if (upgradable.length > 0) {
+      gameState.discoverCard(pickRandom(upgradable).id, true);
+    }
+  }
+
   private discoverSets(): void {
     for (const set of allSets()) {
       gameState.unlockSet(set.id);
@@ -72,4 +97,12 @@ export class DevGamePanel {
       }
     }
   }
+}
+
+function isCard(card: Card | undefined): card is Card {
+  return card !== undefined;
+}
+
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
 }

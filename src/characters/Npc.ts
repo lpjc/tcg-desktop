@@ -45,8 +45,6 @@ const ERRAND_POST_WANDER_MAX = 6;
 /** Once at the booth, stand and "look" before buying. */
 const ERRAND_BROWSE_MIN_MS = 2000;
 const ERRAND_BROWSE_MAX_MS = 8000;
-/** Short beat after buying (emote visible) before wandering on. */
-const ERRAND_POST_BUY_MS = 900;
 /** Chance a wander leg targets decor instead of a random tile. */
 const FURNITURE_VISIT_CHANCE = 0.42;
 /** How long an NPC lingers in front of a piece of furniture. */
@@ -60,7 +58,7 @@ const FURNITURE_LOOK_MAX_MS = 4500;
  */
 export interface NpcErrand {
   target: { x: number; y: number };
-  onArrive: (npc: Npc) => void;
+  onArrive: (npc: Npc) => void | Promise<void>;
 }
 
 /**
@@ -341,14 +339,19 @@ export class Npc extends Phaser.GameObjects.Sprite {
       const browseMs = Phaser.Math.Between(ERRAND_BROWSE_MIN_MS, ERRAND_BROWSE_MAX_MS);
       this.pauseEvent = this.scene.time.delayedCall(browseMs, () => {
         if (!this.scene || this.leaving) return;
-        errand.onArrive(this);
-        this.errandPostWanderLegs = Phaser.Math.Between(
-          ERRAND_POST_WANDER_MIN,
-          ERRAND_POST_WANDER_MAX,
-        );
-        this.pauseEvent = this.scene.time.delayedCall(ERRAND_POST_BUY_MS, () => this.startNextLeg());
+        void this.runErrandPurchase(errand);
       });
     });
+  }
+
+  private async runErrandPurchase(errand: NpcErrand): Promise<void> {
+    await Promise.resolve(errand.onArrive(this));
+    if (!this.scene || this.leaving) return;
+    this.errandPostWanderLegs = Phaser.Math.Between(
+      ERRAND_POST_WANDER_MIN,
+      ERRAND_POST_WANDER_MAX,
+    );
+    this.startNextLeg();
   }
 
   private pickReachableTarget(): { path: Array<{ x: number; y: number }>; atFurniture: boolean } | null {

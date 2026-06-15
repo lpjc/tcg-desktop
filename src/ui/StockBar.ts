@@ -1,6 +1,8 @@
 import { gameState } from '../game/state/GameState';
 import { PILES, type PileId } from '../game/cards/piles';
 import { rarityTokenColors } from '../game/cards/rarityColors';
+import { animateFly, elementCenter, type FlyPoint } from './flyFx';
+import './flyFx.css';
 import './StockBar.css';
 
 /**
@@ -30,6 +32,8 @@ export class StockBar {
   private readonly cardEls = new Map<PileId, HTMLElement>();
   /** Last seen counts, so we can detect which pile a sale came from. */
   private prevCounts = new Map<PileId, number>();
+  /** Piles whose fly-out is handled by the purchase animation instead. */
+  private suppressedFly = new Set<PileId>();
 
   constructor(containerId: string) {
     const host = document.getElementById(containerId);
@@ -76,7 +80,29 @@ export class StockBar {
     return card;
   }
 
-  /** Feed the cursor's normalised position to CSS so holo sheens shift in real time. */
+  /** Skip the default fly-out — the purchase animation owns this pile's card. */
+  suppressSaleFly(pile: PileId): void {
+    this.suppressedFly.add(pile);
+  }
+
+  /** Fly a stock token from the HUD into a screen-space target (the buyer). */
+  flyCardToTarget(pile: PileId, target: FlyPoint): Promise<void> {
+    const token = this.cardEls.get(pile);
+    if (!token) return Promise.resolve();
+
+    const meta = PILES[pile];
+    const colors = rarityTokenColors(meta.rarity);
+    const from = elementCenter(token);
+
+    const fly = document.createElement('div');
+    fly.className = 'sale-fly-card';
+    fly.style.setProperty('--card-color', colors.base);
+    fly.style.setProperty('--card-hi', colors.hi);
+    fly.style.setProperty('--card-edge', colors.edge);
+    document.getElementById('editor-ui')?.appendChild(fly);
+
+    return animateFly(fly, from, target, { duration: 680, endScale: 0.5 });
+  }
   private trackPointerShine(): void {
     const onMove = (event: PointerEvent | MouseEvent) => {
       const mx = event.clientX / Math.max(1, window.innerWidth);
@@ -99,8 +125,13 @@ export class StockBar {
         cardEl.classList.toggle('stock-card--empty', count <= 0);
         cardEl.title = `${PILES[pile].label}: ${count}`;
       }
-      // A sale just removed a card from this pile — fly one out and fade it.
-      if (prev !== undefined && count < prev) this.flyOutCard(pile);
+      if (prev !== undefined && count < prev) {
+        if (this.suppressedFly.has(pile)) {
+          this.suppressedFly.delete(pile);
+        } else {
+          this.flyOutCard(pile);
+        }
+      }
       this.prevCounts.set(pile, count);
     }
   }

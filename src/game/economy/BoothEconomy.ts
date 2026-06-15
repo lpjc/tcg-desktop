@@ -32,27 +32,37 @@ export interface SaleResult {
  */
 export class BoothEconomy {
   /**
-   * A guest arrived: attempt a purchase. Returns the sale, or null if nothing
-   * bought. When `directToBank` (the player is standing at the booth) the money
-   * + reputation go straight to the bank; otherwise they accumulate in the cash
-   * box as a coin pile to collect later.
+   * Pick a pile and quote a price without mutating state — used to drive the
+   * purchase animation before stock/payment are committed.
    */
-  onGuestArrived(directToBank = false): SaleResult | null {
+  resolveSale(): SaleResult | null {
     const data = gameState.snapshot();
     const profile = pickVisitorProfile(data.skills.prestige);
     const pile = this.choosePile(profile, data.stock);
     if (!pile) return null;
-    if (!gameState.takeFromStock(pile, 1)) return null;
 
     const meta = PILES[pile];
     const price = Math.round(meta.worth * (1 + data.skills.reputation * REPUTATION_PRICE_BONUS));
     const reputation = REP_GAIN[meta.rarity];
-    if (directToBank) {
-      gameState.sellDirect(price, reputation);
-    } else {
-      gameState.recordSale(price, reputation);
-    }
     return { pile, price, reputation, profile };
+  }
+
+  /** Remove one card from stock when the sale card flies out of the HUD. */
+  commitStock(pile: PileId): boolean {
+    return gameState.takeFromStock(pile, 1);
+  }
+
+  /**
+   * Apply payment after the sale animation lands. When `directToBank` (player at
+   * the booth) money goes straight to the bank; otherwise it stacks in the cash
+   * box on the table.
+   */
+  commitPayment(sale: SaleResult, directToBank: boolean): void {
+    if (directToBank) {
+      gameState.sellDirect(sale.price, sale.reputation);
+    } else {
+      gameState.recordSale(sale.price, sale.reputation);
+    }
   }
 
   /** Flush the booth cash box into the bank; returns the collected summary. */

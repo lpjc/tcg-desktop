@@ -52,6 +52,12 @@ export class BoothCashPile {
     this.refresh();
   }
 
+  /** World position of the coin pile centre (for collect fly animations). */
+  getWorldAnchor(): { x: number; y: number } | null {
+    if (!this.anchor) return null;
+    return { x: this.anchor.x, y: this.anchor.y };
+  }
+
   private refresh(): void {
     const money = Math.round(gameState.snapshot().cashBox.money);
     const stage = stageForMoney(money);

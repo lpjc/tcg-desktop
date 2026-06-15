@@ -1,22 +1,22 @@
-/* Vertical binder index tabs down the left edge. Chunky tan dividers that match
-   the binder frame; the active one brightens and shows a green "you're here"
-   accent (the affordance borrowed from the reference game). */
+/* Horizontal binder section tabs along the top of the book. Chunky tan dividers
+   that match the cover; the active one brightens with a green "you're here"
+   accent (borrowed from the reference game). */
 .set-tabs {
   display: flex;
-  flex-direction: column;
+  align-items: flex-end;
   gap: 4px;
-  padding-top: 4px;
-  flex: 0 0 auto;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .set-tab {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 3px;
-  width: 34px;
-  height: 44px;
-  padding: 0 4px;
+  padding: 4px 10px 3px;
   border: 0;
   cursor: pointer;
   font-family: var(--game-font);
@@ -29,18 +29,18 @@
   image-rendering: pixelated;
 }
 
-.set-tab__letter {
-  flex: 1;
-  font-size: 14px;
+.set-tab__name {
+  font-size: 10px;
   font-weight: 700;
-  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
-/* Thin vertical completion bar (fills from the bottom). */
+/* Thin horizontal completion bar (fills from the left). */
 .set-tab__bar {
   position: relative;
-  width: 4px;
-  height: 30px;
+  height: 4px;
+  width: 100%;
   background: #6a4f28;
   box-shadow: inset 0 0 0 1px #3a2a12;
   overflow: hidden;
@@ -48,14 +48,15 @@
 
 .set-tab__fill {
   position: absolute;
-  left: 0;
-  right: 0;
+  top: 0;
   bottom: 0;
+  left: 0;
   background: #57d06a;
 }
 
 .set-tab[data-state='active'] {
   background: #f0d9a6;
+  cursor: default;
   box-shadow:
     inset 2px 2px 0 0 #fff3d2,
     inset -2px -2px 0 0 #b48f54,
@@ -66,7 +67,7 @@
 .set-tab:disabled {
   cursor: default;
   background: #6f6450;
-  color: transparent;
+  color: #9a8e72;
   box-shadow:
     inset 2px 2px 0 0 #8a7e66,
     inset -2px -2px 0 0 #4a4233,

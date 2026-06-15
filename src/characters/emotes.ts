@@ -49,31 +49,51 @@ export function emoteForPile(pile: PileId): EmoteKey {
 
 /** Pop a short-lived emote above (x, y): scale-in, drift up, fade out. */
 export function showEmote(scene: Phaser.Scene, x: number, y: number, key: EmoteKey): void {
-  const sprite = scene.add
-    .image(x, y, emoteTextureKey(key))
-    .setOrigin(0.5, 1)
-    .setDepth(EMOTE_DEPTH);
-  sprite.setDisplaySize(EMOTE_SIZE, EMOTE_SIZE);
+  void showEmoteHeld(scene, x, y, key, 850);
+}
 
-  const { scaleX, scaleY } = sprite;
-  sprite.setScale(scaleX * 0.4, scaleY * 0.4).setAlpha(0);
+/**
+ * Purchase emote: scale in, hold for `holdMs`, then fade out. Resolves when gone.
+ */
+export function showEmoteHeld(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  key: EmoteKey,
+  holdMs = 1000,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const sprite = scene.add
+      .image(x, y, emoteTextureKey(key))
+      .setOrigin(0.5, 1)
+      .setDepth(EMOTE_DEPTH);
+    sprite.setDisplaySize(EMOTE_SIZE, EMOTE_SIZE);
 
-  scene.tweens.add({
-    targets: sprite,
-    scaleX,
-    scaleY,
-    alpha: 1,
-    y: y - 4,
-    duration: 180,
-    ease: 'Back.easeOut',
-  });
-  scene.tweens.add({
-    targets: sprite,
-    alpha: 0,
-    y: y - 12,
-    delay: 850,
-    duration: 350,
-    ease: 'Quad.easeIn',
-    onComplete: () => sprite.destroy(),
+    const { scaleX, scaleY } = sprite;
+    sprite.setScale(scaleX * 0.4, scaleY * 0.4).setAlpha(0);
+
+    scene.tweens.add({
+      targets: sprite,
+      scaleX,
+      scaleY,
+      alpha: 1,
+      y: y - 4,
+      duration: 180,
+      ease: 'Back.easeOut',
+    });
+
+    scene.time.delayedCall(holdMs, () => {
+      scene.tweens.add({
+        targets: sprite,
+        alpha: 0,
+        y: y - 10,
+        duration: 180,
+        ease: 'Quad.easeIn',
+        onComplete: () => {
+          sprite.destroy();
+          resolve();
+        },
+      });
+    });
   });
 }

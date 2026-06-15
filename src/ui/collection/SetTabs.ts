@@ -5,15 +5,15 @@ export interface SetTabInfo {
   id: string;
   name: string;
   unlocked: boolean;
-  /** 0..1 discovery progress, shown as a tiny spine bar. */
+  /** 0..1 discovery progress, shown as a tiny underline bar. */
   fraction: number;
 }
 
 /**
- * The binder's index tabs — a vertical rail of dividers down the left edge, one
- * per set (like the tabbed dividers in a real card binder). Clicking a tab turns
- * to that set. Locked sets show as dim, un-clickable spines (a hint of what's to
- * come). Built to grow: today there's one set, later there are many.
+ * The binder's section tabs — a horizontal row of dividers across the top of the
+ * book, one per set (like the labelled tabs in a real card binder). Clicking a
+ * tab turns to that set (the book riffles through the pages to reach it). Locked
+ * sets show dim and un-clickable. Built to grow as more sets unlock.
  */
 export class SetTabs {
   readonly el: HTMLDivElement;
@@ -40,19 +40,19 @@ export class SetTabs {
     btn.disabled = !tab.unlocked;
     btn.title = tab.unlocked ? tab.name : 'Locked set';
 
-    const letter = document.createElement('span');
-    letter.className = 'set-tab__letter';
-    letter.textContent = tab.unlocked ? tab.name.charAt(0).toUpperCase() : '';
+    const label = document.createElement('span');
+    label.className = 'set-tab__name';
+    label.textContent = tab.unlocked ? tab.name : '???';
 
     const bar = document.createElement('span');
     bar.className = 'set-tab__bar';
     const fill = document.createElement('span');
     fill.className = 'set-tab__fill';
-    fill.style.height = `${Math.round(tab.fraction * 100)}%`;
+    fill.style.width = `${Math.round(tab.fraction * 100)}%`;
     bar.appendChild(fill);
 
-    btn.append(letter, bar);
-    if (tab.unlocked) {
+    btn.append(label, bar);
+    if (tab.unlocked && !active) {
       btn.addEventListener('click', () => this.onSelect(tab.id));
     }
     return btn;

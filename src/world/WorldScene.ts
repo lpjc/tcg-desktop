@@ -34,14 +34,15 @@ import {
   rebuildObstacleField,
   stationAnchorPoint,
 } from './obstacleField';
-import { emoteForPile, preloadEmotes, showEmote } from '../characters/emotes';
+import { preloadEmotes } from '../characters/emotes';
 import { preloadCoins } from './coins';
 import type { Npc, NpcErrand } from '../characters/Npc';
 import { isOverWorldSurface, isPlayerWalkSurface } from './worldSurface';
 import { CameraDirector } from './CameraDirector';
 import { BoothEconomy } from '../game/economy/BoothEconomy';
+import { gameState } from '../game/state/GameState';
 import { BoothCashPile } from './BoothCashPile';
-import { playBoothPayout, playLiveSale } from './boothFx';
+import { playBoothCollect, playPurchaseSale } from './purchaseFx';
 import {
   computeWorldLayout,
   frameForX,
@@ -260,18 +261,23 @@ export class WorldScene extends Phaser.Scene {
     );
     // Jitter so several buyers don't stack on the exact same spot.
     const target = { x: front.x + Phaser.Math.Between(-10, 10), y: front.y };
-    return { target, onArrive: (npc) => this.onBuyerAtBooth(npc) };
+    return {
+      target,
+      onArrive: (npc) => this.onBuyerAtBooth(npc),
+    };
   }
 
-  /** A guest reached the booth: make the sale and pop the rarity-cue emote. */
-  private onBuyerAtBooth(npc: Npc): void {
-    const sale = this.boothEconomy.onGuestArrived(this.playerAtBooth);
-    if (!sale) return;
-    showEmote(this, npc.x, npc.y - 22, emoteForPile(sale.pile));
-    // Manning the booth: the sale paid straight to the bank — show it live.
-    if (this.playerAtBooth) {
-      playLiveSale(this, this.player.x, this.player.y - 30, sale.price, sale.reputation);
-    }
+  /** A guest reached the booth: run the full purchase animation, then let them leave. */
+  private onBuyerAtBooth(npc: Npc): Promise<void> {
+    const sale = this.boothEconomy.resolveSale();
+    if (!sale) return Promise.resolve();
+
+    return playPurchaseSale(this, npc, sale, {
+      playerAtBooth: this.playerAtBooth,
+      commitStock: (pile) => this.boothEconomy.commitStock(pile),
+      commitPayment: (result, directToBank) =>
+        this.boothEconomy.commitPayment(result, directToBank),
+    });
   }
 
   /**
@@ -298,11 +304,20 @@ export class WorldScene extends Phaser.Scene {
     return null;
   }
 
-  /** Flush the booth cash box into the bank with a payout callout + coin burst. */
+  /** Flush the booth cash box into the bank once table coins reach the money pill. */
   private collectBooth(): void {
-    const collected = this.boothEconomy.collect();
-    if (collected.sales <= 0) return;
-    playBoothPayout(this, this.player.x, this.player.y, collected);
+    const box = gameState.snapshot().cashBox;
+    if (box.sales <= 0) return;
+
+    const anchor = this.boothCashPile.getWorldAnchor();
+    if (!anchor) {
+      this.boothEconomy.collect();
+      return;
+    }
+
+    void playBoothCollect(this, anchor, box.money, () => {
+      this.boothEconomy.collect();
+    });
   }
 
   /** Re-anchor the cash-coin pile onto the current booth table surface. */

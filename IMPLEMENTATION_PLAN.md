@@ -200,27 +200,37 @@ next.
 - No art needed.
 
 ### Phase 1 — Collection binder ✅
-Shipped. A chunky tan toy panel (bestiary-inspired) that floats above the dimmed band:
-- One **set per spread**, paged in tens (5×2 grid). Panel stays compact — a touch taller than the
-  world band, never huge.
-- **Card = its monster.** Each card is mostly a creature: undiscovered reads as a pure
-  **silhouette** (dark slot + black monster, like the reference bestiary); discovered shows the
-  colour monster on a light "art window" inside a **rarity-coloured frame**; holo cards get a
-  mid-tone foil window with a **cursor-reactive rainbow sheen**.
-- Title bar: set icon (the set's chase monster) + name + green discovery bar + count + X close.
-- Footer: **5 completion-tier pips** (`+1/3/6/10/15` cumulative prestige, lit when achieved) +
-  total prestige + page pager.
-- Left rail = **binder index tabs** (`SetTabs`), one per set, active tab gets the green "you're
-  here" accent; built to grow as sets unlock.
-- Opens from a **persistent right-edge button** (`CollectionButton`), no walking; ESC / scrim /
-  button close it.
-- Components (all with separate CSS): `CollectionScreen`, `BinderPage`, `CardPocket`, `SetTabs`,
-  `CollectionButton`; tier/prestige logic in `src/game/cards/setCompletion.ts`.
+Shipped, then reworked into an **actual open book** that reads as part of the game rather than a
+modal:
+- **No scrim, slides up from the bottom.** The wide book rises over the world band and floats
+  there; the desktop/band stay visible and interactive behind it (ESC or the button close it).
+- **One big book of all sets.** Each set is one **two-page spread** (5×3 = 15 pockets a side, so a
+  30-card set = one spread). The centre **spine** and cream pages sell the binder feel.
+- **Real page-turn animation** (`FlipBook`): a leaf rotates around the spine in CSS 3D — the
+  outgoing page on the front face, the incoming page on the back, the next page revealed beneath.
+  Page elements are *reparented, never cloned*, so pockets keep their state across a turn. Driven by
+  the centre **arrows** (one set per turn) and the **section tabs** (jump to a set — a multi-set
+  jump riffles quickly). No drag (per the reference, we kept the animation, dropped the drag).
+- **Card = its monster.** Undiscovered = pure **silhouette** (dark slot + black monster + `???`);
+  discovered = colour monster on a light "art window" in a **rarity-coloured frame**; holo reuses
+  the **stock-card sheen** (moving white diagonal stripes, cursor-reactive) — no rainbow foil.
+- **Full-width card-count strip** replaces the old progress bar: one tiny card per card in the set,
+  pure black until found, then its **rarity colour** — a clear "x / 30" at a glance.
+- Top bar: horizontal **section tabs** (`SetTabs`, one per set, active = green accent) + current set
+  name/theme + X close. Footer: a single **centred pager** (`‹ 1/3 ›`). Prestige tiers/stars were
+  dropped from the UI (the prestige *mechanic* still lives in `setCompletion.ts` for Phase 2 skills).
+- Opens from a **persistent right-edge button** (`CollectionButton`).
+- Components (all with separate CSS): `CollectionScreen`, `FlipBook`, `BinderPage`, `CardPocket`,
+  `CardCountStrip`, `SetTabs`, `CollectionButton`.
+- Data: a few **placeholder sets** (`placeholderSet.ts`) so the book has spreads to flip through —
+  `Embergrove` (hand-named) plus `Tidehollow`/`Duskmoor` (generated names, art reused from the
+  shared monster pool at an offset). Replace with authored sets by pointing each card's `artKey` at
+  real art.
 - Art: placeholder monsters copied from the bundled "Free Mythic Monsters" pack to
-  `assets/cards/embergrove/NN.png` (mapped per card in `placeholderSet.ts`); UI icons copied from
-  the pixel Lucide set to `assets/icons/`.
-- *(Optional later flourish: a zoomed "flip-through" / single-card detail view — only if it earns
-  its keep.)*
+  `assets/cards/embergrove/NN.png`; UI icons copied from the pixel Lucide set to `assets/icons/`.
+- Dev panel gained **"+ Random card"** to discover a random card (and reach holo once a set is full)
+  for testing before packs exist.
+- *(Optional later flourish: a zoomed single-card detail view — only if it earns its keep.)*
 
 ### Phase 2 — Display case + skills
 3 slots, click-to-add / click-to-remove from binder, cased-card bonuses, hidden combos,

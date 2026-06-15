@@ -1,5 +1,6 @@
 /* Chunky pixel token — flat fill, hard bevel, dark outline (matches stock cards). */
 #money-pill {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -45,6 +46,22 @@
 
 .money-pill--pulse {
   animation: money-pill-pop 180ms steps(3);
+}
+
+.money-pill__gain {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  transform: translateX(-50%);
+  font: 9px/1 var(--game-font);
+  font-weight: 700;
+  color: #ffe08a;
+  text-shadow:
+    0 0 0 2px #3a2a10,
+    1px 1px 0 #3a2a10,
+    -1px 1px 0 #3a2a10;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 @keyframes money-pill-pop {

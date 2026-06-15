@@ -1,0 +1,74 @@
+/* The open binder: two cream pages either side of a centre spine. A page turn
+   lifts a temporary leaf (the outgoing page on the front, the incoming page on
+   the back) and rotates it around the spine in 3D — the page-turn animation,
+   driven by the arrows/tabs (no drag). Page elements are reparented, never
+   cloned, so pockets keep their state across a turn.
+
+   Sizing vars (--page-w / --page-h / --pocket-*) come from .binder. */
+.flipbook {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  height: var(--page-h);
+  perspective: 2200px;
+}
+
+.flipbook__slot {
+  position: relative;
+  width: var(--page-w);
+  height: 100%;
+  flex: 0 0 auto;
+}
+
+/* The gutter where the pages meet. */
+.flipbook__spine {
+  width: 12px;
+  flex: 0 0 auto;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.12) 24%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(0, 0, 0, 0.12) 76%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+}
+
+/* The temporary turning leaf (positioned to match a slot at flip time). */
+.flipbook__leaf {
+  position: absolute;
+  transform-style: preserve-3d;
+  z-index: 40;
+  will-change: transform;
+}
+
+.flipbook__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+.flipbook__face--front {
+  transform: rotateY(0deg);
+}
+
+/* Pre-rotated so its page content reads correctly once the leaf lands. */
+.flipbook__face--back {
+  transform: rotateY(180deg);
+}
+
+/* A travelling shade across the turning leaf sells the curl/lighting. */
+.flipbook__face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0) 38%);
+  opacity: 0.5;
+}
+
+.flipbook__leaf--backward .flipbook__face::after {
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0) 38%);
+}
