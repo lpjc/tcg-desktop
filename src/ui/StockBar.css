@@ -65,10 +65,11 @@
 /* ---- Holo treatment (cursor-reactive) ------------------------------------ */
 /* Same base colour as the non-holo pile — the ONLY thing added is the moving
    white diagonal stripes below. No constant wash/overlay, so the rarity colour
-   reads true between the stripes. */
+   reads true between the stripes. Horizontal cursor position shifts the repeat
+   phase; the pattern always tiles so stripes stay visible at every screen edge. */
 .stock-card__shine {
   position: absolute;
-  inset: -50% -90%;
+  inset: 0;
   background:
     repeating-linear-gradient(
       112deg,
@@ -84,7 +85,8 @@
       rgba(255, 255, 255, 0.75) 11px 12px,
       transparent 12px 22px
     );
-  transform: translateX(calc((var(--mx) - 0.5) * 220% + (var(--i) - 3) * 5px))
-    translateY(calc((var(--my) - 0.5) * 16%));
+  background-position:
+    calc((var(--mx, 0.5) - 0.5) * 56px + (var(--i, 0) - 3) * 3px) 0,
+    calc((var(--mx, 0.5) - 0.5) * 44px + (var(--i, 0) - 3) * 3px) 0;
   pointer-events: none;
 }

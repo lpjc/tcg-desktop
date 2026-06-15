@@ -2,13 +2,14 @@ import type { CollectionEntry } from '../../game/state/types';
 import { CardPocket, type PocketCard } from './CardPocket';
 import './BinderPage.css';
 
-/** Cards shown per binder page (5 across × 2 down) — chunky, low-density. */
-export const PAGE_SIZE = 10;
+/** Cards per binder page (5 across × 3 down). Two pages = a 30-card set spread. */
+export const PAGE_SIZE = 15;
 
 /**
- * One spread of the binder: a fixed grid of card pockets for the current page of
- * the current set. The screen owns which set/page is showing and hands this a
- * slice of cards; discovery updates only flip pocket state (no rebuild/flicker).
+ * One leaf of the open binder: a fixed 5×3 grid of card pockets for one page of a
+ * set. The book shows two of these side by side (a spread); the FlipBook reparents
+ * these page elements during a page turn, so each keeps its own pockets. Discovery
+ * updates only flip pocket state (no rebuild/flicker).
  */
 export class BinderPage {
   readonly el: HTMLDivElement;

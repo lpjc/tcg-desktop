@@ -1,17 +1,22 @@
-/* Positioning is owned by #bottom-hud (see BottomHud.css); the pill is a flex child. */
+/* Chunky pixel token — flat fill, hard bevel, dark outline (matches stock cards). */
 #money-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 12px;
+  gap: 4px;
+  height: 22px;
+  padding: 0 6px 0 4px;
+  box-sizing: border-box;
   font-family: var(--game-font);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 11px;
+  line-height: 1;
   color: #3a2a10;
-  background: linear-gradient(#ffe08a, #f2b341);
-  border: 2px solid #9a6a10;
-  border-radius: 999px;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  background: #f2c44d;
+  box-shadow:
+    inset 2px 2px 0 0 #ffe08a,
+    inset -2px -2px 0 0 #c89428,
+    0 0 0 2px #0e1219;
+  image-rendering: pixelated;
   user-select: none;
 }
 
@@ -19,32 +24,37 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff4cf;
-  border: 2px solid #9a6a10;
-  font-size: 11px;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  font-size: 9px;
   line-height: 1;
+  color: #3a2a10;
+  background: #ffe08a;
+  box-shadow:
+    inset 1px 1px 0 0 #fff4cf,
+    inset -1px -1px 0 0 #c89428,
+    0 0 0 1px #0e1219;
 }
 
 .money-pill__amount {
   min-width: 1ch;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.5px;
+  padding-top: 1px;
 }
 
 .money-pill--pulse {
-  animation: money-pill-pop 260ms ease-out;
+  animation: money-pill-pop 180ms steps(3);
 }
 
 @keyframes money-pill-pop {
   0% {
-    transform: scale(1);
+    transform: translateY(0);
   }
-  45% {
-    transform: scale(1.14);
+  50% {
+    transform: translateY(-2px);
   }
   100% {
-    transform: scale(1);
+    transform: translateY(0);
   }
 }

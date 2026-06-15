@@ -2,7 +2,7 @@ import { gameState } from '../game/state/GameState';
 import './MoneyPill.css';
 
 /**
- * Always-visible bank balance, bottom-centre over the band (the chunky "money
+ * Always-visible bank balance, just above the world band (the chunky "money
  * pill" from the inspirational references). Pulses when the balance rises.
  */
 export class MoneyPill {

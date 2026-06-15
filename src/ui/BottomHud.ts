@@ -3,7 +3,7 @@ import { StockBar } from './StockBar';
 import './BottomHud.css';
 
 /**
- * The persistent bottom-centre resource row: the money pill next to the stock
+ * The persistent resource row just above the world band (bottom-left): the money
  * bar. Both are display-only currencies, so the row is click-through.
  */
 export class BottomHud {

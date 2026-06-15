@@ -150,57 +150,49 @@
   background: linear-gradient(transparent, var(--r-deep) 30%);
 }
 
-/* ---- Holo foil (cursor-reactive) ----------------------------------------- */
-/* Hidden unless the card is a discovered holo. The sheen + rainbow shift with
-   the cursor (--mx/--my fed from the overlay root), the praised "shiny" feel. */
+/* ---- Holo sheen (cursor-reactive) ---------------------------------------- */
+/* Same idea as the mini stock-card tokens: moving white diagonal stripes only —
+   no rainbow foil (that read as "everything's rare/blue"). Two gradients at
+   slightly different angles keep it from looking mechanically symmetric, and the
+   sheen tracks the cursor via --mx/--my (fed from the binder root). The holo card
+   is otherwise the normal discovered card, so the monster reads true. */
 .pocket__holo {
   position: absolute;
-  inset: 0;
+  /* Oversized so the cursor-driven translate never reveals an edge. */
+  inset: -50% -90%;
   opacity: 0;
   pointer-events: none;
-  /* Overlay tints the light art window with rainbow without erasing the monster
-     (color-dodge blew it out). Streaks + rainbow shift with the cursor. */
-  mix-blend-mode: overlay;
   background-image:
     repeating-linear-gradient(
-      115deg,
+      112deg,
       transparent 0 6px,
-      rgba(255, 255, 255, 0.6) 6px 8px,
-      transparent 8px 17px
+      rgba(255, 255, 255, 0.45) 6px 7px,
+      rgba(255, 255, 255, 0.75) 7px 8px,
+      transparent 8px 15px
     ),
-    linear-gradient(
-      115deg,
-      #ff5d8f 0%,
-      #ffd36e 18%,
-      #6effc0 38%,
-      #58c8ff 58%,
-      #c08bff 78%,
-      #ff5d8f 100%
+    repeating-linear-gradient(
+      97deg,
+      transparent 0 11px,
+      rgba(255, 255, 255, 0.4) 11px 12px,
+      transparent 12px 26px
     );
-  background-size:
-    220% 220%,
-    260% 260%;
-  background-position:
-    calc(var(--mx, 0.5) * 180%) calc(var(--my, 0.5) * 180%),
-    calc((1 - var(--mx, 0.5)) * 160%) calc((1 - var(--my, 0.5)) * 160%);
+  transform: translateX(calc((var(--mx, 0.5) - 0.5) * 200% + (var(--i, 7) - 7) * 6px))
+    translateY(calc((var(--my, 0.5) - 0.5) * 18%));
   transition: opacity 120ms steps(3);
 }
 
 .pocket--holo .pocket__holo {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-/* Holo cards get a richer, mid-tone foil window (instead of the flat light one)
-   so the rainbow reads vividly while the vivid monster still pops — a holo
-   should feel special at a glance. Specificity beats the discovered rule. */
+/* A faint extra rim so a holo still reads as special at a glance. */
 .pocket.pocket--holo .pocket__inner {
-  background: radial-gradient(82% 62% at 50% 36%, #6b7a96 0%, #3b465e 55%, #232b3d 100%);
   box-shadow:
     inset 2px 2px 0 0 var(--r-hi),
     inset -2px -2px 0 0 var(--r-edge),
     inset 0 0 0 3px var(--r-base),
     0 0 0 2px #0b0e14,
-    0 0 11px 0 var(--r-glow);
+    0 0 9px 0 var(--r-glow);
 }
 
 /* ---- Hover ---------------------------------------------------------------- */

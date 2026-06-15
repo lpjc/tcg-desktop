@@ -1,8 +1,8 @@
 #bottom-hud {
   position: fixed;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Just above the world band (BAND_HEIGHT 96 × ZOOM 2 = 192px). */
+  bottom: 200px;
+  left: 8px;
   display: flex;
   align-items: center;
   gap: 8px;

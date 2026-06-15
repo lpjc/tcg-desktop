@@ -45,6 +45,8 @@ export class CardPocket {
     this.el.style.setProperty('--r-deep', colors.deep);
     // Stagger the idle bob so creatures don't all breathe in unison.
     this.el.style.setProperty('--bob-delay', `${(index % 5) * 0.4 + (index % 2) * 0.2}s`);
+    // Per-card offset so holo sheens don't all align (less mechanical).
+    this.el.style.setProperty('--i', String(card.number));
 
     const inner = document.createElement('span');
     inner.className = 'pocket__inner';
