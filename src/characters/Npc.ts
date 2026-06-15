@@ -39,12 +39,14 @@ const DOOR_SAMPLES = 7;
 /** A buyer roams this many legs around the floor before heading to the booth. */
 const ERRAND_MIN_WANDER_LEGS = 2;
 const ERRAND_MAX_WANDER_LEGS = 12;
-/** Legs to stroll after buying, before leaving. */
-const ERRAND_POST_WANDER_MIN = 2;
-const ERRAND_POST_WANDER_MAX = 6;
 /** Once at the booth, stand and "look" before buying. */
 const ERRAND_BROWSE_MIN_MS = 2000;
 const ERRAND_BROWSE_MAX_MS = 8000;
+/**
+ * Fallback stand time after a booth visit when the errand doesn't specify one
+ * (e.g. the sale fell through).
+ */
+const ERRAND_POST_BUY_DEFAULT_MS = 500;
 /** Chance a wander leg targets decor instead of a random tile. */
 const FURNITURE_VISIT_CHANCE = 0.42;
 /** How long an NPC lingers in front of a piece of furniture. */
@@ -55,10 +57,13 @@ const FURNITURE_LOOK_MAX_MS = 4500;
  * A one-off destination for an NPC: walk here, run `onArrive`, then leave. Used
  * for convention buyers (walk to the booth → purchase + emote → walk away)
  * instead of the default aimless wandering.
+ *
+ * `onArrive` may return how long (ms) the buyer should stand before walking off;
+ * when omitted a short default is used.
  */
 export interface NpcErrand {
   target: { x: number; y: number };
-  onArrive: (npc: Npc) => void | Promise<void>;
+  onArrive: (npc: Npc) => number | void;
 }
 
 /**
@@ -121,8 +126,6 @@ export class Npc extends Phaser.GameObjects.Sprite {
   private errandDone = false;
   /** Random legs a buyer roams before heading to the booth (0 for non-buyers). */
   private errandWanderLegs: number;
-  /** Legs after buying, before exit (0 until purchase completes). */
-  private errandPostWanderLegs = 0;
   /** Optional hook: stroll to a decor spot instead of a random tile. */
   private readonly furnitureSpotPicker: (() => { x: number; y: number } | null) | null;
 
@@ -259,13 +262,8 @@ export class Npc extends Phaser.GameObjects.Sprite {
       });
       return;
     }
+    // Once the purchase is done the buyer heads straight out (no post-wander).
     if (this.errand && this.errandDone) {
-      if (this.errandPostWanderLegs > 0) {
-        this.wanderLeg(() => {
-          this.errandPostWanderLegs -= 1;
-        });
-        return;
-      }
       this.leave();
       return;
     }
@@ -339,19 +337,34 @@ export class Npc extends Phaser.GameObjects.Sprite {
       const browseMs = Phaser.Math.Between(ERRAND_BROWSE_MIN_MS, ERRAND_BROWSE_MAX_MS);
       this.pauseEvent = this.scene.time.delayedCall(browseMs, () => {
         if (!this.scene || this.leaving) return;
-        void this.runErrandPurchase(errand);
+        // Commit the sale + kick off its animation; `onArrive` returns how long
+        // to stand before walking off (tuned to the purchase beat length).
+        const leaveMs = errand.onArrive(this) ?? ERRAND_POST_BUY_DEFAULT_MS;
+        this.pauseEvent = this.scene.time.delayedCall(leaveMs, () => this.startNextLeg());
       });
     });
   }
 
-  private async runErrandPurchase(errand: NpcErrand): Promise<void> {
-    await Promise.resolve(errand.onArrive(this));
-    if (!this.scene || this.leaving) return;
-    this.errandPostWanderLegs = Phaser.Math.Between(
-      ERRAND_POST_WANDER_MIN,
-      ERRAND_POST_WANDER_MAX,
-    );
-    this.startNextLeg();
+  /**
+   * Brief highlight + hop when this buyer completes a purchase. Purely cosmetic;
+   * the hop yoyos back to the standing position and clears the tint, and is
+   * skipped once the buyer has started leaving.
+   */
+  pop(): void {
+    if (this.leaving || !this.scene) return;
+    const baseY = this.y;
+    this.setTint(0xfff0b8);
+    this.scene.tweens.add({
+      targets: this,
+      y: baseY - 5,
+      duration: 120,
+      ease: 'Quad.easeOut',
+      yoyo: true,
+      onComplete: () => {
+        this.clearTint();
+        this.setY(baseY);
+      },
+    });
   }
 
   private pickReachableTarget(): { path: Array<{ x: number; y: number }>; atFurniture: boolean } | null {

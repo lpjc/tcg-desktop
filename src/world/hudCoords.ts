@@ -1,20 +1,16 @@
 import Phaser from 'phaser';
 import type { FlyPoint } from '../ui/flyFx';
 
-/** Convert a world-space point on the Phaser band to viewport pixels. */
+/**
+ * Convert a world-space point on the Phaser band to viewport pixels, so DOM HUD
+ * flies (coins to the money pill, a sold card onto a buyer) can target it.
+ *
+ * The canvas fills the window at the origin, so screen = (world - cameraView) ×
+ * zoom. We read `cam.worldView` (which already accounts for scroll + zoom)
+ * rather than raw scroll, per the camera notes in ARCHITECTURE §6.1.
+ */
 export function worldToScreen(scene: Phaser.Scene, worldX: number, worldY: number): FlyPoint {
   const cam = scene.cameras.main;
-  const out = new Phaser.Math.Vector2();
-  cam.getScreenPoint(worldX, worldY, out);
-  return { x: out.x, y: out.y };
-}
-
-/** Screen point where coins should leave a buyer's hands. */
-export function buyerCoinOrigin(scene: Phaser.Scene, worldX: number, worldY: number): FlyPoint {
-  return worldToScreen(scene, worldX, worldY - 18);
-}
-
-/** Screen point where a sold card should land on the buyer. */
-export function buyerCardTarget(scene: Phaser.Scene, worldX: number, worldY: number): FlyPoint {
-  return worldToScreen(scene, worldX, worldY - 12);
+  const view = cam.worldView;
+  return { x: (worldX - view.x) * cam.zoom, y: (worldY - view.y) * cam.zoom };
 }

@@ -52,10 +52,9 @@ export class BoothCashPile {
     this.refresh();
   }
 
-  /** World position of the coin pile centre (for collect fly animations). */
+  /** World position of the coin pile centre (origin for the collect coin fly). */
   getWorldAnchor(): { x: number; y: number } | null {
-    if (!this.anchor) return null;
-    return { x: this.anchor.x, y: this.anchor.y };
+    return this.anchor ? { x: this.anchor.x, y: this.anchor.y } : null;
   }
 
   private refresh(): void {

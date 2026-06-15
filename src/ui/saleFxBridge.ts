@@ -1,32 +1,52 @@
 import type { PileId } from '../game/cards/piles';
 import type { FlyPoint } from './flyFx';
 
-interface SaleFxHandlers {
-  suppressStockFly: (pile: PileId) => void;
-  flyStockCard: (pile: PileId, target: FlyPoint) => Promise<void>;
-  moneyPillCenter: () => FlyPoint | null;
-  showMoneyGain: (amount: number) => void;
+/**
+ * A thin bridge between the world (Phaser) sale code and the DOM HUD singletons
+ * (the stock bar + money pill). The world never imports those widgets directly;
+ * it calls these functions and the HUD registers its handlers at construction.
+ *
+ * Everything here is COSMETIC. The economy is committed synchronously by
+ * `BoothEconomy`/`GameState` before any of this runs, so a missing handler or a
+ * dropped animation can never lose or double a sale.
+ */
+interface StockFx {
+  /** Send one card from a pile's stock token to a screen point (the buyer). */
+  flyCard: (pile: PileId, target: FlyPoint, durationMs?: number) => void;
 }
 
-let handlers: SaleFxHandlers | null = null;
-
-export function registerSaleFx(next: SaleFxHandlers): void {
-  handlers = next;
+interface MoneyFx {
+  /** Screen centre of the money pill — where coins should land. */
+  center: () => FlyPoint | null;
+  /** Hold the next banked increase back so it can be revealed on coin arrival. */
+  expectGain: () => void;
+  /** Reveal a held increase now (coins landed) — ticks the number + "+€X". */
+  revealGain: () => void;
 }
 
-export function suppressStockFly(pile: PileId): void {
-  handlers?.suppressStockFly(pile);
+let stock: StockFx | null = null;
+let money: MoneyFx | null = null;
+
+export function registerStockFx(handlers: StockFx): void {
+  stock = handlers;
 }
 
-export function flyStockCardTo(pile: PileId, target: FlyPoint): Promise<void> {
-  if (!handlers) return Promise.resolve();
-  return handlers.flyStockCard(pile, target);
+export function registerMoneyFx(handlers: MoneyFx): void {
+  money = handlers;
+}
+
+export function flyStockCard(pile: PileId, target: FlyPoint, durationMs?: number): void {
+  stock?.flyCard(pile, target, durationMs);
 }
 
 export function moneyPillCenter(): FlyPoint | null {
-  return handlers?.moneyPillCenter() ?? null;
+  return money?.center() ?? null;
 }
 
-export function showMoneyGain(amount: number): void {
-  handlers?.showMoneyGain(amount);
+export function expectMoneyGain(): void {
+  money?.expectGain();
+}
+
+export function revealMoneyGain(): void {
+  money?.revealGain();
 }

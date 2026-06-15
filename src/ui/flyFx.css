@@ -1,17 +1,6 @@
-.sale-fly-coin {
+/* Cosmetic elements flown across the screen by flyFx.ts (coins, sold cards).
+   Positioning + transforms are applied inline by `flyElement`; this only owns
+   the pixel-art look so flying coins match the in-world coin sprites. */
+.fly-coin {
   image-rendering: pixelated;
-  pointer-events: none;
-}
-
-.sale-fly-card {
-  position: relative;
-  width: 16px;
-  height: 22px;
-  background: var(--card-color);
-  box-shadow:
-    inset 2px 2px 0 0 var(--card-hi),
-    inset -2px -2px 0 0 var(--card-edge),
-    0 0 0 2px #0e1219;
-  image-rendering: pixelated;
-  pointer-events: none;
 }

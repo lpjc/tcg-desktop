@@ -42,7 +42,8 @@ import { CameraDirector } from './CameraDirector';
 import { BoothEconomy } from '../game/economy/BoothEconomy';
 import { gameState } from '../game/state/GameState';
 import { BoothCashPile } from './BoothCashPile';
-import { playBoothCollect, playPurchaseSale } from './purchaseFx';
+import { playBoothCollect, playPurchaseSale, purchaseLeaveDelayMs } from './purchaseFx';
+import { expectMoneyGain, revealMoneyGain } from '../ui/saleFxBridge';
 import {
   computeWorldLayout,
   frameForX,
@@ -261,23 +262,24 @@ export class WorldScene extends Phaser.Scene {
     );
     // Jitter so several buyers don't stack on the exact same spot.
     const target = { x: front.x + Phaser.Math.Between(-10, 10), y: front.y };
-    return {
-      target,
-      onArrive: (npc) => this.onBuyerAtBooth(npc),
-    };
+    return { target, onArrive: (npc) => this.onBuyerAtBooth(npc) };
   }
 
-  /** A guest reached the booth: run the full purchase animation, then let them leave. */
-  private onBuyerAtBooth(npc: Npc): Promise<void> {
-    const sale = this.boothEconomy.resolveSale();
-    if (!sale) return Promise.resolve();
+  /**
+   * A guest reached the booth: commit the sale atomically, then play its
+   * (purely cosmetic) animation. When manning the booth the money banks live, so
+   * we ask the pill to hold the tick until the flying coins land on it.
+   */
+  private onBuyerAtBooth(npc: Npc): number {
+    if (this.playerAtBooth) expectMoneyGain();
 
-    return playPurchaseSale(this, npc, sale, {
-      playerAtBooth: this.playerAtBooth,
-      commitStock: (pile) => this.boothEconomy.commitStock(pile),
-      commitPayment: (result, directToBank) =>
-        this.boothEconomy.commitPayment(result, directToBank),
-    });
+    const sale = this.boothEconomy.onGuestArrived(this.playerAtBooth);
+    if (!sale) return 400;
+
+    // Reputation is banked in state; surfacing it is a
+    // TODO(awaiting-stat-system): show "+Rep" when a reputation HUD exists.
+    playPurchaseSale(this, npc, sale, this.playerAtBooth);
+    return purchaseLeaveDelayMs(sale, this.playerAtBooth);
   }
 
   /**
@@ -304,20 +306,24 @@ export class WorldScene extends Phaser.Scene {
     return null;
   }
 
-  /** Flush the booth cash box into the bank once table coins reach the money pill. */
+  /**
+   * Flush the booth cash box into the bank, then fly the table coins up into the
+   * money pill (which reveals the banked total as they land). The collect is
+   * committed synchronously first; the fly is purely cosmetic.
+   */
   private collectBooth(): void {
     const box = gameState.snapshot().cashBox;
     if (box.sales <= 0) return;
 
     const anchor = this.boothCashPile.getWorldAnchor();
+    expectMoneyGain();
+    this.boothEconomy.collect();
+    // Reputation is collected into state; TODO(awaiting-stat-system): surface it.
     if (!anchor) {
-      this.boothEconomy.collect();
+      revealMoneyGain();
       return;
     }
-
-    void playBoothCollect(this, anchor, box.money, () => {
-      this.boothEconomy.collect();
-    });
+    playBoothCollect(this, anchor, box.money);
   }
 
   /** Re-anchor the cash-coin pile onto the current booth table surface. */

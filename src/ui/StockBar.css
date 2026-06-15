@@ -10,10 +10,10 @@
   --my: 0.5;
 }
 
-/* A copy of a pile's card that flies out + fades when that pile makes a sale. */
-.stock-fly {
-  position: absolute;
-  bottom: 0;
+/* A copy of a pile's card that flies from the stock bar into the buying NPC on a
+   sale. Positioning/transform are applied inline by flyFx `flyElement`; this only
+   owns the chunky token look so it matches the pile tokens it launches from. */
+.stock-fly-card {
   width: 16px;
   height: 22px;
   background: var(--card-color);

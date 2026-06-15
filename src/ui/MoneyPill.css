@@ -48,22 +48,6 @@
   animation: money-pill-pop 180ms steps(3);
 }
 
-.money-pill__gain {
-  position: absolute;
-  left: 50%;
-  top: -2px;
-  transform: translateX(-50%);
-  font: 9px/1 var(--game-font);
-  font-weight: 700;
-  color: #ffe08a;
-  text-shadow:
-    0 0 0 2px #3a2a10,
-    1px 1px 0 #3a2a10,
-    -1px 1px 0 #3a2a10;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
 @keyframes money-pill-pop {
   0% {
     transform: translateY(0);
@@ -74,4 +58,25 @@
   100% {
     transform: translateY(0);
   }
+}
+
+/* "+€X" callout that rises off the pill the moment a sale's coins land. */
+.money-gain {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  margin-bottom: 2px;
+  transform: translateX(-50%);
+  font-family: var(--game-font);
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+  color: #ffe08a;
+  text-shadow:
+    1px 1px 0 #3a2a10,
+    -1px 1px 0 #3a2a10,
+    1px -1px 0 #3a2a10,
+    -1px -1px 0 #3a2a10;
+  pointer-events: none;
 }

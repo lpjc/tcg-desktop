@@ -47,13 +47,12 @@ export function emoteForPile(pile: PileId): EmoteKey {
   }
 }
 
-/** Pop a short-lived emote above (x, y): scale-in, drift up, fade out. */
-export function showEmote(scene: Phaser.Scene, x: number, y: number, key: EmoteKey): void {
-  void showEmoteHeld(scene, x, y, key, 850);
-}
+export const EMOTE_POP_MS = 180;
+export const EMOTE_FADE_MS = 320;
 
 /**
- * Purchase emote: scale in, hold for `holdMs`, then fade out. Resolves when gone.
+ * Pop an emote above (x, y): scale in, hold for `holdMs`, then drift up and fade.
+ * Resolves once it has fully gone, so a purchase beat can sequence off it.
  */
 export function showEmoteHeld(
   scene: Phaser.Scene,
@@ -78,7 +77,7 @@ export function showEmoteHeld(
       scaleY,
       alpha: 1,
       y: y - 4,
-      duration: 180,
+      duration: EMOTE_POP_MS,
       ease: 'Back.easeOut',
     });
 
@@ -86,8 +85,8 @@ export function showEmoteHeld(
       scene.tweens.add({
         targets: sprite,
         alpha: 0,
-        y: y - 10,
-        duration: 180,
+        y: y - 12,
+        duration: EMOTE_FADE_MS,
         ease: 'Quad.easeIn',
         onComplete: () => {
           sprite.destroy();

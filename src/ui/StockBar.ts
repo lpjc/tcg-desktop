@@ -1,8 +1,8 @@
 import { gameState } from '../game/state/GameState';
 import { PILES, type PileId } from '../game/cards/piles';
 import { rarityTokenColors } from '../game/cards/rarityColors';
-import { animateFly, elementCenter, type FlyPoint } from './flyFx';
-import './flyFx.css';
+import { flyElement, flyHost, type FlyPoint } from './flyFx';
+import { registerStockFx } from './saleFxBridge';
 import './StockBar.css';
 
 /**
@@ -12,6 +12,8 @@ import './StockBar.css';
  * the cursor across the screen.
  *
  * Display-only (no pointer events) — stock is a resource readout, not a control.
+ * Counts always mirror committed game state; when a booth sale happens the world
+ * calls `flyCard` (via `saleFxBridge`) to send a card token down into the buyer.
  */
 const DISPLAY_ORDER: readonly PileId[] = [
   'common',
@@ -30,10 +32,6 @@ export class StockBar {
   private readonly el: HTMLDivElement;
   private readonly countEls = new Map<PileId, HTMLElement>();
   private readonly cardEls = new Map<PileId, HTMLElement>();
-  /** Last seen counts, so we can detect which pile a sale came from. */
-  private prevCounts = new Map<PileId, number>();
-  /** Piles whose fly-out is handled by the purchase animation instead. */
-  private suppressedFly = new Set<PileId>();
 
   constructor(containerId: string) {
     const host = document.getElementById(containerId);
@@ -46,6 +44,7 @@ export class StockBar {
     host.appendChild(this.el);
 
     this.trackPointerShine();
+    registerStockFx({ flyCard: (pile, target, durationMs) => this.flyCardTo(pile, target, durationMs) });
     gameState.subscribe((data) => this.render(data.stock));
   }
 
@@ -80,29 +79,7 @@ export class StockBar {
     return card;
   }
 
-  /** Skip the default fly-out — the purchase animation owns this pile's card. */
-  suppressSaleFly(pile: PileId): void {
-    this.suppressedFly.add(pile);
-  }
-
-  /** Fly a stock token from the HUD into a screen-space target (the buyer). */
-  flyCardToTarget(pile: PileId, target: FlyPoint): Promise<void> {
-    const token = this.cardEls.get(pile);
-    if (!token) return Promise.resolve();
-
-    const meta = PILES[pile];
-    const colors = rarityTokenColors(meta.rarity);
-    const from = elementCenter(token);
-
-    const fly = document.createElement('div');
-    fly.className = 'sale-fly-card';
-    fly.style.setProperty('--card-color', colors.base);
-    fly.style.setProperty('--card-hi', colors.hi);
-    fly.style.setProperty('--card-edge', colors.edge);
-    document.getElementById('editor-ui')?.appendChild(fly);
-
-    return animateFly(fly, from, target, { duration: 680, endScale: 0.5 });
-  }
+  /** Feed the cursor's normalised position to CSS so holo sheens shift in real time. */
   private trackPointerShine(): void {
     const onMove = (event: PointerEvent | MouseEvent) => {
       const mx = event.clientX / Math.max(1, window.innerWidth);
@@ -117,7 +94,6 @@ export class StockBar {
   private render(stock: Record<PileId, number>): void {
     for (const pile of DISPLAY_ORDER) {
       const count = stock[pile] ?? 0;
-      const prev = this.prevCounts.get(pile);
       const countEl = this.countEls.get(pile);
       const cardEl = this.cardEls.get(pile);
       if (countEl) countEl.textContent = abbreviate(count);
@@ -125,43 +101,29 @@ export class StockBar {
         cardEl.classList.toggle('stock-card--empty', count <= 0);
         cardEl.title = `${PILES[pile].label}: ${count}`;
       }
-      if (prev !== undefined && count < prev) {
-        if (this.suppressedFly.has(pile)) {
-          this.suppressedFly.delete(pile);
-        } else {
-          this.flyOutCard(pile);
-        }
-      }
-      this.prevCounts.set(pile, count);
     }
   }
 
-  /** Spawn a short-lived card copy that lifts out of the pile token and fades. */
-  private flyOutCard(pile: PileId): void {
+  /**
+   * Send one card from a pile's token to a screen point (the buyer at the booth).
+   * Purely cosmetic — the stock count was already decremented in game state, so a
+   * missing token or dropped animation only affects visuals, never the economy.
+   */
+  private flyCardTo(pile: PileId, target: FlyPoint, durationMs = 560): void {
     const token = this.cardEls.get(pile);
     if (!token) return;
-    const meta = PILES[pile];
-    const colors = rarityTokenColors(meta.rarity);
+    const rect = token.getBoundingClientRect();
+    const from: FlyPoint = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
 
-    const fly = document.createElement('div');
-    fly.className = 'stock-fly';
-    fly.style.left = `${token.offsetLeft}px`;
-    fly.style.setProperty('--card-color', colors.base);
-    fly.style.setProperty('--card-hi', colors.hi);
-    fly.style.setProperty('--card-edge', colors.edge);
-    this.el.appendChild(fly);
+    const colors = rarityTokenColors(PILES[pile].rarity);
+    const card = document.createElement('div');
+    card.className = 'stock-fly-card';
+    card.style.setProperty('--card-color', colors.base);
+    card.style.setProperty('--card-hi', colors.hi);
+    card.style.setProperty('--card-edge', colors.edge);
+    flyHost().appendChild(card);
 
-    const drift = (Math.random() - 0.5) * 10;
-    fly
-      .animate(
-        [
-          { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
-          { transform: `translate(${drift}px, -22px) rotate(${drift}deg)`, opacity: 0 },
-        ],
-        { duration: 650, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' },
-      )
-      .finished.then(() => fly.remove())
-      .catch(() => fly.remove());
+    void flyElement(card, from, target, { duration: durationMs, endScale: 0.7 });
   }
 }
 
