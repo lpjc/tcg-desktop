@@ -7,7 +7,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(12, 14, 20, 0.55);
   color: #e8ecf4;
-  font-family: system-ui, sans-serif;
+  font-family: var(--game-font);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;

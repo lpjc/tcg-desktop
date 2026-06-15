@@ -18,6 +18,7 @@ const REPUTATION_PRICE_BONUS = 0.01;
 export interface SaleResult {
   pile: PileId;
   price: number;
+  reputation: number;
   profile: VisitorProfile;
 }
 
@@ -30,8 +31,13 @@ export interface SaleResult {
  * the "convention runs itself" idle loop.
  */
 export class BoothEconomy {
-  /** A guest arrived: attempt a purchase. Returns the sale, or null if nothing bought. */
-  onGuestArrived(): SaleResult | null {
+  /**
+   * A guest arrived: attempt a purchase. Returns the sale, or null if nothing
+   * bought. When `directToBank` (the player is standing at the booth) the money
+   * + reputation go straight to the bank; otherwise they accumulate in the cash
+   * box as a coin pile to collect later.
+   */
+  onGuestArrived(directToBank = false): SaleResult | null {
     const data = gameState.snapshot();
     const profile = pickVisitorProfile(data.skills.prestige);
     const pile = this.choosePile(profile, data.stock);
@@ -40,8 +46,13 @@ export class BoothEconomy {
 
     const meta = PILES[pile];
     const price = Math.round(meta.worth * (1 + data.skills.reputation * REPUTATION_PRICE_BONUS));
-    gameState.recordSale(price, REP_GAIN[meta.rarity]);
-    return { pile, price, profile };
+    const reputation = REP_GAIN[meta.rarity];
+    if (directToBank) {
+      gameState.sellDirect(price, reputation);
+    } else {
+      gameState.recordSale(price, reputation);
+    }
+    return { pile, price, reputation, profile };
   }
 
   /** Flush the booth cash box into the bank; returns the collected summary. */

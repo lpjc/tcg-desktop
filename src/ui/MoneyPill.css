@@ -1,13 +1,10 @@
+/* Positioning is owned by #bottom-hud (see BottomHud.css); the pill is a flex child. */
 #money-pill {
-  position: fixed;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 3px 12px;
-  font-family: 'Trebuchet MS', system-ui, sans-serif;
+  font-family: var(--game-font);
   font-weight: 700;
   font-size: 14px;
   color: #3a2a10;
@@ -15,9 +12,7 @@
   border: 2px solid #9a6a10;
   border-radius: 999px;
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
-  pointer-events: none;
   user-select: none;
-  z-index: 50;
 }
 
 .money-pill__coin {
@@ -44,12 +39,12 @@
 
 @keyframes money-pill-pop {
   0% {
-    transform: translateX(-50%) scale(1);
+    transform: scale(1);
   }
   45% {
-    transform: translateX(-50%) scale(1.14);
+    transform: scale(1.14);
   }
   100% {
-    transform: translateX(-50%) scale(1);
+    transform: scale(1);
   }
 }

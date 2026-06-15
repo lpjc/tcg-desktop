@@ -1,0 +1,18 @@
+/* Global UI theme: the game's pixel font + shared tokens. Imported once in main.ts. */
+@font-face {
+  font-family: 'VCR OSD Mono';
+  src: url('/fonts/vcr_osd_mono/VCR_OSD_MONO_1.001.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  /* One source of truth for the UI typeface — every panel uses this. */
+  --game-font: 'VCR OSD Mono', monospace;
+}
+
+#editor-ui,
+#editor-ui * {
+  font-family: var(--game-font);
+}

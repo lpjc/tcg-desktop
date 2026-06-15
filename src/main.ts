@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
+import './ui/theme.css';
 import { DevToggleButton } from './ui/DevToggleButton';
 import { DevGamePanel } from './ui/DevGamePanel';
-import { MoneyPill } from './ui/MoneyPill';
+import { BottomHud } from './ui/BottomHud';
 import { MonitorSwitchButton } from './ui/MonitorSwitchButton';
 import { registerPlaceholderSet } from './game/cards/placeholderSet';
 import { gameState } from './game/state/GameState';
@@ -39,12 +40,15 @@ function resizeCanvas(): void {
 
 window.addEventListener('resize', resizeCanvas);
 
+// Start loading the pixel font now so Phaser canvas text uses it, not a fallback.
+void document.fonts?.load('16px "VCR OSD Mono"');
+
 // Game state: register card data, then hydrate the save (async) before UI binds.
 registerPlaceholderSet();
 void gameState.load();
 
 new DevToggleButton('editor-ui');
-new MoneyPill('editor-ui');
+new BottomHud('editor-ui');
 new DevGamePanel('editor-ui');
 
 if (window.desktop) {

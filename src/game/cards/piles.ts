@@ -1,4 +1,5 @@
 import { rarityCanHolo, type Rarity } from './rarity';
+import { rarityColor } from './rarityColors';
 
 /**
  * The 7 stock "piles". Whenever the player gains cards they are abstracted to
@@ -31,18 +32,28 @@ export interface PileMeta {
   label: string;
   /** Base sell value in € (placeholder economy — see IMPLEMENTATION_PLAN §3.2). */
   worth: number;
-  /** Display tint for chunky pile tokens / glows. */
+  /** Display tint — always derived from `rarity` via `rarityColors.ts`. */
   color: number;
 }
 
+function pile(
+  id: PileId,
+  rarity: Rarity,
+  holo: boolean,
+  label: string,
+  worth: number,
+): PileMeta {
+  return { id, rarity, holo, label, worth, color: rarityColor(rarity) };
+}
+
 export const PILES: Record<PileId, PileMeta> = {
-  common: { id: 'common', rarity: 'common', holo: false, label: 'Common', worth: 1, color: 0x9aa6b2 },
-  rare: { id: 'rare', rarity: 'rare', holo: false, label: 'Rare', worth: 5, color: 0x4f9dde },
-  epic: { id: 'epic', rarity: 'epic', holo: false, label: 'Epic', worth: 25, color: 0xa463f2 },
-  chase: { id: 'chase', rarity: 'chase', holo: false, label: 'Chase', worth: 150, color: 0xf2b341 },
-  rareHolo: { id: 'rareHolo', rarity: 'rare', holo: true, label: 'Rare Holo', worth: 20, color: 0x6fd0ff },
-  epicHolo: { id: 'epicHolo', rarity: 'epic', holo: true, label: 'Epic Holo', worth: 100, color: 0xc89bff },
-  chaseHolo: { id: 'chaseHolo', rarity: 'chase', holo: true, label: 'Chase Holo', worth: 600, color: 0xffe08a },
+  common: pile('common', 'common', false, 'Common', 1),
+  rare: pile('rare', 'rare', false, 'Rare', 5),
+  epic: pile('epic', 'epic', false, 'Epic', 25),
+  chase: pile('chase', 'chase', false, 'Chase', 150),
+  rareHolo: pile('rareHolo', 'rare', true, 'Rare Holo', 20),
+  epicHolo: pile('epicHolo', 'epic', true, 'Epic Holo', 100),
+  chaseHolo: pile('chaseHolo', 'chase', true, 'Chase Holo', 600),
 };
 
 /** Map a rarity + holo flag to its stock pile (holo collapses to non-holo for common). */

@@ -153,7 +153,7 @@ export class AssetPalette {
         inset: 0;
         pointer-events: none;
         z-index: 1000;
-        font-family: system-ui, sans-serif;
+        font-family: var(--game-font, monospace);
       }
       #asset-palette {
         position: fixed;

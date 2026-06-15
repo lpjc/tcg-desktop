@@ -1,0 +1,90 @@
+/* No panel background — the chunky card tokens float on their own (game, not tool). */
+#stock-bar {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  user-select: none;
+  /* Cursor position (0..1), fed from JS; drives the holo sheens. */
+  --mx: 0.5;
+  --my: 0.5;
+}
+
+/* A copy of a pile's card that flies out + fades when that pile makes a sale. */
+.stock-fly {
+  position: absolute;
+  bottom: 0;
+  width: 16px;
+  height: 22px;
+  background: var(--card-color);
+  box-shadow:
+    inset 2px 2px 0 0 var(--card-hi),
+    inset -2px -2px 0 0 var(--card-edge),
+    0 0 0 2px #0e1219;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* A chunky pixel trading-card token for one stock pile: flat fill, hard bevel,
+   solid dark outline — no smooth gradients or rounded corners. */
+.stock-card {
+  position: relative;
+  width: 16px;
+  height: 22px;
+  overflow: hidden;
+  background: var(--card-color);
+  box-shadow:
+    inset 2px 2px 0 0 var(--card-hi),
+    inset -2px -2px 0 0 var(--card-edge),
+    0 0 0 2px #0e1219;
+  image-rendering: pixelated;
+  transition: opacity 120ms steps(2);
+}
+
+/* Gap before each new rarity tier (common | rare+holo | epic+holo | chase+holo). */
+.stock-card--group-start {
+  margin-left: 5px;
+}
+
+.stock-card__count {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  font: 9px/11px var(--game-font);
+  color: #fff;
+  background: #0e1219;
+  letter-spacing: 0.5px;
+}
+
+.stock-card--empty {
+  opacity: 0.28;
+}
+
+/* ---- Holo treatment (cursor-reactive) ------------------------------------ */
+/* Same base colour as the non-holo pile — the ONLY thing added is the moving
+   white diagonal stripes below. No constant wash/overlay, so the rarity colour
+   reads true between the stripes. */
+.stock-card__shine {
+  position: absolute;
+  inset: -50% -90%;
+  background:
+    repeating-linear-gradient(
+      112deg,
+      transparent 0 6px,
+      rgba(255, 255, 255, 0.35) 6px 7px,
+      rgba(255, 255, 255, 0.55) 7px 8px,
+      transparent 8px 14px
+    ),
+    repeating-linear-gradient(
+      112deg,
+      transparent 0 10px,
+      rgba(255, 255, 255, 0.5) 10px 11px,
+      rgba(255, 255, 255, 0.75) 11px 12px,
+      transparent 12px 22px
+    );
+  transform: translateX(calc((var(--mx) - 0.5) * 220% + (var(--i) - 3) * 5px))
+    translateY(calc((var(--my) - 0.5) * 16%));
+  pointer-events: none;
+}

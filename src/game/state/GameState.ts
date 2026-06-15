@@ -87,6 +87,16 @@ class GameState {
     this.changed();
   }
 
+  /**
+   * A sale made while the player is standing at the booth: money + reputation go
+   * straight to the bank/skills, bypassing the cash box ("sell directly to you").
+   */
+  sellDirect(money: number, reputation: number): void {
+    this.data.money += money;
+    this.data.skills.reputation += reputation;
+    this.changed();
+  }
+
   /** Move the cash box into the bank + skills, returning what was collected. */
   collectCashBox(): CashBox {
     const collected: CashBox = { ...this.data.cashBox };

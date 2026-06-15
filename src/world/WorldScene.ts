@@ -35,12 +35,13 @@ import {
   stationAnchorPoint,
 } from './obstacleField';
 import { emoteForPile, preloadEmotes, showEmote } from '../characters/emotes';
+import { preloadCoins } from './coins';
 import type { Npc, NpcErrand } from '../characters/Npc';
 import { isOverWorldSurface, isPlayerWalkSurface } from './worldSurface';
 import { CameraDirector } from './CameraDirector';
 import { BoothEconomy } from '../game/economy/BoothEconomy';
-import { BoothCashBubble } from './BoothCashBubble';
-import { playBoothPayout } from './boothFx';
+import { BoothCashPile } from './BoothCashPile';
+import { playBoothPayout, playLiveSale } from './boothFx';
 import {
   computeWorldLayout,
   frameForX,
@@ -80,7 +81,9 @@ export class WorldScene extends Phaser.Scene {
   private npcCrowd!: NpcCrowd;
   private guestCharge!: ConventionGuestChargeController;
   private boothEconomy!: BoothEconomy;
-  private boothCashBubble!: BoothCashBubble;
+  private boothCashPile!: BoothCashPile;
+  /** True while the player stands at their booth — sales then go straight to the bank. */
+  private playerAtBooth = false;
   private playerScene: SceneFrameId = 'convention';
   private cameraDirector!: CameraDirector;
   private placeMode!: PlaceMode;
@@ -97,6 +100,7 @@ export class WorldScene extends Phaser.Scene {
     preloadCatalogAssets(this);
     preloadCharacters(this);
     preloadEmotes(this);
+    preloadCoins(this);
   }
 
   create(): void {
@@ -116,7 +120,7 @@ export class WorldScene extends Phaser.Scene {
     this.npcCrowd = new NpcCrowd(this);
     this.npcCrowd.setConventionFurniturePicker(() => this.pickFurnitureBrowseSpot());
     this.boothEconomy = new BoothEconomy();
-    this.boothCashBubble = new BoothCashBubble(this);
+    this.boothCashPile = new BoothCashPile(this);
     this.guestCharge = new ConventionGuestChargeController(
       this,
       this.npcCrowd,
@@ -226,10 +230,16 @@ export class WorldScene extends Phaser.Scene {
     );
     if (!stand) return;
 
+    // Walking away from the booth: stop taking sales directly until we're back.
+    this.playerAtBooth = false;
     this.player.walkTo(stand.x, stand.y, () => {
       this.syncCurrentStation(station);
-      // Booth-layer stations are the player's booth: arriving collects sales.
-      if (station.layer === 'booth') this.collectBooth();
+      // Booth-layer stations are the player's booth: collect the waiting pile,
+      // then man the booth so further sales pay out live.
+      if (station.layer === 'booth') {
+        this.collectBooth();
+        this.playerAtBooth = true;
+      }
     });
   }
 
@@ -255,9 +265,13 @@ export class WorldScene extends Phaser.Scene {
 
   /** A guest reached the booth: make the sale and pop the rarity-cue emote. */
   private onBuyerAtBooth(npc: Npc): void {
-    const sale = this.boothEconomy.onGuestArrived();
+    const sale = this.boothEconomy.onGuestArrived(this.playerAtBooth);
     if (!sale) return;
     showEmote(this, npc.x, npc.y - 22, emoteForPile(sale.pile));
+    // Manning the booth: the sale paid straight to the bank — show it live.
+    if (this.playerAtBooth) {
+      playLiveSale(this, this.player.x, this.player.y - 30, sale.price, sale.reputation);
+    }
   }
 
   /**
@@ -291,12 +305,16 @@ export class WorldScene extends Phaser.Scene {
     playBoothPayout(this, this.player.x, this.player.y, collected);
   }
 
-  /** Re-anchor the pending-cash tag above the current booth station. */
+  /** Re-anchor the cash-coin pile onto the current booth table surface. */
   private refreshBoothAnchor(): void {
     const booth = this.placeMode
       .getAllPlaceables()
       .find((p) => p.isStation && p.layer === 'booth');
-    if (booth) this.boothCashBubble.setAnchor(booth.x, booth.y - booth.displayHeight - 2);
+    // Sit the coins on the table top (just below the sprite's upper edge), and
+    // depth-sort them from the booth's foot so they render on top of the table.
+    if (booth) {
+      this.boothCashPile.setAnchor(booth.x, booth.y - booth.displayHeight + 6, booth.y);
+    }
   }
 
   /** Layout furniture can cover the default booth spawn — snap onto a free tile. */

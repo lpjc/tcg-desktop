@@ -12,7 +12,7 @@ A **set** of cards is like 30 cards with a common theme, and some common, rare, 
 
 **Stock:** Whenever you gain cards, they are added to your "stock" by rarity and holo/non-holo. So we really don't care about what cards you open except when putting the collection — collections will care about the actual card and rarity, but when the booth is selling your cards, we just treat all cards of similar rarity and holo the same. Meaning we have 7 total "piles" (uncommon can't be holo) with different worth, and NPCs will have likelihood of buying of certain piles. So normal NPCs will not buy legendary cards for example, and only low chance of holo for example — but then some NPCs that can spawn will have high chance of buying your legendary cards. That way the NPC spawn also becomes exciting: "oh look, I get the whale-dude, perfect!"
 
-(idea for UI detail: each "pile" is symbolixed by a grey/blue/purple/orange card, and the holo piels has like a "shine" line thorugh, that moves in raletion to the mouse position in-realtime on the screen)
+
 
 ---
 
