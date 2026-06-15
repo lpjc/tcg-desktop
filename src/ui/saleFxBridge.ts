@@ -11,8 +11,8 @@ import type { FlyPoint } from './flyFx';
  * dropped animation can never lose or double a sale.
  */
 interface StockFx {
-  /** Send one card from a pile's stock token to a screen point (the buyer). */
-  flyCard: (pile: PileId, target: FlyPoint, durationMs?: number) => void;
+  /** Viewport-pixel centre of a pile's stock token (launch point for the sale card). */
+  tokenCenter: (pile: PileId) => FlyPoint | null;
 }
 
 interface MoneyFx {
@@ -35,8 +35,8 @@ export function registerMoneyFx(handlers: MoneyFx): void {
   money = handlers;
 }
 
-export function flyStockCard(pile: PileId, target: FlyPoint, durationMs?: number): void {
-  stock?.flyCard(pile, target, durationMs);
+export function stockTokenCenter(pile: PileId): FlyPoint | null {
+  return stock?.tokenCenter(pile) ?? null;
 }
 
 export function moneyPillCenter(): FlyPoint | null {

@@ -121,6 +121,9 @@ export class Npc extends Phaser.GameObjects.Sprite {
   private exitFailures = 0;
   private leaving = false;
   private despawned = false;
+  /** While true, `applyDepth` keeps the standing-foot depth so a cosmetic hop doesn't Y-sort behind furniture. */
+  private depthLocked = false;
+  private lockedDepth = 0;
   /** Optional walk-to-booth-and-buy errand; once done the NPC just leaves. */
   private errand: NpcErrand | null;
   private errandDone = false;
@@ -216,6 +219,10 @@ export class Npc extends Phaser.GameObjects.Sprite {
   }
 
   applyDepth(): void {
+    if (this.depthLocked) {
+      this.setDepth(this.lockedDepth);
+      return;
+    }
     this.setDepth(depthFromFootY(this.y));
   }
 
@@ -348,11 +355,15 @@ export class Npc extends Phaser.GameObjects.Sprite {
   /**
    * Brief highlight + hop when this buyer completes a purchase. Purely cosmetic;
    * the hop yoyos back to the standing position and clears the tint, and is
-   * skipped once the buyer has started leaving.
+   * skipped once the buyer has started leaving. Depth stays pinned to the
+   * standing foot Y so the hop doesn't dip behind nearby furniture.
    */
   pop(): void {
     if (this.leaving || !this.scene) return;
     const baseY = this.y;
+    this.depthLocked = true;
+    this.lockedDepth = depthFromFootY(baseY);
+    this.setDepth(this.lockedDepth);
     this.setTint(0xfff0b8);
     this.scene.tweens.add({
       targets: this,
@@ -361,8 +372,10 @@ export class Npc extends Phaser.GameObjects.Sprite {
       ease: 'Quad.easeOut',
       yoyo: true,
       onComplete: () => {
+        this.depthLocked = false;
         this.clearTint();
         this.setY(baseY);
+        this.applyDepth();
       },
     });
   }

@@ -14,3 +14,14 @@ export function worldToScreen(scene: Phaser.Scene, worldX: number, worldY: numbe
   const view = cam.worldView;
   return { x: (worldX - view.x) * cam.zoom, y: (worldY - view.y) * cam.zoom };
 }
+
+/**
+ * Inverse of `worldToScreen`: viewport pixels back to a world-space point. Used
+ * to launch a world-rendered sale card from a DOM HUD token (the stock bar) so
+ * it can depth-sort against world sprites mid-flight.
+ */
+export function screenToWorld(scene: Phaser.Scene, screenX: number, screenY: number): { x: number; y: number } {
+  const cam = scene.cameras.main;
+  const view = cam.worldView;
+  return { x: screenX / cam.zoom + view.x, y: screenY / cam.zoom + view.y };
+}

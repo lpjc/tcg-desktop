@@ -17,14 +17,20 @@ export function rarityColor(rarity: Rarity): number {
 }
 
 /** Mix a 0xRRGGBB colour toward white (factor > 0) or black (factor < 0). */
-export function shadeColor(color: number, factor: number): string {
+export function shadeColorInt(color: number, factor: number): number {
   const r = (color >> 16) & 0xff;
   const g = (color >> 8) & 0xff;
   const b = color & 0xff;
   const target = factor < 0 ? 0 : 255;
   const amount = Math.abs(factor);
   const mix = (channel: number) => Math.round(channel + (target - channel) * amount);
-  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+  return (mix(r) << 16) | (mix(g) << 8) | mix(b);
+}
+
+/** Same mix as `shadeColorInt`, formatted as a CSS `rgb()` string for the DOM. */
+export function shadeColor(color: number, factor: number): string {
+  const c = shadeColorInt(color, factor);
+  return `rgb(${(c >> 16) & 0xff}, ${(c >> 8) & 0xff}, ${c & 0xff})`;
 }
 
 /** CSS values for a chunky stock-card token (base + pixel bevel). */
@@ -34,6 +40,16 @@ export function rarityTokenColors(rarity: Rarity): { base: string; hi: string; e
     base: shadeColor(color, 0),
     hi: shadeColor(color, 0.4),
     edge: shadeColor(color, -0.45),
+  };
+}
+
+/** Numeric (0xRRGGBB) twin of `rarityTokenColors` for Phaser-drawn card tokens. */
+export function rarityTokenColorsInt(rarity: Rarity): { base: number; hi: number; edge: number } {
+  const color = RARITY_COLORS[rarity];
+  return {
+    base: color,
+    hi: shadeColorInt(color, 0.4),
+    edge: shadeColorInt(color, -0.45),
   };
 }
 

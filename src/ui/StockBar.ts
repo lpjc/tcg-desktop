@@ -1,7 +1,7 @@
 import { gameState } from '../game/state/GameState';
 import { PILES, type PileId } from '../game/cards/piles';
 import { rarityTokenColors } from '../game/cards/rarityColors';
-import { flyElement, flyHost, type FlyPoint } from './flyFx';
+import type { FlyPoint } from './flyFx';
 import { registerStockFx } from './saleFxBridge';
 import './StockBar.css';
 
@@ -12,8 +12,10 @@ import './StockBar.css';
  * the cursor across the screen.
  *
  * Display-only (no pointer events) — stock is a resource readout, not a control.
- * Counts always mirror committed game state; when a booth sale happens the world
- * calls `flyCard` (via `saleFxBridge`) to send a card token down into the buyer.
+ * Counts always mirror committed game state. On a booth sale the world animates a
+ * card from here into the buyer; this bar only exposes a token's screen position
+ * (via `saleFxBridge`) — the flying card itself is rendered in the Phaser world
+ * (see `saleCardFx`) so the buyer can occlude it.
  */
 const DISPLAY_ORDER: readonly PileId[] = [
   'common',
@@ -44,7 +46,7 @@ export class StockBar {
     host.appendChild(this.el);
 
     this.trackPointerShine();
-    registerStockFx({ flyCard: (pile, target, durationMs) => this.flyCardTo(pile, target, durationMs) });
+    registerStockFx({ tokenCenter: (pile) => this.tokenCenter(pile) });
     gameState.subscribe((data) => this.render(data.stock));
   }
 
@@ -105,25 +107,14 @@ export class StockBar {
   }
 
   /**
-   * Send one card from a pile's token to a screen point (the buyer at the booth).
-   * Purely cosmetic — the stock count was already decremented in game state, so a
-   * missing token or dropped animation only affects visuals, never the economy.
+   * Viewport-pixel centre of a pile's token — the launch point the world uses to
+   * fly the sold card into the buyer. Null when the token isn't mounted.
    */
-  private flyCardTo(pile: PileId, target: FlyPoint, durationMs = 560): void {
+  private tokenCenter(pile: PileId): FlyPoint | null {
     const token = this.cardEls.get(pile);
-    if (!token) return;
+    if (!token) return null;
     const rect = token.getBoundingClientRect();
-    const from: FlyPoint = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-
-    const colors = rarityTokenColors(PILES[pile].rarity);
-    const card = document.createElement('div');
-    card.className = 'stock-fly-card';
-    card.style.setProperty('--card-color', colors.base);
-    card.style.setProperty('--card-hi', colors.hi);
-    card.style.setProperty('--card-edge', colors.edge);
-    flyHost().appendChild(card);
-
-    void flyElement(card, from, target, { duration: durationMs, endScale: 0.7 });
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   }
 }
 

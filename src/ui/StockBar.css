@@ -10,21 +10,6 @@
   --my: 0.5;
 }
 
-/* A copy of a pile's card that flies from the stock bar into the buying NPC on a
-   sale. Positioning/transform are applied inline by flyFx `flyElement`; this only
-   owns the chunky token look so it matches the pile tokens it launches from. */
-.stock-fly-card {
-  width: 16px;
-  height: 22px;
-  background: var(--card-color);
-  box-shadow:
-    inset 2px 2px 0 0 var(--card-hi),
-    inset -2px -2px 0 0 var(--card-edge),
-    0 0 0 2px #0e1219;
-  image-rendering: pixelated;
-  pointer-events: none;
-}
-
 /* A chunky pixel trading-card token for one stock pile: flat fill, hard bevel,
    solid dark outline — no smooth gradients or rounded corners. */
 .stock-card {

@@ -2,9 +2,11 @@ import Phaser from 'phaser';
 import { EMOTE_FADE_MS, emoteForPile, showEmoteHeld } from '../characters/emotes';
 import type { Npc } from '../characters/Npc';
 import type { SaleResult } from '../game/economy/BoothEconomy';
-import { flyCoins } from '../ui/flyFx';
-import { flyStockCard, moneyPillCenter, revealMoneyGain } from '../ui/saleFxBridge';
-import { worldToScreen } from './hudCoords';
+import { depthFromFootY } from '../core/depth';
+import { moneyPillCenter, revealMoneyGain, stockTokenCenter } from '../ui/saleFxBridge';
+import { screenToWorld } from './hudCoords';
+import { flyCardToNpc } from './saleCardFx';
+import { flyCoinsToPill } from './saleCoinFx';
 
 /**
  * Purchase + collect animations. These are PURELY COSMETIC: the economy is
@@ -49,11 +51,12 @@ export function playPurchaseSale(
   sale: SaleResult,
   playerAtBooth: boolean,
 ): void {
-  const coinOrigin = worldToScreen(scene, npc.x, npc.y - 16);
-  const cardTarget = worldToScreen(scene, npc.x, npc.y - 10);
-
-  // 1. Card glides from the stock bar into the buyer's hands.
-  flyStockCard(sale.pile, cardTarget, CARD_FLY_MS);
+  // 1. Card glides from the stock bar token into the buyer (world-rendered).
+  const tokenScreen = stockTokenCenter(sale.pile);
+  if (tokenScreen) {
+    const from = screenToWorld(scene, tokenScreen.x, tokenScreen.y);
+    flyCardToNpc(scene, from, npc, sale.pile, CARD_FLY_MS);
+  }
 
   // 2. The instant it lands: pop + emote.
   scene.time.delayedCall(CARD_FLY_MS, () => {
@@ -61,15 +64,24 @@ export function playPurchaseSale(
     void showEmoteHeld(scene, npc.x, npc.y - 22, emoteForPile(sale.pile), EMOTE_HOLD_MS);
   });
 
-  // 3. As the emote fades, coins fly to the pill (manned booth only).
+  // 3. As the emote fades, coins fly to the pill (manned booth only). World-rendered
+  //    so they spawn behind the buyer, then arc up into the HUD pill.
   if (playerAtBooth) {
     scene.time.delayedCall(PAY_AT_MS, () => {
       const pill = moneyPillCenter();
       if (pill) {
-        void flyCoins(coinOrigin, pill, coinCountForValue(sale.price), () => revealMoneyGain(), {
-          duration: COIN_FLY_MS,
-          stagger: COIN_STAGGER_MS,
-        });
+        void flyCoinsToPill(
+          scene,
+          { x: npc.x, y: npc.y - 16 },
+          pill,
+          coinCountForValue(sale.price),
+          {
+            duration: COIN_FLY_MS,
+            stagger: COIN_STAGGER_MS,
+            spawnDepth: depthFromFootY(npc.y) - 1,
+          },
+          () => revealMoneyGain(),
+        );
       } else {
         revealMoneyGain();
       }
@@ -111,9 +123,16 @@ export function playBoothCollect(
     revealMoneyGain();
     return;
   }
-  const from = worldToScreen(scene, tableWorld.x, tableWorld.y - 6);
-  void flyCoins(from, pill, coinCountForValue(totalMoney), () => revealMoneyGain(), {
-    duration: COIN_FLY_MS,
-    stagger: COIN_STAGGER_MS,
-  });
+  void flyCoinsToPill(
+    scene,
+    { x: tableWorld.x, y: tableWorld.y - 6 },
+    pill,
+    coinCountForValue(totalMoney),
+    {
+      duration: COIN_FLY_MS,
+      stagger: COIN_STAGGER_MS,
+      spawnDepth: depthFromFootY(tableWorld.y) + 1,
+    },
+    () => revealMoneyGain(),
+  );
 }
