@@ -128,8 +128,8 @@ export class MoneyPill {
       .animate(
         [
           { transform: 'translate(-50%, 0)', opacity: 1 },
-          { transform: 'translate(-50%, -6px)', opacity: 1, offset: 0.7 },
-          { transform: 'translate(-50%, -16px)', opacity: 0 },
+          { transform: 'translate(-50%, -8px)', opacity: 1, offset: 0.7 },
+          { transform: 'translate(-50%, -20px)', opacity: 0 },
         ],
         { duration: 1650, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' },
       )
