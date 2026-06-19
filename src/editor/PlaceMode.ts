@@ -17,6 +17,7 @@ import {
   type PlacedObjectData,
   type PlaceableLayer,
   type StationAnchor,
+  type StationRole,
 } from '../entities/Placeable';
 import {
   conventionPropsLayoutName,
@@ -142,6 +143,7 @@ export class PlaceMode {
     scene.input.keyboard?.on('keydown-C', () => this.toggleSelectedCollidable());
     scene.input.keyboard?.on('keydown-T', () => this.toggleSelectedStation());
     scene.input.keyboard?.on('keydown-A', () => this.cycleSelectedStationAnchor());
+    scene.input.keyboard?.on('keydown-R', () => this.cycleSelectedStationRole());
     scene.input.keyboard?.on('keydown-S', (event: KeyboardEvent) => {
       if (event.ctrlKey) {
         event.preventDefault();
@@ -711,6 +713,22 @@ export class PlaceMode {
     this.notifyChange();
   }
 
+  /** Cycle the station's role (none → pack vendor → shop counter → booth). */
+  cycleSelectedStationRole(): void {
+    if (!this.active || !this.selectedPlaceable?.isStation || this.paintMode) return;
+    const order: (StationRole | null)[] = [null, 'pack_vendor', 'shop_counter', 'booth'];
+    const p = this.selectedPlaceable;
+    p.stationRoleOverride = order[(order.indexOf(p.stationRoleOverride) + 1) % order.length];
+    this.updateSelectionOutline();
+    this.updateHud(`${p.catalogItem.name}: role ${p.stationRoleOverride ?? 'auto'} (resolved: ${p.getStationRole() ?? 'none'})`);
+    this.notifyChange();
+  }
+
+  /** First station with the given resolved role (e.g. the shop counter). */
+  findStationByRole(role: StationRole): Placeable | null {
+    return this.placeables.find((p) => p.getStationRole() === role) ?? null;
+  }
+
   toggleSelectedCollidable(): void {
     if (!this.active || !this.selectedPlaceable || this.paintMode) return;
     const p = this.selectedPlaceable;
@@ -1077,7 +1095,7 @@ export class PlaceMode {
         : 'shop';
     const hint = this.paintMode
       ? 'Paint floor · Shift+click erase tile · P exit · Ctrl+S save props'
-      : 'Arrows move · T station · A stand side · C walk-through · Shift+arrows collision · Ctrl+S';
+      : 'Arrows move · T station · A stand side · R role · C walk-through · Shift+arrows collision · Ctrl+S';
 
     this.hudBody.innerHTML = `
       <div><strong>${mode}</strong> — ${frameLabel}</div>

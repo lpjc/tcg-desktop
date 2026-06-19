@@ -8,6 +8,7 @@ import {
 } from './characterSheets';
 import { followPath } from '../core/pathWalk';
 import { getObstacleField } from '../world/obstacleField';
+import { playBrowseEmotes } from './emotes';
 import { playFacing } from './registerCharacterAnims';
 import {
   pickRandomRegion,
@@ -40,8 +41,8 @@ const DOOR_SAMPLES = 7;
 const ERRAND_MIN_WANDER_LEGS = 2;
 const ERRAND_MAX_WANDER_LEGS = 12;
 /** Once at the booth, stand and "look" before buying. */
-const ERRAND_BROWSE_MIN_MS = 2000;
-const ERRAND_BROWSE_MAX_MS = 8000;
+const ERRAND_BROWSE_MIN_MS = 1000;
+const ERRAND_BROWSE_MAX_MS = 4000;
 /**
  * Fallback stand time after a booth visit when the errand doesn't specify one
  * (e.g. the sale fell through).
@@ -342,6 +343,7 @@ export class Npc extends Phaser.GameObjects.Sprite {
       playFacing(this, this.charKey, 'idle', this.facing);
       // Stand and "look" before deciding to buy, then transact and head out.
       const browseMs = Phaser.Math.Between(ERRAND_BROWSE_MIN_MS, ERRAND_BROWSE_MAX_MS);
+      playBrowseEmotes(this.scene, this.x, this.y - 22, browseMs);
       this.pauseEvent = this.scene.time.delayedCall(browseMs, () => {
         if (!this.scene || this.leaving) return;
         // Commit the sale + kick off its animation; `onArrive` returns how long

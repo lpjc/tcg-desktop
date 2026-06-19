@@ -54,6 +54,23 @@
   opacity: 0.28;
 }
 
+/* A ripped mini-card just landed on this pile — quick chunky pop on the count. */
+.stock-card--bump {
+  animation: stock-card-bump 220ms steps(3) 1;
+}
+
+@keyframes stock-card-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 /* ---- Holo treatment (cursor-reactive) ------------------------------------ */
 /* Same base colour as the non-holo pile — the ONLY thing added is the moving
    white diagonal stripes below. No constant wash/overlay, so the rarity colour

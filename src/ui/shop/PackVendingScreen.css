@@ -1,0 +1,373 @@
+/* Pack vending machine: an upright machine that rises from the bottom and runs
+   off the bottom edge (the dispense base is clipped below the viewport), so it
+   reads as a real standing machine. Glass-fronted 2x3 pack window on the left,
+   a column of numbered buy buttons + labels on the right. Pixel-first, hard
+   bevels, same toy language as the binder. */
+
+#pack-vending-root {
+  position: fixed;
+  inset: 0;
+  z-index: 820;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.machine {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  padding: 8px 10px 0;
+  background: #2b3550;
+  box-shadow:
+    inset 4px 4px 0 0 #45567f,
+    inset -4px -4px 0 0 #161d35,
+    0 0 0 4px #0c1222,
+    0 -8px 30px rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  overflow: hidden; /* clip the fall once it slips behind the chassis */
+  /* Run the dispense base off the bottom edge. */
+  transform: translateY(110%);
+  visibility: hidden;
+  transition:
+    transform 300ms cubic-bezier(0.18, 0.9, 0.26, 1.05),
+    visibility 0s linear 300ms;
+}
+
+/* Bottom chassis lip: covers the falling pack as it exits the window. */
+.machine::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 90px;
+  background: #2b3550;
+  box-shadow: inset 0 4px 0 0 #45567f;
+  z-index: 8;
+  pointer-events: none;
+}
+
+#pack-vending-root.is-open .machine {
+  transform: translateY(16%);
+  visibility: visible;
+  transition: transform 340ms cubic-bezier(0.16, 0.84, 0.3, 1.02);
+}
+
+/* ---- Header -------------------------------------------------------------- */
+.machine__header {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 2px 8px;
+}
+
+.machine__title {
+  font-family: var(--game-font);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #ffd96b;
+  text-shadow: 0 1px 0 #0c1222;
+}
+
+.machine__close {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff5e6;
+  background: #d2483a;
+  box-shadow:
+    inset 2px 2px 0 0 #ef7a64,
+    inset -2px -2px 0 0 #9a2a1e,
+    0 0 0 2px #0c1222;
+  image-rendering: pixelated;
+}
+
+.machine__close:hover {
+  background: #e85a48;
+}
+
+/* ---- Body: glass window + button panel ----------------------------------- */
+.machine__body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+  padding-bottom: 90px; /* the base that runs off the bottom edge */
+}
+
+.machine__window {
+  position: relative;
+  padding: 8px;
+  background: #0f1626;
+  box-shadow:
+    inset 3px 3px 0 0 #050a14,
+    inset -3px -3px 0 0 #243152,
+    0 0 0 2px #0c1222;
+  overflow: visible;
+}
+
+.machine__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 56px);
+  grid-template-rows: repeat(3, 80px);
+  gap: 8px;
+}
+
+/* Falling packs: in front of the bays, behind the glass and machine body. */
+.machine__fall-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* The glass sheet over the whole window: a soft diagonal gloss; non-blocking. */
+.machine__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.04) 28%,
+    rgba(255, 255, 255, 0) 42%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0.1) 74%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  box-shadow: inset 0 0 0 2px rgba(180, 210, 255, 0.16);
+}
+
+/* ---- One pack bay (slot in the window) ----------------------------------- */
+.pack-bay {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pack-bay__pack {
+  position: relative;
+  width: 48px;
+  height: 72px;
+  overflow: hidden;
+  background: var(--accent);
+  box-shadow:
+    inset 3px 3px 0 0 rgba(255, 255, 255, 0.45),
+    inset -3px -3px 0 0 rgba(0, 0, 0, 0.4),
+    0 0 0 2px #0c1222;
+  image-rendering: pixelated;
+}
+
+.pack-bay__pack::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 11px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 -2px 0 0 rgba(255, 255, 255, 0.25);
+}
+
+.pack-bay__shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 34%,
+    rgba(255, 255, 255, 0.4) 48%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 64%
+  );
+  pointer-events: none;
+}
+
+.pack-bay__mark {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--game-font);
+  font-size: 24px;
+  font-weight: 700;
+  color: #5a678c;
+}
+
+/* Locked / future bays: pack reduced to a dark silhouette + mark. */
+.pack-bay[data-state='locked'] .pack-bay__pack,
+.pack-bay[data-state='empty'] .pack-bay__pack {
+  background: #1a2238;
+  box-shadow:
+    inset 3px 3px 0 0 #283150,
+    inset -3px -3px 0 0 #11172a,
+    0 0 0 2px #0c1222;
+  filter: grayscale(1);
+}
+
+.pack-bay[data-state='locked'] .pack-bay__shine,
+.pack-bay[data-state='empty'] .pack-bay__shine {
+  display: none;
+}
+
+.pack-bay[data-state='locked'] .pack-bay__mark,
+.pack-bay[data-state='empty'] .pack-bay__mark {
+  display: flex;
+}
+
+.pack-bay[data-state='locked'] .pack-bay__mark {
+  font-size: 18px;
+}
+
+.pack-bay[data-state='locked'] .pack-bay__mark::before {
+  content: '\1F512';
+}
+
+.pack-bay[data-state='empty'] .pack-bay__mark::before {
+  content: '?';
+}
+
+/* Dispense: solid pack copy tumbles inside the glass (over bays, under glass),
+   then slips behind the machine chassis at the bottom. */
+.pack-faller {
+  position: absolute;
+  overflow: hidden;
+  opacity: 1;
+  background: var(--accent);
+  box-shadow:
+    inset 3px 3px 0 0 rgba(255, 255, 255, 0.45),
+    inset -3px -3px 0 0 rgba(0, 0, 0, 0.4),
+    0 0 0 2px #0c1222;
+  image-rendering: pixelated;
+  pointer-events: none;
+  animation: pack-fall 640ms cubic-bezier(0.45, 0.05, 0.7, 1) forwards;
+}
+
+.pack-faller__crimp {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 11px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 -2px 0 0 rgba(255, 255, 255, 0.25);
+}
+
+.pack-faller__shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 34%,
+    rgba(255, 255, 255, 0.4) 48%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 64%
+  );
+  pointer-events: none;
+}
+
+@keyframes pack-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  16% {
+    transform: translateY(8px) rotate(-5deg);
+  }
+  100% {
+    transform: translateY(var(--fall, 260px)) rotate(14deg);
+  }
+}
+
+/* ---- Side panel: numbered buy buttons + labels --------------------------- */
+.machine__panel {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.pack-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+}
+
+.pack-btn {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--game-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: #0c1222;
+  /* Each button wears its set's accent so it reads as "press for this pack". */
+  background: var(--accent, #6fce5a);
+  box-shadow:
+    inset 2px 2px 0 0 rgba(255, 255, 255, 0.5),
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.42),
+    0 0 0 2px #0c1222;
+  image-rendering: pixelated;
+}
+
+.pack-btn:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+.pack-btn:active:not(:disabled) {
+  box-shadow:
+    inset -2px -2px 0 0 rgba(255, 255, 255, 0.5),
+    inset 2px 2px 0 0 rgba(0, 0, 0, 0.42),
+    0 0 0 2px #0c1222;
+}
+
+.pack-btn:disabled {
+  cursor: default;
+  color: #c8d0e4;
+  background: #4a5677;
+  box-shadow:
+    inset 2px 2px 0 0 #5d6c92,
+    inset -2px -2px 0 0 #2c3450,
+    0 0 0 2px #0c1222;
+}
+
+.pack-row__labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 104px;
+  line-height: 1.1;
+  overflow: hidden;
+}
+
+.pack-row__name {
+  font-family: var(--game-font);
+  font-size: 11px;
+  font-weight: 700;
+  color: #eaf0ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pack-row__price {
+  font-family: var(--game-font);
+  font-size: 9px;
+  color: #9fb0d8;
+}

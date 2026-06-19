@@ -6,6 +6,8 @@ import { BottomHud } from './ui/BottomHud';
 import { MonitorSwitchButton } from './ui/MonitorSwitchButton';
 import { CollectionScreen } from './ui/collection/CollectionScreen';
 import { CollectionButton } from './ui/collection/CollectionButton';
+import { PackVendingScreen } from './ui/shop/PackVendingScreen';
+import { CardRevealFeed } from './ui/shop/CardRevealFeed';
 import { registerPlaceholderSet } from './game/cards/placeholderSet';
 import { gameState } from './game/state/GameState';
 import { WorldScene } from './world/WorldScene';
@@ -46,8 +48,11 @@ window.addEventListener('resize', resizeCanvas);
 void document.fonts?.load('16px "VCR OSD Mono"');
 
 // Game state: register card data, then hydrate the save (async) before UI binds.
-registerPlaceholderSet();
-void gameState.load();
+const starterSetId = registerPlaceholderSet();
+void gameState.load().then(() => {
+  // Make the starter set buyable out of the box; later sets unlock via trades.
+  if (gameState.snapshot().unlockedSets.length === 0) gameState.unlockSet(starterSetId);
+});
 
 new DevToggleButton('editor-ui');
 new BottomHud('editor-ui');
@@ -56,6 +61,11 @@ new DevGamePanel('editor-ui');
 // Collection binder: persistent opener button + the floating screen it toggles.
 const collectionScreen = new CollectionScreen('editor-ui');
 new CollectionButton('editor-ui', collectionScreen);
+
+// Shop pack loop: the vending purchase screen + the ripped-card reveal feed.
+// Both register themselves on the shop bridge, so the world can drive them.
+new PackVendingScreen('editor-ui');
+new CardRevealFeed('editor-ui');
 
 if (window.desktop) {
   new MonitorSwitchButton('editor-ui');

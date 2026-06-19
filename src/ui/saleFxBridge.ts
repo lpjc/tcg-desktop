@@ -13,6 +13,10 @@ import type { FlyPoint } from './flyFx';
 interface StockFx {
   /** Viewport-pixel centre of a pile's stock token (launch point for the sale card). */
   tokenCenter: (pile: PileId) => FlyPoint | null;
+  /** Hold `n` incoming cards on a pile back, so they reveal as mini-cards land. */
+  expectGain: (pile: PileId, n: number) => void;
+  /** Release `n` held cards on a pile now (a ripped mini-card just landed). */
+  revealGain: (pile: PileId, n: number) => void;
 }
 
 interface MoneyFx {
@@ -37,6 +41,14 @@ export function registerMoneyFx(handlers: MoneyFx): void {
 
 export function stockTokenCenter(pile: PileId): FlyPoint | null {
   return stock?.tokenCenter(pile) ?? null;
+}
+
+export function expectStockGain(pile: PileId, n: number): void {
+  stock?.expectGain(pile, n);
+}
+
+export function revealStockGain(pile: PileId, n: number): void {
+  stock?.revealGain(pile, n);
 }
 
 export function moneyPillCenter(): FlyPoint | null {

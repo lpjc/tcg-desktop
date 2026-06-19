@@ -34,6 +34,7 @@ export class DevGamePanel {
     this.el.append(
       this.button('+ Stock', () => this.grantStock()),
       this.button('+ €1000', () => gameState.addMoney(1000)),
+      this.button('+ Pack', () => this.grantPack()),
       this.button('+ Random card', () => this.addRandomCard()),
       this.button('Discover set', () => this.discoverSets()),
       this.button('Reset save', () => gameState.reset()),
@@ -60,6 +61,13 @@ export class DevGamePanel {
     for (const [pile, count] of Object.entries(STOCK_BUNDLE)) {
       gameState.grantStock(pile as PileId, count);
     }
+  }
+
+  /** Queue a free pack of the first unlocked set onto the shop counter to rip. */
+  private grantPack(): void {
+    const { unlockedSets } = gameState.snapshot();
+    const setId = unlockedSets[0] ?? allSets()[0]?.id;
+    if (setId) gameState.queuePack(setId);
   }
 
   /**

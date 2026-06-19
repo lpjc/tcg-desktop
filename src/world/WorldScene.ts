@@ -42,8 +42,13 @@ import { CameraDirector } from './CameraDirector';
 import { BoothEconomy } from '../game/economy/BoothEconomy';
 import { gameState } from '../game/state/GameState';
 import { BoothCashPile } from './BoothCashPile';
+import { PackPile } from './PackPile';
+import { HeadPackPiles } from './HeadPackPiles';
+import { FloorCardField } from './floorCardFx';
+import { PackRipController } from './PackRipController';
 import { playBoothCollect, playPurchaseSale, purchaseLeaveDelayMs } from './purchaseFx';
 import { expectMoneyGain, revealMoneyGain } from '../ui/saleFxBridge';
+import { openPackVending, closePackVending } from '../ui/shopBridge';
 import {
   computeWorldLayout,
   frameForX,
@@ -84,6 +89,10 @@ export class WorldScene extends Phaser.Scene {
   private guestCharge!: ConventionGuestChargeController;
   private boothEconomy!: BoothEconomy;
   private boothCashPile!: BoothCashPile;
+  private packPile!: PackPile;
+  private headPiles!: HeadPackPiles;
+  private floorField!: FloorCardField;
+  private packRip!: PackRipController;
   /** True while the player stands at their booth — sales then go straight to the bank. */
   private playerAtBooth = false;
   private playerScene: SceneFrameId = 'convention';
@@ -123,6 +132,14 @@ export class WorldScene extends Phaser.Scene {
     this.npcCrowd.setConventionFurniturePicker(() => this.pickFurnitureBrowseSpot());
     this.boothEconomy = new BoothEconomy();
     this.boothCashPile = new BoothCashPile(this);
+    this.packPile = new PackPile(this);
+    this.headPiles = new HeadPackPiles(this);
+    this.floorField = new FloorCardField(this);
+    this.packRip = new PackRipController(
+      this.headPiles,
+      this.floorField,
+      () => ({ x: this.player.x, y: this.player.y }),
+    );
     this.guestCharge = new ConventionGuestChargeController(
       this,
       this.npcCrowd,
@@ -135,6 +152,7 @@ export class WorldScene extends Phaser.Scene {
       this.snapPlayerToWalkable();
       this.syncCurrentStation();
       this.refreshBoothAnchor();
+      this.refreshCounterAnchor();
       this.npcCrowd.syncToPlayerScene(this.playerScene);
       // First charge only after obstacles exist, so the door spot is real.
       this.guestCharge.start();
@@ -146,10 +164,23 @@ export class WorldScene extends Phaser.Scene {
       if (this.placeMode.isActive()) return true;
       const world = this.cameras.main.getWorldPoint(clientX, clientY);
       if (isOverWorldSurface(world.x, world.y)) return true;
+      // Floor cards and the head piles can sit in the transparent headroom above
+      // the band, so they need their own hit registration to stay clickable.
+      if (this.floorField.isOverCard(world.x, world.y)) return true;
+      if (this.headPiles.isOverPile(world.x, world.y)) return true;
       return this.placeMode.stationAtWorld(world.x, world.y) !== null;
     });
 
     this.input.on('pointerdown', this.onPlayClick, this);
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (this.placeMode.isActive()) return;
+      const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      this.floorField.handlePointerMove(pointer, world.x, world.y);
+    });
+    this.input.on('pointerup', () => {
+      if (this.placeMode.isActive()) return;
+      this.floorField.handlePointerUp();
+    });
 
     this.input.keyboard?.on('keydown-V', (event: KeyboardEvent) => {
       if (this.placeMode.isActive()) return;
@@ -222,6 +253,12 @@ export class WorldScene extends Phaser.Scene {
     if (pointer.rightButtonDown()) return;
 
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+
+    // Clicks resolve in priority order: tear a pack at the counter, then pick up
+    // a card off the floor (works anywhere), then walk to a station.
+    if (this.packRip.handlePointerDown(world.x, world.y)) return;
+    if (this.floorField.handlePointerDown(world.x, world.y)) return;
+
     const station = this.placeMode.stationAtWorld(world.x, world.y);
     if (!station) return;
 
@@ -232,17 +269,35 @@ export class WorldScene extends Phaser.Scene {
     );
     if (!stand) return;
 
-    // Walking away from the booth: stop taking sales directly until we're back.
+    // Starting a new walk: leave the booth/counter and close the vendor UI until
+    // we arrive somewhere new.
     this.playerAtBooth = false;
+    this.packRip.setAtCounter(false);
+    closePackVending();
     this.player.walkTo(stand.x, stand.y, () => {
       this.syncCurrentStation(station);
-      // Booth-layer stations are the player's booth: collect the waiting pile,
-      // then man the booth so further sales pay out live.
-      if (station.layer === 'booth') {
+      this.onStationArrived(station);
+    });
+  }
+
+  /** Resolve what happens when the player reaches a station, by its role. */
+  private onStationArrived(station: Placeable): void {
+    switch (station.getStationRole()) {
+      case 'booth':
+        // The player's booth: collect the waiting pile, then man it so further
+        // sales pay out live.
         this.collectBooth();
         this.playerAtBooth = true;
-      }
-    });
+        break;
+      case 'pack_vendor':
+        openPackVending();
+        break;
+      case 'shop_counter':
+        this.packRip.setAtCounter(true);
+        break;
+      default:
+        break;
+    }
   }
 
   /**
@@ -338,6 +393,14 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /** Re-anchor the bought-pack pile onto the shop counter surface. */
+  private refreshCounterAnchor(): void {
+    const counter = this.placeMode.findStationByRole('shop_counter');
+    if (counter) {
+      this.packPile.setAnchor(counter.x, counter.y - counter.displayHeight + 6, counter.y);
+    }
+  }
+
   /** Layout furniture can cover the default booth spawn — snap onto a free tile. */
   private snapPlayerToWalkable(): void {
     const field = getObstacleField();
@@ -390,6 +453,7 @@ export class WorldScene extends Phaser.Scene {
     this.npcCrowd.relayoutConvention();
     this.guestCharge.relayout();
     this.refreshBoothAnchor();
+    this.refreshCounterAnchor();
   }
 
   private handleBandResize(viewportPxWidth: number): void {
@@ -416,6 +480,7 @@ export class WorldScene extends Phaser.Scene {
     this.rebuildBaseFloors();
     this.placeMode.onLayoutBoundsChanged();
     this.cameraDirector.refit(newLayout.worldWidth);
+    this.refreshCounterAnchor();
   }
 
   private rebuildBaseFloors(): void {

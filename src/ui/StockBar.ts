@@ -1,5 +1,5 @@
 import { gameState } from '../game/state/GameState';
-import { PILES, type PileId } from '../game/cards/piles';
+import { PILES, PILE_IDS, type PileId } from '../game/cards/piles';
 import { rarityTokenColors } from '../game/cards/rarityColors';
 import type { FlyPoint } from './flyFx';
 import { registerStockFx } from './saleFxBridge';
@@ -34,6 +34,15 @@ export class StockBar {
   private readonly el: HTMLDivElement;
   private readonly countEls = new Map<PileId, HTMLElement>();
   private readonly cardEls = new Map<PileId, HTMLElement>();
+  /**
+   * Cards committed to stock at rip but still lying on the floor as mini-cards.
+   * They're held back from the displayed count until picked up (flown into the
+   * bar). Floor cards persist, so there is no timed release: a card is released
+   * exactly when it lands here, when the floor perf-cap collects it, or on
+   * reload (when the map starts empty and the count shows the committed truth).
+   */
+  private readonly held = new Map<PileId, number>();
+  private lastStock: Record<PileId, number> = emptyCounts();
 
   constructor(containerId: string) {
     const host = document.getElementById(containerId);
@@ -46,8 +55,37 @@ export class StockBar {
     host.appendChild(this.el);
 
     this.trackPointerShine();
-    registerStockFx({ tokenCenter: (pile) => this.tokenCenter(pile) });
-    gameState.subscribe((data) => this.render(data.stock));
+    registerStockFx({
+      tokenCenter: (pile) => this.tokenCenter(pile),
+      expectGain: (pile, n) => this.expectGain(pile, n),
+      revealGain: (pile, n) => this.revealGain(pile, n),
+    });
+    gameState.subscribe((data) => {
+      this.lastStock = data.stock;
+      this.render(data.stock);
+    });
+  }
+
+  /** Hold `n` incoming cards on a pile, so the count waits for the mini-cards to land. */
+  private expectGain(pile: PileId, n: number): void {
+    this.held.set(pile, (this.held.get(pile) ?? 0) + n);
+    this.render(this.lastStock);
+  }
+
+  /** Release `n` held cards and pop the token (a ripped mini-card just landed). */
+  private revealGain(pile: PileId, n: number): void {
+    this.held.set(pile, Math.max(0, (this.held.get(pile) ?? 0) - n));
+    this.render(this.lastStock);
+    this.bumpToken(pile);
+  }
+
+  /** Brief scale-pop on a token when its count ticks up. */
+  private bumpToken(pile: PileId): void {
+    const card = this.cardEls.get(pile);
+    if (!card) return;
+    card.classList.remove('stock-card--bump');
+    void card.offsetWidth; // restart the animation
+    card.classList.add('stock-card--bump');
   }
 
   private buildCard(pile: PileId, index: number): HTMLElement {
@@ -95,7 +133,9 @@ export class StockBar {
 
   private render(stock: Record<PileId, number>): void {
     for (const pile of DISPLAY_ORDER) {
-      const count = stock[pile] ?? 0;
+      // Held cards are already committed to state but shouldn't show until their
+      // mini-card lands, so subtract them from the displayed count.
+      const count = Math.max(0, (stock[pile] ?? 0) - (this.held.get(pile) ?? 0));
       const countEl = this.countEls.get(pile);
       const cardEl = this.cardEls.get(pile);
       if (countEl) countEl.textContent = abbreviate(count);
@@ -122,4 +162,10 @@ export class StockBar {
 function abbreviate(value: number): string {
   if (value < 1000) return String(value);
   return `${(value / 1000).toFixed(value < 10000 ? 1 : 0)}k`;
+}
+
+function emptyCounts(): Record<PileId, number> {
+  const counts = {} as Record<PileId, number>;
+  for (const id of PILE_IDS) counts[id] = 0;
+  return counts;
 }

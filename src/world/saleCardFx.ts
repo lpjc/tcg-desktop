@@ -34,7 +34,7 @@ function cardTextureKey(rarity: Rarity): string {
 }
 
 /** Draw the rarity's card token into a cached texture once; return its key. */
-function ensureCardTexture(scene: Phaser.Scene, rarity: Rarity): string {
+export function ensureCardTexture(scene: Phaser.Scene, rarity: Rarity): string {
   const key = cardTextureKey(rarity);
   if (scene.textures.exists(key)) return key;
 

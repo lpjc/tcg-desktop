@@ -21,6 +21,7 @@
   inset: 0;
   display: block;
   overflow: hidden;
+  isolation: isolate;
   /* Card silhouette: dark slot + hard outline. Rarity reskins this when found. */
   background: #262b38;
   box-shadow:
@@ -36,6 +37,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
 }
 
 .pocket__art {
@@ -62,6 +64,7 @@
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 2;
   padding: 1px 3px;
   font-size: 8px;
   line-height: 1;
@@ -75,6 +78,7 @@
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 2;
   padding: 2px 3px;
   font-size: 8px;
   line-height: 11px;
@@ -92,6 +96,7 @@
   position: absolute;
   top: 0;
   right: 0;
+  z-index: 2;
   padding: 1px 4px;
   font-size: 9px;
   line-height: 1;
@@ -150,39 +155,107 @@
   background: linear-gradient(transparent, var(--r-deep) 30%);
 }
 
-/* ---- Holo sheen (cursor-reactive) ---------------------------------------- */
-/* Same idea as the mini stock-card tokens: moving white diagonal stripes only —
-   no rainbow foil (that read as "everything's rare/blue"). Two gradients at
-   slightly different angles keep it from looking mechanically symmetric, and the
-   sheen tracks the cursor via --mx/--my (fed from the binder root). The holo card
-   is otherwise the normal discovered card, so the monster reads true. */
+/* ---- Holo cardstock (cursor-reactive) ------------------------------------- */
+/* The foil is treated as material printed into the card background, not a sticker
+   over the creature art. It borrows the V-card idea from pokemon-cards-css:
+   layered diagonal/rainbow gradients, opposing background motion, blend modes,
+   and a tiny noise layer. The binder keeps one shared --mx/--my rhythm so every
+   card shimmers together, but each layer repeats instead of sliding off-screen. */
 .pocket__holo {
   position: absolute;
-  /* Oversized so the cursor-driven translate never reveals an edge. */
-  inset: -50% -90%;
+  inset: 3px;
+  z-index: 0;
   opacity: 0;
   pointer-events: none;
+  --foil-x: calc(var(--mx, 0.5) * 100%);
+  --foil-y: calc(var(--my, 0.5) * 100%);
+  --foil-shift-x: calc((var(--mx, 0.5) - 0.5) * 180%);
+  --foil-shift-y: calc((var(--my, 0.5) - 0.5) * 120%);
   background-image:
-    repeating-linear-gradient(
-      112deg,
-      transparent 0 6px,
-      rgba(255, 255, 255, 0.45) 6px 7px,
-      rgba(255, 255, 255, 0.75) 7px 8px,
-      transparent 8px 15px
+    radial-gradient(
+      farthest-corner circle at var(--foil-x) var(--foil-y),
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.2) 18%,
+      rgba(18, 24, 44, 0.24) 72%,
+      rgba(7, 10, 20, 0.42) 140%
     ),
     repeating-linear-gradient(
-      97deg,
-      transparent 0 11px,
-      rgba(255, 255, 255, 0.4) 11px 12px,
-      transparent 12px 26px
+      0deg,
+      #ff6d8c 0% 5%,
+      #ffe77b 5% 10%,
+      #9cffbd 10% 15%,
+      #76e9ff 15% 20%,
+      #8f9dff 20% 25%,
+      #e48cff 25% 30%,
+      #ff6d8c 30% 35%
+    ),
+    repeating-linear-gradient(
+      133deg,
+      rgba(8, 14, 35, 0.95) 0% 7.2%,
+      rgba(175, 224, 230, 0.72) 7.2% 8.4%,
+      rgba(255, 255, 255, 0.86) 8.4% 9.1%,
+      rgba(118, 181, 205, 0.62) 9.1% 10.2%,
+      rgba(8, 14, 35, 0.95) 10.2% 14%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--r-base) 42%, #ffffff),
+      color-mix(in srgb, var(--r-deep) 75%, #0a1026)
     );
-  transform: translateX(calc((var(--mx, 0.5) - 0.5) * 200% + (var(--i, 7) - 7) * 6px))
-    translateY(calc((var(--my, 0.5) - 0.5) * 18%));
+  background-blend-mode: hard-light, hue, color-dodge, normal;
+  background-size:
+    150% 150%,
+    220% 700%,
+    280% 100%,
+    100% 100%;
+  background-position:
+    center,
+    0 calc((var(--my, 0.5) * 520px) + (var(--i, 7) * 3px)),
+    calc(50% + var(--foil-shift-x)) calc(50% + var(--foil-shift-y)),
+    center;
+  filter: brightness(0.82) contrast(1.85) saturate(1.55);
+  mix-blend-mode: color-dodge;
   transition: opacity 120ms steps(3);
 }
 
+.pocket__holo::before,
+.pocket__holo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pocket__holo::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)' opacity='.58'/%3E%3C/svg%3E");
+  background-size: 44px 44px;
+  background-position:
+    calc(var(--mx, 0.5) * -18px + var(--i, 7) * 2px)
+    calc(var(--my, 0.5) * -18px);
+  mix-blend-mode: overlay;
+  opacity: 0.22;
+}
+
+.pocket__holo::after {
+  background-image:
+    repeating-linear-gradient(
+      133deg,
+      transparent 0% 6%,
+      rgba(255, 255, 255, 0.5) 6% 6.8%,
+      rgba(86, 247, 255, 0.42) 6.8% 7.6%,
+      transparent 7.6% 13%
+    );
+  background-size: 195% 100%;
+  background-position:
+    calc(50% - var(--foil-shift-x))
+    calc(50% - var(--foil-shift-y));
+  filter: brightness(1.15) contrast(1.35) saturate(1.2);
+  mix-blend-mode: soft-light;
+  opacity: 0.74;
+}
+
 .pocket--holo .pocket__holo {
-  opacity: 0.9;
+  opacity: 0.72;
 }
 
 /* A faint extra rim so a holo still reads as special at a glance. */

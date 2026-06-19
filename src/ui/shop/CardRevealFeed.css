@@ -1,0 +1,150 @@
+/* The card-reveal feed: a bottom-anchored column that grows upward, just left of
+   the shop. Each pickup pops a small card in at the bottom; older ones rise and
+   fade. Non-interactive — it's pure feedback, the desktop stays clickable. */
+
+#card-reveal-feed {
+  position: fixed;
+  z-index: 850;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.feed-card {
+  position: relative;
+  width: 64px;
+  height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 4px 4px;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--r-base), var(--r-deep));
+  box-shadow:
+    inset 2px 2px 0 0 var(--r-hi),
+    inset -2px -2px 0 0 var(--r-edge),
+    0 0 0 2px #0e1219,
+    0 0 14px 2px var(--r-glow);
+  image-rendering: pixelated;
+  animation: feed-pop 280ms cubic-bezier(0.16, 0.84, 0.3, 1.1) 1;
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+.feed-card--out {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.92);
+}
+
+@keyframes feed-pop {
+  0% {
+    transform: scale(0.3) translateY(14px);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.feed-card__art-wrap {
+  width: 100%;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(248, 246, 238, 0.92);
+  box-shadow: inset 0 0 0 2px #0e1219;
+}
+
+.feed-card__art {
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+}
+
+.feed-card__name {
+  margin-top: 4px;
+  font-family: var(--game-font);
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-shadow:
+    1px 1px 0 #0e1219,
+    -1px 1px 0 #0e1219,
+    1px -1px 0 #0e1219,
+    -1px -1px 0 #0e1219;
+}
+
+/* ---- Badge --------------------------------------------------------------- */
+.feed-card__badge {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  z-index: 3;
+  padding: 1px 3px;
+  font-family: var(--game-font);
+  font-size: 7px;
+  font-weight: 700;
+  color: #5a3d00;
+  background: #ffe14d;
+  box-shadow:
+    inset 1px 1px 0 0 rgba(255, 255, 255, 0.6),
+    inset -1px -1px 0 0 rgba(0, 0, 0, 0.35),
+    0 0 0 1px #0e1219;
+  transform: rotate(-7deg);
+}
+
+.feed-card__badge--first {
+  background: #6fce5a;
+  color: #16321a;
+}
+
+.feed-card__badge--holo {
+  background: linear-gradient(90deg, #ff7eb3, #ffd36e, #6ee7ff, #b88bff);
+  color: #1a1030;
+}
+
+/* ---- Holo foil sheen ----------------------------------------------------- */
+.feed-card__holo {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: repeating-linear-gradient(
+    112deg,
+    transparent 0 8px,
+    rgba(255, 255, 255, 0.35) 8px 10px,
+    rgba(255, 255, 255, 0.55) 10px 11px,
+    transparent 11px 20px
+  );
+  background-size: 200% 100%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: feed-holo-sweep 2.2s linear infinite;
+  z-index: 2;
+}
+
+.feed-card--holo .feed-card__holo {
+  display: block;
+}
+
+@keyframes feed-holo-sweep {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

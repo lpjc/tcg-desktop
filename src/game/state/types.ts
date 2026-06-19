@@ -35,4 +35,10 @@ export interface GameStateData {
   unlockedConventions: string[];
   unlockedSets: string[];
   cashBox: CashBox;
+  /**
+   * Packs bought but not yet ripped, as a queue of set ids (one entry per pack).
+   * They pile on the shop counter — just like the cash box, they persist and are
+   * resolved later when the player walks over to rip them.
+   */
+  pendingPacks: string[];
 }

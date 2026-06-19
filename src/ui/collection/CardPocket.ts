@@ -62,7 +62,7 @@ export class CardPocket {
       artWrap.appendChild(art);
     }
 
-    // Foil overlays the whole card (under the number/name chips).
+    // Foil is printed into the card stock; the creature art sits above it.
     const holo = document.createElement('span');
     holo.className = 'pocket__holo';
 
@@ -77,7 +77,7 @@ export class CardPocket {
     this.nameEl = document.createElement('span');
     this.nameEl.className = 'pocket__name';
 
-    inner.append(artWrap, holo, mystery, num, this.nameEl);
+    inner.append(holo, artWrap, mystery, num, this.nameEl);
     this.el.appendChild(inner);
 
     this.setEntry(undefined);

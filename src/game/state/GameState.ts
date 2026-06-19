@@ -25,6 +25,7 @@ function defaultData(): GameStateData {
     unlockedConventions: ['default_expo'],
     unlockedSets: [],
     cashBox: { sales: 0, money: 0, reputation: 0 },
+    pendingPacks: [],
   };
 }
 
@@ -62,6 +63,35 @@ class GameState {
 
   addMoney(amount: number): void {
     this.data.money += amount;
+    this.changed();
+  }
+
+  /** Spend money if affordable; false (no change) when there isn't enough. */
+  spendMoney(amount: number): boolean {
+    if (this.data.money < amount) return false;
+    this.data.money -= amount;
+    this.changed();
+    return true;
+  }
+
+  /** Add a bought pack to the shop-counter queue (one entry per pack). */
+  queuePack(setId: string): void {
+    this.data.pendingPacks.push(setId);
+    this.changed();
+  }
+
+  /** Remove the most recent un-ripped pack of a specific set; null when none. */
+  dequeuePackOfSet(setId: string): string | null {
+    const index = this.data.pendingPacks.lastIndexOf(setId);
+    if (index < 0) return null;
+    this.data.pendingPacks.splice(index, 1);
+    this.changed();
+    return setId;
+  }
+
+  /** Raise the Prestige skill (e.g. a rare+ first-find bonus when ripping packs). */
+  addPrestige(amount: number): void {
+    this.data.skills.prestige += amount;
     this.changed();
   }
 
@@ -159,6 +189,7 @@ function mergeSaved(base: GameStateData, saved: Partial<GameStateData>): GameSta
     displayCase: saved.displayCase ?? base.displayCase,
     unlockedConventions: saved.unlockedConventions ?? base.unlockedConventions,
     unlockedSets: saved.unlockedSets ?? base.unlockedSets,
+    pendingPacks: saved.pendingPacks ?? base.pendingPacks,
     version: STATE_VERSION,
   };
 }
