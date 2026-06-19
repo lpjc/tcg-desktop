@@ -343,8 +343,8 @@ export class Npc extends Phaser.GameObjects.Sprite {
       playFacing(this, this.charKey, 'idle', this.facing);
       // Stand and "look" before deciding to buy, then transact and head out.
       const browseMs = Phaser.Math.Between(ERRAND_BROWSE_MIN_MS, ERRAND_BROWSE_MAX_MS);
-      playBrowseEmotes(this.scene, this.x, this.y - 22, browseMs);
-      this.pauseEvent = this.scene.time.delayedCall(browseMs, () => {
+      const lookEndMs = playBrowseEmotes(this.scene, this.x, this.y - 22, browseMs);
+      this.pauseEvent = this.scene.time.delayedCall(lookEndMs, () => {
         if (!this.scene || this.leaving) return;
         // Commit the sale + kick off its animation; `onArrive` returns how long
         // to stand before walking off (tuned to the purchase beat length).

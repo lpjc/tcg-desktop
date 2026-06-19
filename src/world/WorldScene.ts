@@ -46,7 +46,12 @@ import { PackPile } from './PackPile';
 import { HeadPackPiles } from './HeadPackPiles';
 import { FloorCardField } from './floorCardFx';
 import { PackRipController } from './PackRipController';
-import { playBoothCollect, playPurchaseSale, purchaseLeaveDelayMs } from './purchaseFx';
+import {
+  playBoothCollect,
+  playNoStockCue,
+  playPurchaseSale,
+  purchaseLeaveDelayMs,
+} from './purchaseFx';
 import { expectMoneyGain, revealMoneyGain } from '../ui/saleFxBridge';
 import { openPackVending, closePackVending } from '../ui/shopBridge';
 import {
@@ -333,10 +338,10 @@ export class WorldScene extends Phaser.Scene {
    * we ask the pill to hold the tick until the flying coins land on it.
    */
   private onBuyerAtBooth(npc: Npc): number {
-    if (this.playerAtBooth) expectMoneyGain();
-
     const sale = this.boothEconomy.onGuestArrived(this.playerAtBooth);
-    if (!sale) return 400;
+    if (!sale) return playNoStockCue(this, npc);
+
+    if (this.playerAtBooth) expectMoneyGain();
 
     // Reputation is banked in state; surfacing it is a
     // TODO(awaiting-stat-system): show "+Rep" when a reputation HUD exists.

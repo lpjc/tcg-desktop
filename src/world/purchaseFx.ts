@@ -108,6 +108,54 @@ export function unmannedPurchaseBeatMs(): number {
   return CARD_FLY_MS + EMOTE_HOLD_MS + EMOTE_FADE_MS;
 }
 
+const NO_STOCK_FADE_IN_MS = 320;
+const NO_STOCK_FADE_OUT_MS = 450;
+/** Stand just long enough to read the cue, then head out. */
+const NO_STOCK_LEAVE_AFTER_MS = 500;
+
+/**
+ * A buyer browsed the booth but nothing was in stock (for their tastes). Purely
+ * cosmetic — the economy already decided there was no sale.
+ */
+export function playNoStockCue(scene: Phaser.Scene, npc: Npc): number {
+  const headY = npc.y - 24;
+  const depth = depthFromFootY(npc.y) + 2;
+
+  const label = scene.add
+    .text(npc.x, headY, 'no stock!', {
+      fontFamily: 'VCR OSD Mono, monospace',
+      fontSize: '6px',
+      color: '#ffc9b8',
+    })
+    .setOrigin(0.5, 1)
+    .setStroke('#0e1219', 3)
+    .setDepth(depth)
+    .setAlpha(0)
+    .setScale(0.85);
+
+  scene.tweens.add({
+    targets: label,
+    alpha: 1,
+    scale: 1,
+    y: headY - 3,
+    duration: NO_STOCK_FADE_IN_MS,
+    ease: 'Back.easeOut',
+  });
+
+  scene.time.delayedCall(NO_STOCK_FADE_IN_MS + NO_STOCK_LEAVE_AFTER_MS, () => {
+    scene.tweens.add({
+      targets: label,
+      alpha: 0,
+      y: headY - 8,
+      duration: NO_STOCK_FADE_OUT_MS,
+      ease: 'Quad.easeIn',
+      onComplete: () => label.destroy(),
+    });
+  });
+
+  return NO_STOCK_FADE_IN_MS + NO_STOCK_LEAVE_AFTER_MS;
+}
+
 /**
  * Booth collect: coins lift off the table cash pile and fly into the money pill,
  * which reveals the banked total when they land. The cash box was already

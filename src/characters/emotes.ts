@@ -143,14 +143,18 @@ function showBrowseEmote(
 /**
  * Cycle random "browsing" emotes above a buyer for the stand-and-look window
  * before they commit to a purchase. Purely cosmetic.
+ *
+ * @returns Ms from booth arrival until the last scheduled browse emote has fully
+ *          faded out — callers should wait this long before the purchase beat.
  */
 export function playBrowseEmotes(
   scene: Phaser.Scene,
   x: number,
   y: number,
   browseMs: number,
-): void {
+): number {
   let at = BROWSE_EMOTE_START_MS;
+  let sequenceEndMs = 0;
   while (at + BROWSE_EMOTE_FADE_IN_MS + BROWSE_EMOTE_HOLD_MIN_MS <= browseMs) {
     const when = at;
     const holdMs = randomBrowseHoldMs();
@@ -158,8 +162,10 @@ export function playBrowseEmotes(
     scene.time.delayedCall(when, () => {
       showBrowseEmote(scene, x, y, key, holdMs);
     });
+    sequenceEndMs = when + BROWSE_EMOTE_FADE_IN_MS + holdMs + BROWSE_EMOTE_FADE_OUT_MS;
     at += browseEmoteBeatMs(holdMs);
   }
+  return sequenceEndMs > 0 ? sequenceEndMs : browseMs;
 }
 
 /**
