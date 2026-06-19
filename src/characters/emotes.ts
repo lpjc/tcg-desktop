@@ -72,17 +72,72 @@ export function emoteForPile(pile: PileId): PurchaseEmoteKey {
 export const EMOTE_POP_MS = 180;
 export const EMOTE_FADE_MS = 320;
 
-const BROWSE_EMOTE_HOLD_MS = 650;
-const BROWSE_EMOTE_GAP_MIN_MS = 120;
-const BROWSE_EMOTE_GAP_MAX_MS = 320;
-const BROWSE_EMOTE_START_MS = 250;
+/** Soft fade-in while a buyer reads the booth — unhurried, no pop bounce. */
+const BROWSE_EMOTE_FADE_IN_MS = 1000;
+const BROWSE_EMOTE_HOLD_MIN_MS = 2000;
+const BROWSE_EMOTE_HOLD_MAX_MS = 5000;
+/** Gentle drift away once they've finished looking. */
+const BROWSE_EMOTE_FADE_OUT_MS = 700;
+const BROWSE_EMOTE_GAP_MIN_MS = 400;
+const BROWSE_EMOTE_GAP_MAX_MS = 900;
+/** Brief beat after arriving before the first browsing emote appears. */
+const BROWSE_EMOTE_START_MS = 500;
 
-/** One full browse emote cycle (pop + hold + fade + gap before the next). */
-function browseEmoteBeatMs(): number {
-  return BROWSE_EMOTE_HOLD_MS + EMOTE_POP_MS + EMOTE_FADE_MS + Phaser.Math.Between(
-    BROWSE_EMOTE_GAP_MIN_MS,
-    BROWSE_EMOTE_GAP_MAX_MS,
+function randomBrowseHoldMs(): number {
+  return Phaser.Math.Between(BROWSE_EMOTE_HOLD_MIN_MS, BROWSE_EMOTE_HOLD_MAX_MS);
+}
+
+/** Full length of one browse emote (fade in → linger → fade out → gap). */
+function browseEmoteBeatMs(holdMs: number): number {
+  return (
+    BROWSE_EMOTE_FADE_IN_MS +
+    holdMs +
+    BROWSE_EMOTE_FADE_OUT_MS +
+    Phaser.Math.Between(BROWSE_EMOTE_GAP_MIN_MS, BROWSE_EMOTE_GAP_MAX_MS)
   );
+}
+
+/**
+ * A slow, soft emote for the booth-browsing beat: ease in over ~1s, linger
+ * 2–5s, then drift away. Purchase emotes keep their snappy pop.
+ */
+function showBrowseEmote(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  key: BrowseEmoteKey,
+  holdMs: number,
+): void {
+  const sprite = scene.add
+    .image(x, y, emoteTextureKey(key))
+    .setOrigin(0.5, 1)
+    .setDepth(EMOTE_DEPTH);
+  sprite.setDisplaySize(EMOTE_SIZE, EMOTE_SIZE);
+
+  const { scaleX, scaleY } = sprite;
+  const restY = y - 3;
+  sprite.setScale(scaleX * 0.88, scaleY * 0.88).setAlpha(0).setY(restY + 2);
+
+  scene.tweens.add({
+    targets: sprite,
+    scaleX,
+    scaleY,
+    alpha: 1,
+    y: restY,
+    duration: BROWSE_EMOTE_FADE_IN_MS,
+    ease: 'Sine.easeOut',
+  });
+
+  scene.time.delayedCall(BROWSE_EMOTE_FADE_IN_MS + holdMs, () => {
+    scene.tweens.add({
+      targets: sprite,
+      alpha: 0,
+      y: restY - 6,
+      duration: BROWSE_EMOTE_FADE_OUT_MS,
+      ease: 'Sine.easeInOut',
+      onComplete: () => sprite.destroy(),
+    });
+  });
 }
 
 /**
@@ -96,13 +151,14 @@ export function playBrowseEmotes(
   browseMs: number,
 ): void {
   let at = BROWSE_EMOTE_START_MS;
-  while (at + BROWSE_EMOTE_HOLD_MS < browseMs) {
+  while (at + BROWSE_EMOTE_FADE_IN_MS + BROWSE_EMOTE_HOLD_MIN_MS <= browseMs) {
     const when = at;
+    const holdMs = randomBrowseHoldMs();
     const key = Phaser.Utils.Array.GetRandom([...BROWSE_EMOTE_KEYS]);
     scene.time.delayedCall(when, () => {
-      void showEmoteHeld(scene, x, y, key, BROWSE_EMOTE_HOLD_MS);
+      showBrowseEmote(scene, x, y, key, holdMs);
     });
-    at += browseEmoteBeatMs();
+    at += browseEmoteBeatMs(holdMs);
   }
 }
 

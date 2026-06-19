@@ -36,9 +36,10 @@ export class StockBar {
   private readonly cardEls = new Map<PileId, HTMLElement>();
   /**
    * Cards committed to stock at rip but still lying on the floor as mini-cards.
-   * They're held back from the displayed count until picked up (flown into the
-   * bar). Floor cards persist, so there is no timed release: a card is released
-   * exactly when it lands here, when the floor perf-cap collects it, or on
+   * They're held back from the displayed count until picked up (revealed in the
+   * feed bar and flown into stock when the reveal dwell ends). Floor cards
+   * persist, so there is no timed release: a card is released exactly when its
+   * reveal flies into the bar, when the floor perf-cap collects it, or on
    * reload (when the map starts empty and the count shows the committed truth).
    */
   private readonly held = new Map<PileId, number>();
@@ -72,7 +73,7 @@ export class StockBar {
     this.render(this.lastStock);
   }
 
-  /** Release `n` held cards and pop the token (a ripped mini-card just landed). */
+  /** Release `n` held cards and pop the token (a reveal card just landed in stock). */
   private revealGain(pile: PileId, n: number): void {
     this.held.set(pile, Math.max(0, (this.held.get(pile) ?? 0) - n));
     this.render(this.lastStock);

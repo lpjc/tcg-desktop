@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { shopEconomy } from '../game/economy/ShopEconomy';
 import { expectStockGain } from '../ui/saleFxBridge';
 import type { FloorCardField } from './floorCardFx';
@@ -8,11 +7,13 @@ import type { HeadPackPiles } from './HeadPackPiles';
 const HEAD_OFFSET = 34;
 /** Cards land on the floor this far in front of the player's feet. */
 const FLOOR_DROP_AHEAD = 6;
+/** Every pack rips over exactly this many clicks (steady rhythm). */
+const TEAR_CLICKS = 5;
 
 /**
- * Drives the piñata pack rip at the shop counter. While the player stands at the
- * counter, their bought packs float above their head as per-set piles
- * (`HeadPackPiles`); clicking a pile tears that set's top pack over a random 2-6
+ * Drives pack ripping at the shop counter. While the player stands at the
+ * counter, their bought packs float above their head as per-set packs
+ * (`HeadPackPiles`); clicking a pack tears that set's top pack over five soft
  * clicks, and the final click bursts its cards onto the floor (`FloorCardField`)
  * — committing the pack to collection + stock atomically at that instant.
  *
@@ -27,7 +28,6 @@ export class PackRipController {
   private atCounter = false;
   private tearingSetId: string | null = null;
   private tearProgress = 0;
-  private tearTarget = 0;
 
   constructor(
     headPiles: HeadPackPiles,
@@ -51,7 +51,7 @@ export class PackRipController {
     }
   }
 
-  /** Returns true when a head-pile tear consumed the click (so no walk happens). */
+  /** Returns true when a head-pack tear consumed the click (so no walk happens). */
   handlePointerDown(worldX: number, worldY: number): boolean {
     if (!this.atCounter) return false;
     const setId = this.headPiles.hitTest(worldX, worldY);
@@ -64,11 +64,10 @@ export class PackRipController {
     if (this.tearingSetId !== setId) {
       this.tearingSetId = setId;
       this.tearProgress = 0;
-      this.tearTarget = Phaser.Math.Between(2, 6);
     }
     this.tearProgress += 1;
-    this.headPiles.shake(setId);
-    if (this.tearProgress >= this.tearTarget) {
+    this.headPiles.tearStep(setId, this.tearProgress / TEAR_CLICKS);
+    if (this.tearProgress >= TEAR_CLICKS) {
       this.resetTear();
       this.burst(setId);
     }
@@ -76,7 +75,7 @@ export class PackRipController {
 
   private burst(setId: string): void {
     const burstFrom = this.headPiles.pilePosition(setId) ?? this.getPlayer();
-    // Hold the incoming stock counts so they tick up as cards are picked up.
+    // Hold the incoming stock counts so they tick up as cards leave the reveal bar.
     const cards = shopEconomy.ripPack(setId, (ripped) => {
       for (const c of ripped) expectStockGain(c.pile, 1);
     });
@@ -89,6 +88,5 @@ export class PackRipController {
   private resetTear(): void {
     this.tearingSetId = null;
     this.tearProgress = 0;
-    this.tearTarget = 0;
   }
 }

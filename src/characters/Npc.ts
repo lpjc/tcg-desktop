@@ -40,9 +40,9 @@ const DOOR_SAMPLES = 7;
 /** A buyer roams this many legs around the floor before heading to the booth. */
 const ERRAND_MIN_WANDER_LEGS = 2;
 const ERRAND_MAX_WANDER_LEGS = 12;
-/** Once at the booth, stand and "look" before buying. */
-const ERRAND_BROWSE_MIN_MS = 1000;
-const ERRAND_BROWSE_MAX_MS = 4000;
+/** Once at the booth, stand and "look" before buying (one soft emote cycle minimum). */
+const ERRAND_BROWSE_MIN_MS = 4000;
+const ERRAND_BROWSE_MAX_MS = 10000;
 /**
  * Fallback stand time after a booth visit when the errand doesn't specify one
  * (e.g. the sale fell through).

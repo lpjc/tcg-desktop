@@ -135,6 +135,7 @@ export class WorldScene extends Phaser.Scene {
     this.packPile = new PackPile(this);
     this.headPiles = new HeadPackPiles(this);
     this.floorField = new FloorCardField(this);
+    this.floorField.setOnTapEmpty((worldX, worldY) => this.walkToStationAt(worldX, worldY));
     this.packRip = new PackRipController(
       this.headPiles,
       this.floorField,
@@ -177,9 +178,10 @@ export class WorldScene extends Phaser.Scene {
       const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
       this.floorField.handlePointerMove(pointer, world.x, world.y);
     });
-    this.input.on('pointerup', () => {
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
       if (this.placeMode.isActive()) return;
-      this.floorField.handlePointerUp();
+      const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      this.floorField.handlePointerUp(world.x, world.y);
     });
 
     this.input.keyboard?.on('keydown-V', (event: KeyboardEvent) => {
@@ -254,12 +256,19 @@ export class WorldScene extends Phaser.Scene {
 
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
 
-    // Clicks resolve in priority order: tear a pack at the counter, then pick up
-    // a card off the floor (works anywhere), then walk to a station.
+    // Tear a pack at the counter first, then begin a floor gesture in the shop.
     if (this.packRip.handlePointerDown(world.x, world.y)) return;
-    if (this.floorField.handlePointerDown(world.x, world.y)) return;
+    if (frameForX(world.x) === 'shop' || this.floorField.isOverCard(world.x, world.y)) {
+      this.floorField.handlePointerDown(world.x, world.y);
+      return;
+    }
 
-    const station = this.placeMode.stationAtWorld(world.x, world.y);
+    this.walkToStationAt(world.x, world.y);
+  }
+
+  /** Walk the player to a station clicked in the world (or no-op if none). */
+  private walkToStationAt(worldX: number, worldY: number): void {
+    const station = this.placeMode.stationAtWorld(worldX, worldY);
     if (!station) return;
 
     const stand = getObstacleField().standPointForStation(
@@ -269,8 +278,6 @@ export class WorldScene extends Phaser.Scene {
     );
     if (!stand) return;
 
-    // Starting a new walk: leave the booth/counter and close the vendor UI until
-    // we arrive somewhere new.
     this.playerAtBooth = false;
     this.packRip.setAtCounter(false);
     closePackVending();

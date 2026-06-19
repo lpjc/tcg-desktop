@@ -1,47 +1,122 @@
-/* The card-reveal feed: a bottom-anchored column that grows upward, just left of
-   the shop. Each pickup pops a small card in at the bottom; older ones rise and
-   fade. Non-interactive — it's pure feedback, the desktop stays clickable. */
+/* The card-reveal feed: a bottom-anchored horizontal row, right edge fixed just
+   left of the shop. Newest cards grow in at the left; oldest at the right
+   anchor flies to stock when its dwell ends. Non-interactive feedback only. */
 
 #card-reveal-feed {
   position: fixed;
   z-index: 850;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: row;
   align-items: flex-end;
-  gap: 5px;
+  gap: 6px;
   pointer-events: none;
 }
 
 .feed-card {
   position: relative;
+  flex-shrink: 0;
   width: 64px;
   height: 90px;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 5px 4px 4px;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(160deg, var(--r-base), var(--r-deep));
   box-shadow:
     inset 2px 2px 0 0 var(--r-hi),
     inset -2px -2px 0 0 var(--r-edge),
-    0 0 0 2px #0e1219,
-    0 0 14px 2px var(--r-glow);
+    0 0 0 2px #0e1219;
   image-rendering: pixelated;
-  animation: feed-pop 280ms cubic-bezier(0.16, 0.84, 0.3, 1.1) 1;
-  transition:
-    opacity 500ms ease,
-    transform 500ms ease;
+  animation: feed-pop 320ms cubic-bezier(0.16, 0.84, 0.3, 1.1) 1;
 }
 
-.feed-card--out {
+.feed-card--flying {
+  animation: none;
+  z-index: 900;
+}
+
+/* Rarity-scaled glow behind the card */
+.feed-card__glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 2px;
+  background: radial-gradient(ellipse at 50% 80%, var(--r-glow) 0%, transparent 72%);
+  opacity: 0.45;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.feed-card--rare .feed-card__glow {
+  inset: -8px;
+  opacity: 0.6;
+}
+
+.feed-card--epic .feed-card__glow {
+  inset: -10px;
+  opacity: 0.75;
+}
+
+.feed-card--chase .feed-card__glow {
+  inset: -14px;
+  opacity: 0.95;
+}
+
+/* One-shot entrance flash — stronger for higher rarity */
+.feed-card__flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.55);
   opacity: 0;
-  transform: translateY(-10px) scale(0.92);
+  pointer-events: none;
+  z-index: 4;
+  animation: feed-flash 420ms ease-out 1;
+}
+
+.feed-card--rare .feed-card__flash {
+  animation-duration: 480ms;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.feed-card--epic .feed-card__flash {
+  animation-duration: 540ms;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.feed-card--chase .feed-card__flash {
+  animation-duration: 620ms;
+  background: rgba(255, 240, 180, 0.85);
+}
+
+.feed-card--new .feed-card__flash {
+  animation: feed-new-flash 520ms ease-out 1;
+}
+
+@keyframes feed-flash {
+  0% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes feed-new-flash {
+  0% {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.95);
+  }
+  35% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes feed-pop {
   0% {
-    transform: scale(0.3) translateY(14px);
+    transform: scale(0.3) translateX(-12px);
     opacity: 0;
   }
   70% {
@@ -53,7 +128,44 @@
   }
 }
 
+/* Lingering labels stacked above the card */
+.feed-card__labels {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 3px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.feed-card__label {
+  padding: 1px 5px;
+  font-family: var(--game-font);
+  font-weight: 700;
+  color: #0e1219;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px #0e1219;
+}
+
+.feed-card__label--new {
+  font-size: 10px;
+  background: #6fce5a;
+  color: #16321a;
+}
+
+.feed-card__label--holo {
+  font-size: 8px;
+  background: linear-gradient(90deg, #ff7eb3, #ffd36e, #6ee7ff, #b88bff);
+  color: #1a1030;
+}
+
 .feed-card__art-wrap {
+  position: relative;
   width: 100%;
   height: 58px;
   display: flex;
@@ -86,35 +198,6 @@
     -1px 1px 0 #0e1219,
     1px -1px 0 #0e1219,
     -1px -1px 0 #0e1219;
-}
-
-/* ---- Badge --------------------------------------------------------------- */
-.feed-card__badge {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  z-index: 3;
-  padding: 1px 3px;
-  font-family: var(--game-font);
-  font-size: 7px;
-  font-weight: 700;
-  color: #5a3d00;
-  background: #ffe14d;
-  box-shadow:
-    inset 1px 1px 0 0 rgba(255, 255, 255, 0.6),
-    inset -1px -1px 0 0 rgba(0, 0, 0, 0.35),
-    0 0 0 1px #0e1219;
-  transform: rotate(-7deg);
-}
-
-.feed-card__badge--first {
-  background: #6fce5a;
-  color: #16321a;
-}
-
-.feed-card__badge--holo {
-  background: linear-gradient(90deg, #ff7eb3, #ffd36e, #6ee7ff, #b88bff);
-  color: #1a1030;
 }
 
 /* ---- Holo foil sheen ----------------------------------------------------- */
