@@ -43,9 +43,6 @@ import { BoothEconomy } from '../game/economy/BoothEconomy';
 import { gameState } from '../game/state/GameState';
 import { BoothCashPile } from './BoothCashPile';
 import { PackPile } from './PackPile';
-import { HeadPackPiles } from './HeadPackPiles';
-import { FloorCardField } from './floorCardFx';
-import { PackRipController } from './PackRipController';
 import {
   playBoothCollect,
   playNoStockCue,
@@ -95,9 +92,6 @@ export class WorldScene extends Phaser.Scene {
   private boothEconomy!: BoothEconomy;
   private boothCashPile!: BoothCashPile;
   private packPile!: PackPile;
-  private headPiles!: HeadPackPiles;
-  private floorField!: FloorCardField;
-  private packRip!: PackRipController;
   /** True while the player stands at their booth — sales then go straight to the bank. */
   private playerAtBooth = false;
   private playerScene: SceneFrameId = 'convention';
@@ -138,14 +132,6 @@ export class WorldScene extends Phaser.Scene {
     this.boothEconomy = new BoothEconomy();
     this.boothCashPile = new BoothCashPile(this);
     this.packPile = new PackPile(this);
-    this.headPiles = new HeadPackPiles(this);
-    this.floorField = new FloorCardField(this);
-    this.floorField.setOnTapEmpty((worldX, worldY) => this.walkToStationAt(worldX, worldY));
-    this.packRip = new PackRipController(
-      this.headPiles,
-      this.floorField,
-      () => ({ x: this.player.x, y: this.player.y }),
-    );
     this.guestCharge = new ConventionGuestChargeController(
       this,
       this.npcCrowd,
@@ -170,24 +156,10 @@ export class WorldScene extends Phaser.Scene {
       if (this.placeMode.isActive()) return true;
       const world = this.cameras.main.getWorldPoint(clientX, clientY);
       if (isOverWorldSurface(world.x, world.y)) return true;
-      // Floor cards and the head piles can sit in the transparent headroom above
-      // the band, so they need their own hit registration to stay clickable.
-      if (this.floorField.isOverCard(world.x, world.y)) return true;
-      if (this.headPiles.isOverPile(world.x, world.y)) return true;
       return this.placeMode.stationAtWorld(world.x, world.y) !== null;
     });
 
     this.input.on('pointerdown', this.onPlayClick, this);
-    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (this.placeMode.isActive()) return;
-      const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-      this.floorField.handlePointerMove(pointer, world.x, world.y);
-    });
-    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-      if (this.placeMode.isActive()) return;
-      const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-      this.floorField.handlePointerUp(world.x, world.y);
-    });
 
     this.input.keyboard?.on('keydown-V', (event: KeyboardEvent) => {
       if (this.placeMode.isActive()) return;
@@ -260,14 +232,6 @@ export class WorldScene extends Phaser.Scene {
     if (pointer.rightButtonDown()) return;
 
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-
-    // Tear a pack at the counter first, then begin a floor gesture in the shop.
-    if (this.packRip.handlePointerDown(world.x, world.y)) return;
-    if (frameForX(world.x) === 'shop' || this.floorField.isOverCard(world.x, world.y)) {
-      this.floorField.handlePointerDown(world.x, world.y);
-      return;
-    }
-
     this.walkToStationAt(world.x, world.y);
   }
 
@@ -284,7 +248,6 @@ export class WorldScene extends Phaser.Scene {
     if (!stand) return;
 
     this.playerAtBooth = false;
-    this.packRip.setAtCounter(false);
     closePackVending();
     this.player.walkTo(stand.x, stand.y, () => {
       this.syncCurrentStation(station);
@@ -305,7 +268,8 @@ export class WorldScene extends Phaser.Scene {
         openPackVending();
         break;
       case 'shop_counter':
-        this.packRip.setAtCounter(true);
+        // Inert for packs now — opening moved to the pack overlay. The counter
+        // still shows the ambient PackPile decor reflecting unopened packs.
         break;
       default:
         break;

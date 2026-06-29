@@ -1,0 +1,471 @@
+/* The pack-opening reveal: a pack tear, then five cards fan out face-down and
+   flip with emphasis (rarity glow, entrance flash, NEW!/HOLO! tags), ending in a
+   progress summary. Lives inside the pack overlay panel. */
+
+.pack-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.pack-reveal__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 184px;
+}
+
+.pack-reveal__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* The button row. A reserved min-height keeps the summary (Open Another / Back)
+   the same height as the 'Reveal All' row, so the final flip shifts nothing. */
+.pack-reveal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 30px;
+}
+
+/* ---- Pack tear ----------------------------------------------------------- */
+.pack-tear {
+  position: relative;
+  width: 96px;
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10px;
+  background: linear-gradient(160deg, var(--accent), #0e1219);
+  box-shadow:
+    inset 3px 3px 0 0 rgba(255, 255, 255, 0.35),
+    inset -3px -3px 0 0 rgba(0, 0, 0, 0.4),
+    0 0 0 3px #0e1219;
+  image-rendering: pixelated;
+  transform-origin: center;
+  animation: pack-tear-wobble 180ms steps(3) 2;
+}
+
+/* Crimped foil top */
+.pack-tear::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 3px, transparent 3px 6px);
+  box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+.pack-tear__name {
+  font-family: var(--game-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  text-shadow:
+    1px 1px 0 #0e1219,
+    -1px 1px 0 #0e1219,
+    1px -1px 0 #0e1219,
+    -1px -1px 0 #0e1219;
+}
+
+.pack-tear--ripping {
+  animation: pack-tear-burst 460ms ease-in forwards;
+}
+
+@keyframes pack-tear-wobble {
+  0% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pack-tear-burst {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(1.12) rotate(-2deg);
+    filter: brightness(2.4);
+  }
+  100% {
+    transform: scale(0.7) translateY(-24px);
+    filter: brightness(3);
+    opacity: 0;
+  }
+}
+
+/* ---- Reveal cards -------------------------------------------------------- */
+.reveal-card {
+  position: relative;
+  width: 78px;
+  height: 110px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  perspective: 700px;
+  opacity: 0;
+  transform: translateY(16px) scale(0.85);
+  transition:
+    opacity 220ms ease,
+    transform 260ms cubic-bezier(0.16, 0.84, 0.3, 1.1);
+}
+
+.reveal-card--in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.reveal-card__inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.reveal-card--flipped .reveal-card__inner {
+  transform: rotateY(180deg);
+}
+
+.reveal-card__back,
+.reveal-card__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  image-rendering: pixelated;
+}
+
+.reveal-card__back {
+  background:
+    repeating-linear-gradient(45deg, #2b3566 0 6px, #232c54 6px 12px);
+  box-shadow:
+    inset 2px 2px 0 0 #4a5aa0,
+    inset -2px -2px 0 0 #161d3a,
+    0 0 0 3px #0e1219;
+}
+
+.reveal-card__back::after {
+  content: '?';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--game-font);
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.reveal-card__face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 5px 5px;
+  overflow: visible;
+  transform: rotateY(180deg);
+  background: linear-gradient(160deg, var(--r-base), var(--r-deep));
+  box-shadow:
+    inset 2px 2px 0 0 var(--r-hi),
+    inset -2px -2px 0 0 var(--r-edge),
+    0 0 0 3px #0e1219;
+}
+
+/* Rarity-scaled glow, on the card root so it haloes both the back and the face.
+   The inner (back/face) sits above it. */
+.reveal-card__inner {
+  z-index: 1;
+}
+
+.reveal-card__glow {
+  position: absolute;
+  inset: -6px;
+  background: radial-gradient(ellipse at 50% 60%, var(--r-glow) 0%, transparent 72%);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition:
+    opacity 300ms ease,
+    inset 300ms ease;
+}
+
+/* ---- Anticipation: glow while the card is still face-down ---------------- */
+/* The rarer the pull, the brighter (and, for epic/chase, pulsing) the halo, so
+   the player can read "something good is coming" before flipping. */
+.reveal-card--in .reveal-card__glow {
+  opacity: 0.14;
+}
+
+.reveal-card--rare.reveal-card--in .reveal-card__glow {
+  inset: -8px;
+  opacity: 0.3;
+}
+
+.reveal-card--epic.reveal-card--in .reveal-card__glow {
+  inset: -11px;
+  opacity: 0.46;
+  animation: reveal-glow-pulse 1.5s ease-in-out infinite;
+}
+
+.reveal-card--chase.reveal-card--in .reveal-card__glow {
+  inset: -15px;
+  opacity: 0.66;
+  animation: reveal-glow-pulse 1.2s ease-in-out infinite;
+}
+
+/* ---- Payoff: glow intensifies once the face is up ------------------------ */
+.reveal-card--flipped .reveal-card__glow {
+  opacity: 0.5;
+  animation: none;
+}
+
+.reveal-card--rare.reveal-card--flipped .reveal-card__glow {
+  inset: -9px;
+  opacity: 0.65;
+}
+
+.reveal-card--epic.reveal-card--flipped .reveal-card__glow {
+  inset: -12px;
+  opacity: 0.8;
+}
+
+.reveal-card--chase.reveal-card--flipped .reveal-card__glow {
+  inset: -16px;
+  opacity: 1;
+}
+
+@keyframes reveal-glow-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.5);
+  }
+}
+
+/* One-shot entrance flash when the face turns up */
+.reveal-card__flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.reveal-card--flipped .reveal-card__flash {
+  animation: reveal-flash 460ms ease-out 200ms 1;
+}
+
+.reveal-card--epic.reveal-card--flipped .reveal-card__flash {
+  animation-duration: 560ms;
+}
+
+.reveal-card--chase.reveal-card--flipped .reveal-card__flash {
+  animation-duration: 680ms;
+  background: rgba(255, 240, 180, 0.92);
+}
+
+@keyframes reveal-flash {
+  0% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Lingering labels above the card */
+.reveal-card__labels {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 3px;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.reveal-card--flipped .reveal-card__labels {
+  opacity: 1;
+  transition: opacity 200ms ease 320ms;
+}
+
+.reveal-card__label {
+  padding: 1px 5px;
+  font-family: var(--game-font);
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px #0e1219;
+}
+
+.reveal-card__label--new {
+  font-size: 11px;
+  background: #6fce5a;
+  color: #16321a;
+}
+
+.reveal-card__label--holo {
+  font-size: 8px;
+  background: linear-gradient(90deg, #ff7eb3, #ffd36e, #6ee7ff, #b88bff);
+  color: #1a1030;
+}
+
+.reveal-card__art {
+  width: 100%;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(248, 246, 238, 0.92);
+  box-shadow: inset 0 0 0 2px #0e1219;
+}
+
+.reveal-card__art img {
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+}
+
+.reveal-card__name {
+  margin-top: 5px;
+  font-family: var(--game-font);
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-shadow:
+    1px 1px 0 #0e1219,
+    -1px 1px 0 #0e1219,
+    1px -1px 0 #0e1219,
+    -1px -1px 0 #0e1219;
+}
+
+/* Holo foil sheen on the face */
+.reveal-card__holo {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: repeating-linear-gradient(
+    112deg,
+    transparent 0 8px,
+    rgba(255, 255, 255, 0.35) 8px 10px,
+    rgba(255, 255, 255, 0.55) 10px 11px,
+    transparent 11px 20px
+  );
+  background-size: 200% 100%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.reveal-card--holo.reveal-card--flipped .reveal-card__holo {
+  display: block;
+  animation: reveal-holo-sweep 2.2s linear infinite;
+}
+
+@keyframes reveal-holo-sweep {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ---- "+1 to stock" token that floats up off a freshly-flipped card ------- */
+.reveal-gain {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 6;
+  pointer-events: none;
+  font-family: var(--game-font);
+  animation: reveal-gain-float 1000ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.reveal-gain__plus {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow:
+    1px 1px 0 #0e1219,
+    -1px 1px 0 #0e1219,
+    1px -1px 0 #0e1219,
+    -1px -1px 0 #0e1219;
+}
+
+/* Mini twin of the stock-bar token: flat rarity fill + hard bevel. */
+.reveal-gain__token {
+  position: relative;
+  width: 12px;
+  height: 16px;
+  overflow: hidden;
+  background: var(--c-base);
+  box-shadow:
+    inset 1px 1px 0 0 var(--c-hi),
+    inset -1px -1px 0 0 var(--c-edge),
+    0 0 0 1px #0e1219;
+  image-rendering: pixelated;
+}
+
+.reveal-gain__token.is-holo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    118deg,
+    transparent 0 3px,
+    rgba(255, 255, 255, 0.6) 3px 4px,
+    transparent 4px 7px
+  );
+  mix-blend-mode: screen;
+}
+
+@keyframes reveal-gain-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.8);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -52px) scale(0.95);
+  }
+}

@@ -35,12 +35,11 @@ export class StockBar {
   private readonly countEls = new Map<PileId, HTMLElement>();
   private readonly cardEls = new Map<PileId, HTMLElement>();
   /**
-   * Cards committed to stock at rip but still lying on the floor as mini-cards.
-   * They're held back from the displayed count until picked up (revealed in the
-   * feed bar and flown into stock when the reveal dwell ends). Floor cards
-   * persist, so there is no timed release: a card is released exactly when its
-   * reveal flies into the bar, when the floor perf-cap collects it, or on
-   * reload (when the map starts empty and the count shows the committed truth).
+   * Counts held back from the display so a count tick can be synced to a sale's
+   * cosmetic animation (e.g. a booth sale flying a card from the bar into the
+   * buyer): `expectGain` hides the change, `revealGain` releases it when the
+   * animation lands. Pack opening does NOT use this — packs commit and tick
+   * immediately, with the reveal handled separately in the pack overlay.
    */
   private readonly held = new Map<PileId, number>();
   private lastStock: Record<PileId, number> = emptyCounts();
@@ -67,13 +66,13 @@ export class StockBar {
     });
   }
 
-  /** Hold `n` incoming cards on a pile, so the count waits for the mini-cards to land. */
+  /** Hold `n` incoming cards on a pile, so the count waits for a sale animation to land. */
   private expectGain(pile: PileId, n: number): void {
     this.held.set(pile, (this.held.get(pile) ?? 0) + n);
     this.render(this.lastStock);
   }
 
-  /** Release `n` held cards and pop the token (a reveal card just landed in stock). */
+  /** Release `n` held cards and pop the token (a sale animation just landed). */
   private revealGain(pile: PileId, n: number): void {
     this.held.set(pile, Math.max(0, (this.held.get(pile) ?? 0) - n));
     this.render(this.lastStock);
@@ -135,7 +134,7 @@ export class StockBar {
   private render(stock: Record<PileId, number>): void {
     for (const pile of DISPLAY_ORDER) {
       // Held cards are already committed to state but shouldn't show until their
-      // mini-card lands, so subtract them from the displayed count.
+      // sale animation lands, so subtract them from the displayed count.
       const count = Math.max(0, (stock[pile] ?? 0) - (this.held.get(pile) ?? 0));
       const countEl = this.countEls.get(pile);
       const cardEl = this.cardEls.get(pile);

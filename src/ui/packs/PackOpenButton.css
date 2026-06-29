@@ -1,0 +1,101 @@
+/* Pack-opening toolbar button — sits just above the collection button. Chunky
+   pixel button with a foil-pouch glyph and an unopened-pack count badge. */
+
+#pack-open-btn {
+  position: fixed;
+  right: 8px;
+  bottom: 266px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  cursor: pointer;
+  background: #c8a772;
+  box-shadow:
+    inset 3px 3px 0 0 #e4cfa1,
+    inset -3px -3px 0 0 #8f6f3e,
+    0 0 0 3px #3a2a12,
+    0 4px 0 rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  transition: transform 90ms steps(3);
+}
+
+#pack-open-btn:hover {
+  background: #dcc089;
+  transform: translateY(-2px);
+}
+
+#pack-open-btn:active {
+  transform: translateY(0);
+}
+
+#pack-open-btn.active {
+  background: #f0d9a6;
+  box-shadow:
+    inset 3px 3px 0 0 #fff3d2,
+    inset -3px -3px 0 0 #b48f54,
+    0 0 0 3px #2f7d33,
+    0 0 9px 0 rgba(87, 208, 106, 0.6);
+}
+
+/* Foil-pouch glyph (no asset needed) */
+.pack-open-btn__glyph {
+  position: relative;
+  width: 22px;
+  height: 28px;
+  background: linear-gradient(160deg, #e0563b, #0e1219);
+  box-shadow:
+    inset 2px 2px 0 0 rgba(255, 255, 255, 0.45),
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.45),
+    0 0 0 2px #3a2a12;
+}
+
+/* Crimped foil seal, top and bottom — matches every other pack in the game. */
+.pack-open-btn__glyph::before,
+.pack-open-btn__glyph::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.6) 0 2px, transparent 2px 4px);
+}
+
+.pack-open-btn__glyph::before {
+  top: 0;
+}
+
+.pack-open-btn__glyph::after {
+  bottom: 0;
+}
+
+/* Unopened-pack count badge */
+.pack-open-btn__badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--game-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff5e6;
+  background: #d2483a;
+  box-shadow:
+    inset 1px 1px 0 0 #ef7a64,
+    inset -1px -1px 0 0 #9a2a1e,
+    0 0 0 2px #3a2a12;
+  image-rendering: pixelated;
+}
+
+.pack-open-btn__badge.is-hidden {
+  display: none;
+}

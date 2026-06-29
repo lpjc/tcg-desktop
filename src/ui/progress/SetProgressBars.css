@@ -1,0 +1,132 @@
+/* One completion bar for the whole set, read left-to-right as bracket sections:
+   Common | Rare | Epic | Chase | Holos. Each section is a fanned row of
+   overlapping mini-cards (one per card, lit when found, a silhouette when not —
+   the binder's language shrunk) with its prestige bonus on top. The Holos
+   section is a modifier bucket, set apart with a divider. */
+
+.set-progress {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+}
+
+.set-progress__section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* Holos sit apart from the rarity brackets — they cut across all of them. */
+.set-progress__section--holo {
+  margin-left: 3px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(58, 42, 18, 0.3);
+}
+
+/* A bracket the set has no cards for — no reward to earn, so de-emphasise it. */
+.set-progress__section--empty {
+  opacity: 0.4;
+}
+
+/* ---- Bonus reward sitting on top of the section ------------------------- */
+.set-progress__bonus {
+  font-family: var(--game-font);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: #8a6f44;
+  letter-spacing: 0.02em;
+}
+
+.set-progress__bonus.is-complete {
+  color: #2f7d33;
+}
+
+/* ---- Fanned, overlapping mini-cards ------------------------------------- */
+.set-progress__chips {
+  display: flex;
+  height: 15px;
+  padding-right: 1px; /* room for the last chip's outline */
+}
+
+.set-progress__chip {
+  position: relative;
+  width: 10px;
+  height: 15px;
+  margin-left: -6px;
+  flex: 0 0 auto;
+  /* Undiscovered: a dark silhouette slot, like an empty binder pocket. */
+  background: #2a3040;
+  box-shadow:
+    inset 1px 1px 0 0 #3c4456,
+    inset -1px -1px 0 0 #161b26,
+    0 0 0 1px #0b0e14;
+  image-rendering: pixelated;
+  transition:
+    background 220ms steps(3),
+    box-shadow 220ms steps(3),
+    transform 160ms steps(3);
+}
+
+.set-progress__chip:first-child {
+  margin-left: 0;
+}
+
+/* Discovered: the rarity-tinted chunky card token (matches the stock pile). */
+.set-progress__chip.is-found {
+  background: var(--c-base);
+  box-shadow:
+    inset 1px 1px 0 0 var(--c-hi),
+    inset -1px -1px 0 0 var(--c-edge),
+    0 0 0 1px #0b0e14;
+  z-index: 1;
+}
+
+/* Holo chips keep their rarity tint but gain a moving foil sheen when found. */
+.set-progress__chip--holo.is-found::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    118deg,
+    transparent 0 3px,
+    rgba(255, 255, 255, 0.55) 3px 4px,
+    transparent 4px 7px
+  );
+  mix-blend-mode: screen;
+  animation: set-progress-foil 2.4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes set-progress-foil {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 14px 0;
+  }
+}
+
+/* ---- Section label ------------------------------------------------------ */
+.set-progress__section-label {
+  font-family: var(--game-font);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  color: #5a4426;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ---- Locked mystery ----------------------------------------------------- */
+.set-progress--locked .set-progress__bonus {
+  color: #8a6f44;
+}
+
+.set-progress--locked .set-progress__section-label {
+  color: #8a6f44;
+}

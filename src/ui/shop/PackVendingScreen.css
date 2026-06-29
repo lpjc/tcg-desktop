@@ -174,13 +174,26 @@
   image-rendering: pixelated;
 }
 
-.pack-bay__pack::before {
+/* Crimped foil seal, top and bottom — the shared pack-art motif (same zipper as
+   the open-packs overlay and the toolbar glyph). */
+.pack-bay__pack::before,
+.pack-bay__pack::after {
   content: '';
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 11px;
-  background: rgba(0, 0, 0, 0.28);
-  box-shadow: inset 0 -2px 0 0 rgba(255, 255, 255, 0.25);
+  left: 0;
+  right: 0;
+  height: 9px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 2px, transparent 2px 4px);
+}
+
+.pack-bay__pack::before {
+  top: 0;
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+.pack-bay__pack::after {
+  bottom: 0;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.4);
 }
 
 .pack-bay__shine {
@@ -259,10 +272,24 @@
 
 .pack-faller__crimp {
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 11px;
-  background: rgba(0, 0, 0, 0.28);
-  box-shadow: inset 0 -2px 0 0 rgba(255, 255, 255, 0.25);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 9px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 2px, transparent 2px 4px);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Matching bottom seal on the tumbling pack. */
+.pack-faller::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 9px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 2px, transparent 2px 4px);
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.4);
 }
 
 .pack-faller__shine {

@@ -6,8 +6,9 @@ import { BottomHud } from './ui/BottomHud';
 import { MonitorSwitchButton } from './ui/MonitorSwitchButton';
 import { CollectionScreen } from './ui/collection/CollectionScreen';
 import { CollectionButton } from './ui/collection/CollectionButton';
+import { PackOpenScreen } from './ui/packs/PackOpenScreen';
+import { PackOpenButton } from './ui/packs/PackOpenButton';
 import { PackVendingScreen } from './ui/shop/PackVendingScreen';
-import { CardRevealFeed } from './ui/shop/CardRevealFeed';
 import { registerPlaceholderSet } from './game/cards/placeholderSet';
 import { gameState } from './game/state/GameState';
 import { WorldScene } from './world/WorldScene';
@@ -58,14 +59,23 @@ new DevToggleButton('editor-ui');
 new BottomHud('editor-ui');
 new DevGamePanel('editor-ui');
 
-// Collection binder: persistent opener button + the floating screen it toggles.
+// Collection binder + pack-opening overlay: persistent opener buttons and the
+// floating screens they toggle. The two overlays are mutually exclusive — opening
+// one closes the other so ESC and the active-button state never desync.
 const collectionScreen = new CollectionScreen('editor-ui');
 new CollectionButton('editor-ui', collectionScreen);
+const packScreen = new PackOpenScreen('editor-ui');
+new PackOpenButton('editor-ui', packScreen);
+packScreen.onOpenChange((open) => {
+  if (open) collectionScreen.close();
+});
+collectionScreen.onOpenChange((open) => {
+  if (open) packScreen.close();
+});
 
-// Shop pack loop: the vending purchase screen + the ripped-card reveal feed.
-// Both register themselves on the shop bridge, so the world can drive them.
+// Shop vending purchase screen — registers itself on the shop bridge so the
+// world can open it on arrival at the pack vending machine.
 new PackVendingScreen('editor-ui');
-new CardRevealFeed('editor-ui');
 
 if (window.desktop) {
   new MonitorSwitchButton('editor-ui');

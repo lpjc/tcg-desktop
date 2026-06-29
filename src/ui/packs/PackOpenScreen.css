@@ -1,0 +1,370 @@
+/* The pack-opening overlay: a tan panel that slides up from the bottom and
+   floats over the world band (no scrim, matching the binder). A set carousel in
+   the carousel phase; the flip reveal in the reveal phase. */
+
+#pack-root {
+  position: fixed;
+  inset: 0;
+  z-index: 810;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* Sit just above the world band (BAND_HEIGHT 96 x ZOOM 2 = 192px). */
+  padding-bottom: 204px;
+  pointer-events: none;
+}
+
+.pack-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 540px;
+  max-width: 96vw;
+  padding: 10px 14px 16px;
+  background: #d8bd86;
+  box-shadow:
+    inset 3px 3px 0 0 #efd9a8,
+    inset -3px -3px 0 0 #a9854c,
+    0 0 0 3px #3a2a12,
+    0 14px 34px rgba(0, 0, 0, 0.5);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  transform: translateY(120%);
+  visibility: hidden;
+  transition:
+    transform 280ms cubic-bezier(0.18, 0.9, 0.26, 1.05),
+    visibility 0s linear 280ms;
+}
+
+#pack-root.is-open .pack-panel {
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform 320ms cubic-bezier(0.16, 0.84, 0.3, 1.02);
+}
+
+/* Show only the phase's content. */
+.pack-panel[data-phase='carousel'] .pack-reveal {
+  display: none;
+}
+
+.pack-panel[data-phase='reveal'] .pack-carousel {
+  display: none;
+}
+
+/* ---- Header -------------------------------------------------------------- */
+.pack-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pack-panel__title {
+  font-family: var(--game-font);
+  font-size: 15px;
+  font-weight: 700;
+  color: #3a2a12;
+  text-shadow: 0 1px 0 rgba(255, 245, 214, 0.5);
+}
+
+.pack-panel__close {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff5e6;
+  background: #d2483a;
+  box-shadow:
+    inset 2px 2px 0 0 #ef7a64,
+    inset -2px -2px 0 0 #9a2a1e,
+    0 0 0 2px #3a2a12;
+  image-rendering: pixelated;
+}
+
+.pack-panel__close:hover {
+  background: #e85a48;
+}
+
+/* ---- Carousel ------------------------------------------------------------ */
+.pack-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pack-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 300px;
+}
+
+/* Minimal flowy chevrons — the carousel is driven mostly by clicking the peeking
+   neighbours, so the arrows are a light hint, not a framed button. */
+.pack-arrow {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 60px;
+  border: 0;
+  cursor: pointer;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  color: #6b5024;
+  background: transparent;
+  opacity: 0.5;
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    color 140ms ease;
+}
+
+.pack-arrow:hover:not(:disabled) {
+  opacity: 1;
+  color: #3a2a12;
+  transform: scale(1.2);
+}
+
+.pack-arrow:disabled {
+  opacity: 0;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ---- Focused set card ---------------------------------------------------- */
+/* No inner frame: the pack and its details float directly on the panel for a
+   smoother, flowier feel. */
+.set-card {
+  flex: 0 0 auto;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+}
+
+.set-card__pack {
+  position: relative;
+  width: 84px;
+  height: 118px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 16px;
+  background: linear-gradient(160deg, var(--accent), #0e1219);
+  box-shadow:
+    inset 3px 3px 0 0 rgba(255, 255, 255, 0.4),
+    inset -3px -3px 0 0 rgba(0, 0, 0, 0.4),
+    0 0 0 3px #0e1219;
+}
+
+/* Crimped foil seal, top and bottom — the shared pack-art motif. */
+.set-card__pack::before,
+.set-card__pack::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 3px, transparent 3px 6px);
+}
+
+.set-card__pack::before {
+  top: 0;
+  box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+.set-card__pack::after {
+  bottom: 0;
+  box-shadow: 0 -2px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+.set-card__pack-name {
+  font-family: var(--game-font);
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.1;
+  text-shadow:
+    1px 1px 0 #0e1219,
+    -1px 1px 0 #0e1219,
+    1px -1px 0 #0e1219,
+    -1px -1px 0 #0e1219;
+}
+
+.set-card__pack--locked {
+  align-items: center;
+  padding-bottom: 0;
+  font-family: var(--game-font);
+  font-size: 40px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  background: linear-gradient(160deg, #6a7180, #2a2f3a);
+}
+
+.set-card__title {
+  font-family: var(--game-font);
+  font-size: 14px;
+  font-weight: 700;
+  color: #3a2a12;
+}
+
+.set-card__theme {
+  font-family: var(--game-font);
+  font-size: 9px;
+  color: #8a6f44;
+  letter-spacing: 0.03em;
+  margin-top: -4px;
+}
+
+.set-card__count {
+  font-family: var(--game-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: #5a4426;
+}
+
+.set-card__open {
+  margin-top: 2px;
+}
+
+/* ---- Peek neighbours ----------------------------------------------------- */
+.pack-peek {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 64px;
+  padding: 6px;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  opacity: 0.55;
+  transition: opacity 140ms ease;
+}
+
+.pack-peek:hover {
+  opacity: 0.85;
+}
+
+.pack-peek__pack {
+  position: relative;
+  width: 46px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--accent), #0e1219);
+  box-shadow:
+    inset 2px 2px 0 0 rgba(255, 255, 255, 0.35),
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.4),
+    0 0 0 2px #0e1219;
+}
+
+/* Same crimped foil seal as the focused pack, scaled down for consistency. */
+.pack-peek__pack::before,
+.pack-peek__pack::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 2px, transparent 2px 4px);
+}
+
+.pack-peek__pack::before {
+  top: 0;
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+.pack-peek__pack::after {
+  bottom: 0;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.4);
+}
+
+.pack-peek__pack--locked {
+  font-family: var(--game-font);
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  background: linear-gradient(160deg, #6a7180, #2a2f3a);
+}
+
+.pack-peek__name {
+  font-family: var(--game-font);
+  font-size: 8px;
+  font-weight: 700;
+  color: #5a4426;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Shared overlay buttons ---------------------------------------------- */
+/* Named distinctly from the vending machine's square `.pack-btn` (a global,
+   26x26 numbered button) so these text buttons keep their own size and the
+   labels aren't clipped. */
+.pack-action-btn {
+  box-sizing: border-box;
+  min-width: 96px;
+  padding: 7px 16px;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--game-font);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  color: #3a2a12;
+  background: #c8a772;
+  box-shadow:
+    inset 2px 2px 0 0 #e4cfa1,
+    inset -2px -2px 0 0 #8f6f3e,
+    0 0 0 2px #3a2a12;
+  image-rendering: pixelated;
+}
+
+.pack-action-btn:hover:not(:disabled) {
+  background: #dcc089;
+}
+
+.pack-action-btn:active:not(:disabled) {
+  box-shadow:
+    inset -2px -2px 0 0 #e4cfa1,
+    inset 2px 2px 0 0 #8f6f3e,
+    0 0 0 2px #3a2a12;
+}
+
+.pack-action-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pack-action-btn--primary {
+  color: #16321a;
+  background: #6fce5a;
+  box-shadow:
+    inset 2px 2px 0 0 #a6e89a,
+    inset -2px -2px 0 0 #3f8a35,
+    0 0 0 2px #16321a;
+}
+
+.pack-action-btn--primary:hover:not(:disabled) {
+  background: #84df70;
+}
+
+.pack-action-btn--ghost {
+  min-width: 0;
+  font-size: 10px;
+  padding: 6px 14px;
+}

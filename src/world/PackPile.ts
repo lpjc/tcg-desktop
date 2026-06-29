@@ -12,10 +12,11 @@ const SCALED_H = PACK_H * TABLE_SCALE;
 
 /**
  * Bought-but-unripped packs shown as a tidy ambient pack on the shop counter —
- * the shop twin of `BoothCashPile`. Decoration only: ripping happens on the
- * per-set packs above the player's head at the counter (`HeadPackPiles`).
- * Subscribes to the pending-pack queue so the display grows and shrinks with
- * what you own.
+ * the shop twin of `BoothCashPile`. Decoration only and non-interactive: ripping
+ * now happens in the pack-opening overlay (see `ui/packs/PackOpenScreen`), opened
+ * from its toolbar button. This pile just links the in-world vending machine to
+ * that overlay by reflecting how many packs are waiting; it subscribes to the
+ * pending-pack queue so it grows and shrinks with what you own.
  */
 export class PackPile {
   private readonly scene: Phaser.Scene;
