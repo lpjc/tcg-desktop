@@ -49,8 +49,9 @@ import {
   playPurchaseSale,
   purchaseLeaveDelayMs,
 } from './purchaseFx';
+import { devUi } from '../ui/devUi';
 import { expectMoneyGain, revealMoneyGain } from '../ui/saleFxBridge';
-import { openPackVending, closePackVending } from '../ui/shopBridge';
+import { openPackVending, closePackVending, openPackOpenScreen } from '../ui/shopBridge';
 import {
   computeWorldLayout,
   frameForX,
@@ -59,6 +60,11 @@ import {
   type SceneFrameId,
 } from './WorldLayout';
 
+import { loadLayoutJson } from './layoutSource';
+
+// Bundled last-resort defaults, used only when `assets/layouts/*.json` cannot
+// be read (see layoutSource.ts). Keep them roughly in sync with the editor
+// saves — the shop/booth files MUST contain stations or the game is unplayable.
 import playerBoothLayout from '../data/layouts/player_booth.json';
 import defaultExpoProps from '../data/layouts/conventions/default_expo_props.json';
 import wideLobbyProps from '../data/layouts/conventions/wide_lobby_props.json';
@@ -161,8 +167,9 @@ export class WorldScene extends Phaser.Scene {
 
     this.input.on('pointerdown', this.onPlayClick, this);
 
+    // Venue cycling is a dev/editor affordance — hidden from players.
     this.input.keyboard?.on('keydown-V', (event: KeyboardEvent) => {
-      if (this.placeMode.isActive()) return;
+      if (this.placeMode.isActive() || !devUi.isVisible()) return;
       event.preventDefault();
       void this.cycleConventionVenue();
     });
@@ -268,8 +275,9 @@ export class WorldScene extends Phaser.Scene {
         openPackVending();
         break;
       case 'shop_counter':
-        // Inert for packs now — opening moved to the pack overlay. The counter
-        // still shows the ambient PackPile decor reflecting unopened packs.
+        // The counter is where packs get ripped: arriving opens the same
+        // pack-opening overlay as the toolbar button.
+        openPackOpenScreen();
         break;
       default:
         break;
@@ -506,11 +514,7 @@ export class WorldScene extends Phaser.Scene {
     this.placeMode.setBoothAnchor(getBoothAnchor());
     await this.loadConventionContent();
 
-    let shop = shopLayout as LayoutData;
-    if (window.desktop) {
-      const saved = await window.desktop.loadLayout('shop');
-      if (saved) shop = JSON.parse(saved) as LayoutData;
-    }
+    const shop = (await loadLayoutJson<LayoutData>('shop')) ?? (shopLayout as LayoutData);
     this.placeMode.seedPlaceables('shop', shop.objects);
 
     for (const p of this.placeMode.getAllPlaceables()) {
@@ -526,27 +530,20 @@ export class WorldScene extends Phaser.Scene {
   private async loadConventionContent(): Promise<void> {
     const venueId = getActiveConventionVenue().id;
 
-    let booth = playerBoothLayout as PlayerBoothLayout;
-    if (window.desktop) {
-      const savedBooth = await window.desktop.loadLayout('player_booth');
-      if (savedBooth) booth = JSON.parse(savedBooth) as PlayerBoothLayout;
-    }
+    const booth =
+      (await loadLayoutJson<PlayerBoothLayout>('player_booth')) ??
+      (playerBoothLayout as PlayerBoothLayout);
     this.placeMode.seedBooth(booth);
 
-    let props = VENUE_PROPS_DEFAULTS[venueId] ?? { venueId, objects: [] };
-    const propsName = `convention_${venueId}_props`;
-    if (window.desktop) {
-      const savedProps = await window.desktop.loadLayout(propsName);
-      if (savedProps) props = JSON.parse(savedProps) as ConventionPropsLayout;
-      else {
-        const legacy = await window.desktop.loadLayout('convention');
-        if (legacy && venueId === 'default_expo') {
-          const old = JSON.parse(legacy) as LayoutData;
-          props = { venueId, objects: old.objects, floor: old.floor };
-        }
-      }
+    let props = await loadLayoutJson<ConventionPropsLayout>(`convention_${venueId}_props`);
+    if (!props && venueId === 'default_expo') {
+      // Legacy save name from before venues existed.
+      const legacy = await loadLayoutJson<LayoutData>('convention');
+      if (legacy) props = { venueId, objects: legacy.objects, floor: legacy.floor };
     }
-    this.placeMode.seedVenueProps(props);
+    this.placeMode.seedVenueProps(
+      props ?? VENUE_PROPS_DEFAULTS[venueId] ?? { venueId, objects: [] },
+    );
   }
 
   private sortDepths(): void {

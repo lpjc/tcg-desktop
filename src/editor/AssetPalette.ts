@@ -1,3 +1,4 @@
+import { assetUrl } from '../assets/assetUrl';
 import { getItemsByCategory, type CatalogItem } from '../assets/catalog';
 import { interaction } from '../core/interaction';
 import { enablePanelDrag } from '../ui/draggablePanel';
@@ -131,7 +132,7 @@ export class AssetPalette {
       btn.className = `palette-item${this.selectedId === item.id ? ' selected' : ''}`;
       btn.title = `${item.name} (${item.width}×${item.height})`;
       btn.innerHTML = `
-        <img src="${encodeURI(`/${item.file}`)}" alt="" width="${Math.min(item.width, 36)}" height="${Math.min(item.height, 36)}" />
+        <img src="${assetUrl(item.file)}" alt="" width="${Math.min(item.width, 36)}" height="${Math.min(item.height, 36)}" />
         <span>${item.name}</span>
       `;
       btn.addEventListener('click', () => {

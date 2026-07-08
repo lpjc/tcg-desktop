@@ -1,3 +1,5 @@
+import { assetUrl } from '../assets/assetUrl';
+
 /**
  * Character roster + sprite-sheet layout for the LimeZu "Modern Interiors"
  * free character pack (`assets/Characters_free/`).
@@ -50,7 +52,7 @@ function capitalize(name: CharacterKey): string {
 /** Public URL of an animation sheet, served from Vite `publicDir` (`assets/`). */
 export function characterSheetUrl(name: CharacterKey, sheet: 'idle' | 'walk'): string {
   const file = sheet === 'idle' ? 'idle_anim' : 'run';
-  return encodeURI(`/Characters_free/${capitalize(name)}_${file}_16x16.png`);
+  return assetUrl(`Characters_free/${capitalize(name)}_${file}_16x16.png`);
 }
 
 /** Phaser texture key for a character's loaded sheet. */

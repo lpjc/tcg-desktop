@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { audio } from '../audio/audio';
 import { ROAD_FLOOR_TOP, WORLD_HEIGHT } from '../core/constants';
 import { depthFromFootY } from '../core/depth';
 import { getObstacleField } from '../world/obstacleField';
@@ -60,7 +61,7 @@ const CLICK_SPARK_COUNT = 3;
 const CLICK_SPARK_RISE = 10;
 const CLICK_SPARK_MS = 280;
 
-/** Arrival "pling" (visual-only for now — see playArrivalPling). */
+/** Arrival "pling" flash + bounce (sound in playArrivalPling). */
 const PLING_FLASH_MS = 160;
 const PLING_BOUNCE_MS = 240;
 const PLING_BOUNCE_SCALE = 1.15;
@@ -398,12 +399,9 @@ export class ConventionGuestChargeController {
     });
   }
 
-  /**
-   * Audio seam: the pling is visual-only until the app grows a sound system.
-   * Wire the actual "pling!" sample here when it does.
-   */
+  /** The "pling!" that lands with the arrival flash + bounce. */
   private playArrivalPling(): void {
-    /* no-op — flash + bounce carry the moment for now */
+    audio.playSfx('pling');
   }
 
   private clearVisuals(): void {

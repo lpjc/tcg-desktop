@@ -1,3 +1,4 @@
+import { assetUrl } from '../../assets/assetUrl';
 import { interaction } from '../../core/interaction';
 import { allSets, getCard } from '../../game/cards/cards';
 import { rarityCanHolo } from '../../game/cards/rarity';
@@ -278,7 +279,7 @@ export class CollectionScreen {
     btn.className = 'binder__page-btn';
     btn.title = dir === 'left' ? 'Previous set' : 'Next set';
     const icon = document.createElement('img');
-    icon.src = `/icons/chevron-${dir}.png`;
+    icon.src = assetUrl(`icons/chevron-${dir}.png`);
     icon.alt = dir === 'left' ? 'Previous' : 'Next';
     btn.appendChild(icon);
     btn.addEventListener('click', onClick);

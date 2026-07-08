@@ -1,9 +1,10 @@
+import { assetUrl } from '../../assets/assetUrl';
 import { registerSet, type Card, type CardSet } from './cards';
 import type { Rarity } from './rarity';
 
 /**
  * Placeholder sets so the economy and binder have real data before authored sets
- * arrive. Card art is borrowed from the bundled "Free Mythic Monsters" pack
+ * arrive. Card art is borrowed from the "Free Mythic Monsters" pack in `art-source/`
  * (copied to `assets/cards/embergrove/NN.png`); cards are monster-first, shown as
  * a silhouette until discovered. Several sets are registered so the binder is a
  * real multi-spread book to flip through — replace names/art with authored sets
@@ -51,7 +52,7 @@ const NAME_PARTS: Record<string, { pre: string[]; suf: string[]; chase: string }
 
 /** Public URL (Vite `publicDir: assets`) for one of the monster art files. */
 function artKeyFor(artNumber: number): string {
-  return `/cards/embergrove/${String(artNumber).padStart(2, '0')}.png`;
+  return assetUrl(`cards/embergrove/${String(artNumber).padStart(2, '0')}.png`);
 }
 
 function buildCards(setId: string, names: string[], artOffset: number): Card[] {

@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import './ui/theme.css';
+import { assetUrl } from './assets/assetUrl';
+import { audio } from './audio/audio';
 import { DevToggleButton } from './ui/DevToggleButton';
 import { DevGamePanel } from './ui/DevGamePanel';
 import { BottomHud } from './ui/BottomHud';
@@ -9,20 +11,31 @@ import { CollectionButton } from './ui/collection/CollectionButton';
 import { PackOpenScreen } from './ui/packs/PackOpenScreen';
 import { PackOpenButton } from './ui/packs/PackOpenButton';
 import { PackVendingScreen } from './ui/shop/PackVendingScreen';
+import { HelpOverlay } from './ui/HelpOverlay';
+import { MusicToggleButton } from './ui/MusicToggleButton';
+import { BackgroundCycler } from './ui/BackgroundCycler';
 import { registerPlaceholderSet } from './game/cards/placeholderSet';
 import { gameState } from './game/state/GameState';
 import { WorldScene } from './world/WorldScene';
 
 /**
- * Phaser bootstrap for the desktop overlay band.
+ * Phaser bootstrap. Two hosting modes share this entry point:
  *
- * - Canvas always fills the Electron window (whose height is set in
- *   electron/main.ts to (BAND_HEIGHT + TOP_MARGIN) × ZOOM); the camera glues
- *   the world band to the window bottom, headroom above stays transparent.
- * - Width is 100% of the monitor work area; convention | road | shop fill it
- *   via `WorldLayout` (road flexes on resize).
- * - `transparent: true` lets the desktop show through.
+ * - Electron overlay (`window.desktop` present): the canvas fills the
+ *   transparent window (height set in electron/main.ts), the camera glues the
+ *   world band to the window bottom, and the desktop shows through.
+ * - Plain browser / itch.io: same layout, but the page provides an opaque
+ *   backdrop (`body.web-page` in theme.css) instead of the desktop.
+ *
+ * Width is 100% of the window; convention | road | shop fill it via
+ * `WorldLayout` (road flexes on resize).
  */
+
+// In a plain browser there is no desktop to show through — give the page an
+// opaque backdrop so the transparent canvas reads as a game frame.
+if (!window.desktop) {
+  document.body.classList.add('web-page');
+}
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -45,8 +58,16 @@ function resizeCanvas(): void {
 
 window.addEventListener('resize', resizeCanvas);
 
-// Start loading the pixel font now so Phaser canvas text uses it, not a fallback.
-void document.fonts?.load('16px "VCR OSD Mono"');
+// Register + load the pixel font via the FontFace API (not a CSS @font-face)
+// so the file URL respects the deploy base (itch.io serves from a subpath).
+// Loading it eagerly also means Phaser canvas text uses it, not a fallback.
+const pixelFont = new FontFace(
+  'VCR OSD Mono',
+  `url(${assetUrl('fonts/vcr_osd_mono/VCR_OSD_MONO_1.001.ttf')})`,
+  { display: 'block' },
+);
+document.fonts.add(pixelFont);
+void pixelFont.load();
 
 // Game state: register card data, then hydrate the save (async) before UI binds.
 const starterSetId = registerPlaceholderSet();
@@ -76,6 +97,20 @@ collectionScreen.onOpenChange((open) => {
 // Shop vending purchase screen — registers itself on the shop bridge so the
 // world can open it on arrival at the pack vending machine.
 new PackVendingScreen('editor-ui');
+
+// Onboarding: auto-opens on first run, then lives behind the "?" button.
+new HelpOverlay('editor-ui');
+
+// Audio: SFX + looping background music (starts on the first user gesture,
+// per browser autoplay policy). The toolbar button toggles the music.
+audio.init();
+new MusicToggleButton('editor-ui');
+
+// Web only: classic Windows wallpaper behind the canvas + "BG" cycle button.
+// Electron shows the real desktop instead, so no cycler there.
+if (!window.desktop) {
+  new BackgroundCycler('editor-ui');
+}
 
 if (window.desktop) {
   new MonitorSwitchButton('editor-ui');

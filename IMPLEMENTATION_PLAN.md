@@ -226,8 +226,9 @@ modal:
   `Embergrove` (hand-named) plus `Tidehollow`/`Duskmoor` (generated names, art reused from the
   shared monster pool at an offset). Replace with authored sets by pointing each card's `artKey` at
   real art.
-- Art: placeholder monsters copied from the bundled "Free Mythic Monsters" pack to
-  `assets/cards/embergrove/NN.png`; UI icons copied from the pixel Lucide set to `assets/icons/`.
+- Art: placeholder monsters copied from the "Free Mythic Monsters" pack (source art in
+  `art-source/`, kept out of the shipped `assets/` publicDir) to `assets/cards/embergrove/NN.png`;
+  UI icons copied from the pixel Lucide set to `assets/icons/`.
 - Dev panel gained **"+ Random card"** to discover a random card (and reach holo once a set is full)
   for testing before packs exist.
 - *(Optional later flourish: a zoomed single-card detail view — only if it earns its keep.)*
@@ -268,7 +269,7 @@ Set unlock progression, audio (reveal/holo/cash/pling), balancing pass, more set
 
 ### Assets (placeholders fine until you're ready)
 - **Card faces** — *placeholder in place:* the binder currently borrows pixel monsters from the
-  bundled "Free Mythic Monsters" pack (`assets/cards/embergrove/NN.png`). The card design is
+  "Free Mythic Monsters" pack in `art-source/` (`assets/cards/embergrove/NN.png`). The card design is
   monster-first (the creature is the hero, silhouette until discovered), so real art slots straight
   into the same `artKey` field. Authored set art still welcome; classic `63:88` portrait.
 - **Card back** (face-down look).

@@ -1,10 +1,10 @@
-/* Pack-opening toolbar button — sits just above the collection button. Chunky
+/* Pack-opening toolbar button — top slot of the top-right toolbar. Chunky
    pixel button with a foil-pouch glyph and an unopened-pack count badge. */
 
 #pack-open-btn {
   position: fixed;
   right: 8px;
-  bottom: 266px;
+  top: 12px;
   z-index: 60;
   display: flex;
   align-items: center;

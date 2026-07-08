@@ -14,11 +14,23 @@ function emptyStock(): Record<PileId, number> {
   return stock;
 }
 
+/**
+ * A fresh save starts with enough money for a few packs and a little booth
+ * stock, so both loops (visitors buying, you ripping packs) work from the
+ * first minute instead of dead-locking at €0 / no stock.
+ */
+const STARTING_MONEY = 300;
+const STARTING_STOCK: Partial<Record<PileId, number>> = { common: 8, rare: 2 };
+
 function defaultData(): GameStateData {
+  const stock = emptyStock();
+  for (const [pile, count] of Object.entries(STARTING_STOCK)) {
+    stock[pile as PileId] = count;
+  }
   return {
     version: STATE_VERSION,
-    money: 0,
-    stock: emptyStock(),
+    money: STARTING_MONEY,
+    stock,
     collection: {},
     skills: { reputation: 0, luck: 0, prestige: 0, attraction: 0 },
     displayCase: [null, null, null],

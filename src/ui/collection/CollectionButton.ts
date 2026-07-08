@@ -1,3 +1,4 @@
+import { assetUrl } from '../../assets/assetUrl';
 import { interaction } from '../../core/interaction';
 import type { CollectionScreen } from './CollectionScreen';
 import './CollectionButton.css';
@@ -22,7 +23,7 @@ export class CollectionButton {
     this.el.title = 'Collection binder';
 
     const icon = document.createElement('img');
-    icon.src = '/icons/collection.png';
+    icon.src = assetUrl('icons/collection.png');
     icon.alt = 'Collection';
     icon.draggable = false;
     this.el.appendChild(icon);

@@ -1,3 +1,4 @@
+import { audio } from '../../audio/audio';
 import { interaction } from '../../core/interaction';
 import { allSets, type CardSet } from '../../game/cards/cards';
 import { PACK_PRICE, shopEconomy } from '../../game/economy/ShopEconomy';
@@ -171,6 +172,7 @@ export class PackVendingScreen {
     const slot = this.slots[index];
     if (!slot.set) return;
     if (!shopEconomy.buyPack(slot.set.id)) return;
+    audio.playSfx('vend');
     this.dropFaller(slot);
   }
 

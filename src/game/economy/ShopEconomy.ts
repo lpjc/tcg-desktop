@@ -5,7 +5,7 @@ import { gameState } from '../state/GameState';
 import { rollPack } from './packs';
 
 /** Placeholder pack price (see IMPLEMENTATION_PLAN §3.2 — easy to tune). */
-export const PACK_PRICE = 100;
+export const PACK_PRICE = 50;
 
 /** Prestige granted the first time a rare-or-better card is discovered. */
 const FIRST_FIND_PRESTIGE: Record<Rarity, number> = {

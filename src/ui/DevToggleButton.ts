@@ -4,8 +4,8 @@ import { enablePanelDragWithClickThreshold } from './draggablePanel';
 import './DevToggleButton.css';
 
 /**
- * Always-visible control that shows or hides developer overlay chrome so you
- * can preview the player-facing view. The game canvas stays visible either way.
+ * Control that hides developer overlay chrome again once it is on. Hidden while
+ * the dev UI is off so players never see it — F3 is the (undocumented) way in.
  */
 export class DevToggleButton {
   private readonly el: HTMLButtonElement;
@@ -37,6 +37,7 @@ export class DevToggleButton {
   }
 
   private syncLabel(visible: boolean): void {
+    this.el.style.display = visible ? '' : 'none';
     this.el.classList.toggle('active', visible);
     this.el.textContent = visible ? 'DEV ON' : 'DEV';
   }

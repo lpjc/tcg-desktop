@@ -4,6 +4,7 @@ import { shopEconomy } from '../../game/economy/ShopEconomy';
 import { gameState, type GameStateData } from '../../game/state/GameState';
 import type { CollectionEntry } from '../../game/state/types';
 import { SetProgressBars } from '../progress/SetProgressBars';
+import { registerPackOpen } from '../shopBridge';
 import { PackReveal } from './PackReveal';
 import './PackOpenScreen.css';
 
@@ -74,6 +75,9 @@ export class PackOpenScreen {
     // The panel captures pointer events so clicks never route to the world
     // behind it; it is registered hot so it stays clickable through the overlay.
     interaction.registerHotElement(this.panel);
+    // Shop-counter arrivals in the world open this overlay too (same as the
+    // toolbar button) — see shopBridge.
+    registerPackOpen({ open: () => this.show(), close: () => this.close() });
     this.bindGlobalInput();
     gameState.subscribe((data) => {
       if (this.open && this.phase === 'carousel') this.renderCarousel(data);

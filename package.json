@@ -10,6 +10,7 @@
     "build": "npm run build:electron && vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "generate:catalog": "node scripts/generate-catalog.mjs",
+    "generate:sfx": "node scripts/build-sfx.mjs",
     "start": "electron .",
     "typecheck": "tsc --noEmit"
   },

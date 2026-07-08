@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { assetUrl } from '../assets/assetUrl';
 import { PILES, type PileId } from '../game/cards/piles';
 
 /**
@@ -36,7 +37,7 @@ const EMOTE_FILES: Partial<Record<EmoteKey, string>> = {
 
 function emoteAssetPath(key: EmoteKey): string {
   const file = EMOTE_FILES[key] ?? `${key}.png`;
-  return encodeURI(`/emote-sprites/${file}`);
+  return assetUrl(`emote-sprites/${file}`);
 }
 
 const EMOTE_SIZE = 13;

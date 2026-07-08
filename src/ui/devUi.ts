@@ -2,19 +2,21 @@ const STORAGE_KEY = 'tcg-desktop.dev-ui';
 
 type DevUiListener = (visible: boolean) => void;
 
-/** Whether developer overlay chrome (HUD, palette, monitor switch) is shown. */
+/**
+ * Whether developer overlay chrome (HUD, palette, monitor switch) is shown.
+ * Off by default so players never see dev tools — F3 opts in, and the choice
+ * persists for the session's browser/profile.
+ */
 let visible = readStored();
 
 const listeners = new Set<DevUiListener>();
 
 function readStored(): boolean {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === 'false') return false;
+    return localStorage.getItem(STORAGE_KEY) === 'true';
   } catch {
-    /* ignore */
+    return false;
   }
-  return true;
 }
 
 function persist(): void {

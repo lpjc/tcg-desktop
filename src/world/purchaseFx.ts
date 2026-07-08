@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { audio } from '../audio/audio';
 import { EMOTE_FADE_MS, emoteForPile, showEmoteHeld } from '../characters/emotes';
 import type { Npc } from '../characters/Npc';
 import type { SaleResult } from '../game/economy/BoothEconomy';
@@ -58,9 +59,10 @@ export function playPurchaseSale(
     flyCardToNpc(scene, from, npc, sale.pile, CARD_FLY_MS);
   }
 
-  // 2. The instant it lands: pop + emote.
+  // 2. The instant it lands: pop + emote + sale blip.
   scene.time.delayedCall(CARD_FLY_MS, () => {
     npc.pop();
+    audio.playSfx('sale');
     void showEmoteHeld(scene, npc.x, npc.y - 22, emoteForPile(sale.pile), EMOTE_HOLD_MS);
   });
 
@@ -68,6 +70,7 @@ export function playPurchaseSale(
   //    so they spawn behind the buyer, then arc up into the HUD pill.
   if (playerAtBooth) {
     scene.time.delayedCall(PAY_AT_MS, () => {
+      audio.playSfx('coins');
       const pill = moneyPillCenter();
       if (pill) {
         void flyCoinsToPill(
@@ -118,6 +121,7 @@ const NO_STOCK_LEAVE_AFTER_MS = 500;
  * cosmetic — the economy already decided there was no sale.
  */
 export function playNoStockCue(scene: Phaser.Scene, npc: Npc): number {
+  audio.playSfx('no-stock');
   const headY = npc.y - 24;
   const depth = depthFromFootY(npc.y) + 2;
 
@@ -171,6 +175,7 @@ export function playBoothCollect(
     revealMoneyGain();
     return;
   }
+  audio.playSfx('coins');
   void flyCoinsToPill(
     scene,
     { x: tableWorld.x, y: tableWorld.y - 6 },

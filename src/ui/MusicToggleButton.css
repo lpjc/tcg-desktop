@@ -1,0 +1,39 @@
+/* Music on/off toggle — slots under the "?" in the top-right toolbar. */
+#music-toggle-btn {
+  position: fixed;
+  right: 8px;
+  top: 168px;
+  z-index: 60;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--game-font);
+  font-size: 20px;
+  color: #3a2a12;
+  background: #c8a772;
+  box-shadow:
+    inset 3px 3px 0 0 #e4cfa1,
+    inset -3px -3px 0 0 #8f6f3e,
+    0 0 0 3px #3a2a12,
+    0 4px 0 rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  transition: transform 90ms steps(3);
+}
+
+#music-toggle-btn:hover {
+  background: #dcc089;
+  transform: translateY(-2px);
+}
+
+#music-toggle-btn:active {
+  transform: translateY(0);
+}
+
+#music-toggle-btn.is-muted {
+  color: #8f6f3e;
+  text-decoration: line-through;
+  text-decoration-thickness: 3px;
+  background: #b09362;
+}

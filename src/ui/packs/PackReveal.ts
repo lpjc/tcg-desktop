@@ -1,3 +1,4 @@
+import { audio } from '../../audio/audio';
 import { rarityCardColors, rarityTokenColors } from '../../game/cards/rarityColors';
 import type { RippedCard } from '../../game/economy/ShopEconomy';
 import { gameState } from '../../game/state/GameState';
@@ -97,7 +98,10 @@ export class PackReveal {
 
     // Kick the tear animation, then swap to the fanned cards.
     this.timers.push(
-      window.setTimeout(() => tearer.classList.add('pack-tear--ripping'), 30),
+      window.setTimeout(() => {
+        tearer.classList.add('pack-tear--ripping');
+        audio.playSfx('rip');
+      }, 30),
     );
     this.timers.push(window.setTimeout(() => this.showCards(), TEAR_MS));
   }
@@ -211,9 +215,15 @@ export class PackReveal {
     if (!el || el.classList.contains('reveal-card--flipped')) return;
     el.classList.add('reveal-card--flipped');
 
+    const card = this.cards[index];
+    audio.playSfx('flip');
+    // Big pulls get a stinger on top of the flip.
+    if (card && (card.holo || card.rarity === 'epic' || card.rarity === 'chase')) {
+      audio.playSfx('rare');
+    }
+
     // As the face turns up, a "+1 to stock" token floats off the card — the
     // pull is already banked in the stock pile of its rarity.
-    const card = this.cards[index];
     if (card) this.timers.push(window.setTimeout(() => this.spawnGain(el, card), GAIN_DELAY_MS));
 
     this.flipped += 1;

@@ -1,0 +1,110 @@
+/* "How to play" onboarding overlay + its "?" toolbar opener. Matches the
+   chunky tan pixel-button style of the collection/pack toolbar. */
+
+#help-overlay {
+  position: fixed;
+  inset: 0;
+  /* Above the game overlays (binder 800, packs 810, vending 820), below dev chrome (1200+). */
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 8, 4, 0.55);
+  pointer-events: auto;
+}
+
+#help-overlay[hidden] {
+  display: none;
+}
+
+.help-overlay__panel {
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 12px;
+  padding: 18px 20px 20px;
+  background: #f0e2c0;
+  color: #3a2a12;
+  box-shadow:
+    inset 3px 3px 0 0 #fff3d2,
+    inset -3px -3px 0 0 #b48f54,
+    0 0 0 3px #3a2a12,
+    0 6px 0 rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+}
+
+.help-overlay__title {
+  margin-bottom: 12px;
+  font-size: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.help-overlay__list {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.help-overlay__list li + li {
+  margin-top: 8px;
+}
+
+.help-overlay__start {
+  display: block;
+  margin: 0 auto;
+  padding: 8px 22px;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--game-font);
+  font-size: 14px;
+  color: #fff5e6;
+  background: #2f7d33;
+  box-shadow:
+    inset 2px 2px 0 0 #57d06a,
+    inset -2px -2px 0 0 #1d4e20,
+    0 0 0 3px #3a2a12;
+  transition: transform 90ms steps(3);
+}
+
+.help-overlay__start:hover {
+  transform: translateY(-2px);
+}
+
+.help-overlay__start:active {
+  transform: translateY(0);
+}
+
+/* "?" opener — slots under the collection button in the top-right toolbar. */
+#help-btn {
+  position: fixed;
+  right: 8px;
+  top: 116px;
+  z-index: 60;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--game-font);
+  font-size: 22px;
+  color: #3a2a12;
+  background: #c8a772;
+  box-shadow:
+    inset 3px 3px 0 0 #e4cfa1,
+    inset -3px -3px 0 0 #8f6f3e,
+    0 0 0 3px #3a2a12,
+    0 4px 0 rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  transition: transform 90ms steps(3);
+}
+
+#help-btn:hover {
+  background: #dcc089;
+  transform: translateY(-2px);
+}
+
+#help-btn:active {
+  transform: translateY(0);
+}

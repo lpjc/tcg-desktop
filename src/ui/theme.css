@@ -1,11 +1,6 @@
-/* Global UI theme: the game's pixel font + shared tokens. Imported once in main.ts. */
-@font-face {
-  font-family: 'VCR OSD Mono';
-  src: url('/fonts/vcr_osd_mono/VCR_OSD_MONO_1.001.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: block;
-}
+/* Global UI theme: shared tokens + the web-page backdrop.
+   The pixel font itself is registered in main.ts via the FontFace API (not a
+   CSS @font-face) so its URL respects the deploy base (itch.io subpaths). */
 
 :root {
   /* One source of truth for the UI typeface — every panel uses this. */
@@ -15,4 +10,15 @@
 #editor-ui,
 #editor-ui * {
   font-family: var(--game-font);
+}
+
+/* Plain-browser / itch.io build: no desktop shows through the transparent
+   canvas, so the page provides a backdrop. This gradient is the fallback while
+   the wallpaper loads — BackgroundCycler overlays a classic Windows wallpaper
+   via inline styles. Class added by main.ts when window.desktop is absent. */
+body.web-page {
+  background:
+    radial-gradient(ellipse 120% 60% at 50% 100%, #2c3550 0%, transparent 60%),
+    linear-gradient(to bottom, #0d0f1a 0%, #161a2b 55%, #1d2340 100%);
+  background-attachment: fixed;
 }

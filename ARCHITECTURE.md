@@ -36,6 +36,21 @@ hand-building it.
 Tauri was considered (lighter) but Electron's click-through + mouse-forwarding story
 is more reliable cross-platform, which matters for a click-through overlay.
 
+### Web build (itch.io)
+
+The renderer also ships as a plain static site (`npm run build` → `dist/`) with no
+Electron. Everything desktop-specific degrades behind the optional `window.desktop`
+bridge:
+
+- **Saves** fall back to localStorage (`src/game/state/persistence.ts`).
+- **Layouts** are fetched from `layouts/*.json` in the publicDir — the same files the
+  F2 editor saves — instead of the IPC filesystem read (`src/world/layoutSource.ts`).
+- **Asset URLs** all go through `assetUrl()` (`src/assets/assetUrl.ts`) so they respect
+  Vite's relative `base: './'` and work from itch.io's nested upload URLs.
+- **Backdrop:** with no desktop showing through the transparent canvas, `body.web-page`
+  (added in `main.ts` when `window.desktop` is absent) paints an opaque night-sky page.
+- Raw art packs not used at runtime live in `art-source/`, outside the shipped publicDir.
+
 ---
 
 ## 3. Project structure
